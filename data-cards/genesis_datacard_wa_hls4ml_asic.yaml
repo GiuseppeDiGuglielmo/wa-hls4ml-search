@@ -16,7 +16,7 @@ supports_ai_usability: "Yes"
 discoverability:
   datacard:
     template_version: "1.1"
-    datacard_version: "1.0"
+    datacard_version: "1.1"
     filename: "genesis_datacard_wa_hls4ml_asic.yaml"
     language: en
 
@@ -33,16 +33,52 @@ discoverability:
       ucni_status: "No"
 
     created_date: "2026-06-25"
-    updated_date: "2026-06-25"
+    updated_date: "2026-07-17"
 
     change_log:
       - change_date: "2026-06-25"
         data_card_version: "1.0"
         summary: "Initial creation"
+      - change_date: "2026-07-17"
+        data_card_version: "1.1"
+        summary: >-
+          Clarified two-part dataset structure (JSON reports vs. Catapult project tarballs);
+          scoped card to part 1 (JSON reports) only; removed EULA references from part 1
+          sensitivity and access fields; expanded features list to match actual JSON schema;
+          updated dataset_scale to reflect JSON-only size (~6.4 GB); added ASIC paper
+          citation placeholder; updated contacts, software URLs, and stewardship affiliation.
 
     creation_method: Hybrid
 
     created_by:
+      - contribution_date: "2026-07-17"
+        description: "Final consistency pass across all sections."
+        creator:
+          agent_type: ai_model
+          ai_model:
+            name: Claude Sonnet 4.6
+            version: claude-sonnet-4-6
+            accessed_date: "2026-07-17"
+            identifier:
+              type: url
+              value: https://www.anthropic.com/claude
+            role:
+              - Other
+            relationship: used_to_create
+      - contribution_date: "2026-07-17"
+        description: "Reviewed and edited the data card."
+        creator:
+          agent_type: person
+          person:
+            given_name: Giuseppe
+            family_name: Di Guglielmo
+            orcid: https://orcid.org/0000-0002-5749-1432
+            email: gdg@fnal.gov
+            affiliation:
+              name: Fermi National Accelerator Laboratory
+              ror_id: https://ror.org/05579410
+            role:
+              - Writing_Review_Editing
       - contribution_date: "2026-06-25"
         description: "Authored and edited the data card."
         creator:
@@ -100,12 +136,14 @@ discoverability:
       Siemens Catapult HLS (v2026.1_1) synthesis results for 529,507 quantized dense
       neural networks (QKeras QDense layers) targeting two ASIC technology nodes:
       Nangate 45 nm Open Cell Library (485,905 designs) and GlobalFoundries 22FDX
-      FD-SOI (43,602 designs). Each record reports latency, throughput (initiation
-      interval), and total chip area for a specific network architecture (1–10 layers,
-      4–128 neurons/layer, bitwidths 4–14 bits, activations relu/sigmoid/tanh) and
-      synthesis configuration (ReuseFactor 1/4/8/16). The dataset is generated to
-      train surrogate models for rapid ASIC resource and timing estimation in the
-      wa-hls4ml project.
+      FD-SOI (43,602 designs). The dataset has two parts: (1) per-design JSON reports
+      containing synthesis metrics (latency, throughput, area) with a layer-by-layer
+      breakdown — covered by this card; and (2) the full Catapult HLS project tarballs,
+      governed by the Siemens EDA EULA and not covered here. Each JSON record captures
+      a specific network architecture (1–10 layers, 4–128 neurons/layer, bitwidths
+      4–14 bits, activations relu/sigmoid/tanh) and synthesis configuration
+      (ReuseFactor 1/4/8/16). Surrogate model training for rapid ASIC resource and
+      timing estimation uses part (1), the JSON reports.
 
     purpose: >-
       To provide a large-scale, systematically sampled benchmark of ASIC synthesis
@@ -125,13 +163,16 @@ discoverability:
       were synthesised at ReuseFactor 1, 4, 8, and 16.
 
     data_characteristics: >-
-      529,507 total designs: 485,905 on nangate45 (4.4 TB) and 43,602 on gf22fdx
-      (50 GB). Architecture coverage: 1–10 dense layers; neuron counts 4, 8, 16,
-      32, 64 (128 for 1-layer extension); bitwidths 4–14 (even); activations
-      relu/sigmoid/tanh; ReuseFactor 1/4/8/16. 1–3-layer sweeps are full
-      Cartesian products; 4–10-layer and GF22FDX 2–3-layer sweeps use LHS
-      (N=2,500–10,000 samples each). Each design is stored as one JSON report and
-      one synthesis tarball.
+      529,507 total designs: 485,905 on nangate45 and 43,602 on gf22fdx.
+      Part (1) JSON reports (covered by this card): ~6.4 GB total (~5.93 GB
+      nangate45 + ~0.49 GB gf22fdx). Part (2) Catapult project tarballs (not
+      covered here): ~4.4 TB nangate45 + ~50 GB gf22fdx. Architecture coverage:
+      1–10 dense layers; neuron counts 4, 8, 16, 32, 64 (128 for 1-layer
+      extension); bitwidths 4–14 (even); activations relu/sigmoid/tanh;
+      ReuseFactor 1/4/8/16. 1–3-layer sweeps are full Cartesian products;
+      4–10-layer and GF22FDX 2–3-layer sweeps use LHS (N=2,500–10,000 samples
+      each). Each design is stored as one JSON report (part 1) and one synthesis
+      tarball (part 2, governed by the Siemens EDA EULA and not covered here).
 
     limitations: >-
       (1) Fixed 5 ns clock (200 MHz); timing closure at other targets not included.
@@ -192,6 +233,14 @@ discoverability:
         family_name: Hawks
         orcid: https://orcid.org/0000-0001-5700-0288
         email: bhawks@fnal.gov
+        affiliation:
+          name: Fermi National Accelerator Laboratory
+          ror_id: https://ror.org/05579410
+    - person:
+        given_name: Nhan
+        family_name: Tran
+        orcid: https://orcid.org/0000-0002-8440-6854
+        email: ntran@fnal.gov
         affiliation:
           name: Fermi National Accelerator Laboratory
           ror_id: https://ror.org/05579410
@@ -268,13 +317,14 @@ discoverability:
 
   # --- Sensitivity ----------------------------------------------
   sensitivity:
-    overall_sensitivity: Unclassified_Uncontrolled
+    overall_sensitivity: Unclassified_Uncontrolled  # JSON reports (part 1) contain no classified or export-controlled content; update to Public once formally released
     source_marking_string: ""
     source_marking_scheme: None
     classified_status: "No"
     cui_status: "No"
     ucni_status: "No"
-    normalized_control_basis: Other_Controlled  # synthesis outputs generated under Siemens EDA Catapult HLS EULA; distribution restrictions may apply
+    # normalized_control_basis not set: part (1) JSON reports are not governed by the Siemens EDA EULA;
+    # current access restriction is operational only (NERSC CFS), pending formal release and DOI registration
 
   # --- Workflow -------------------------------------------------
   workflow:
@@ -291,8 +341,7 @@ accessibility:
     access_restrictions: >-
       Currently accessible only to authorized users of the NERSC AmSC project
       (amsc011) on the Perlmutter CFS filesystem. Public release pending DOI
-      registration, data management plan approval, and review of Siemens EDA
-      Catapult HLS EULA constraints on distribution of synthesis outputs.
+      registration and data management plan approval.
     authorization_required:
       - Account
     intended_partner_classes:
@@ -307,12 +356,12 @@ accessibility:
   access:
     current_location: /global/cfs/cdirs/amsc011/shared/wa-hls4ml-catapult/
     publicly_facing_landing_page_url:
-    intended_repositories:  # TBD — pending Siemens EDA EULA review and DOE data management plan approval before selecting a public repository
+    intended_repositories:  # TBD — pending DOE data management plan approval before selecting a public repository
 
   dataset_scale:
     record_count: 529507
-    record_unit: other  # synthesised designs (one JSON report + one tar.gz per design)
-    compressed_bytes: 4893536870912   # ~4.45 TB (4.4 TB nangate45 + 50 GB gf22fdx)
+    record_unit: other  # synthesised designs (one JSON report per design; part 1 only)
+    compressed_bytes: 6878023680   # ~6.4 GB (nangate45: ~5.93 GB + gf22fdx: ~0.49 GB; JSON reports only, tarballs not included)
     uncompressed_bytes:
 
 # ============================================================
@@ -322,12 +371,12 @@ interoperability:
   data_structure:
     formats:
       - JSON    # per-design synthesis report (Config, QOFRSummary, AreaReport, DesignSummary, LayerResults)
-      - tar.gz  # per-design Catapult project archive (RTL, HLS logs, intermediate synthesis artifacts)
     encoding: UTF-8
     schema_version: "1.0"
     modalities:
       - tabular
     features:
+      # QOFRSummary — top-level synthesis results
       - name: latency_cycles
         data_type: int
         unit: clock cycles
@@ -340,10 +389,15 @@ interoperability:
         data_type: float
         unit: µm²
         description: Total synthesised circuit area (TotalAreaScore from Catapult AreaReport).
+      # AreaReport — area breakdown
+      - name: TotalAreaScore
+        data_type: float
+        unit: µm²
+        description: Total area score (same as total_area).
       - name: TotalReg
         data_type: float
         unit: µm²
-        description: Total register area component.
+        description: Total register area.
       - name: DataPath
         data_type: float
         unit: µm²
@@ -351,30 +405,74 @@ interoperability:
       - name: MUX
         data_type: float
         unit: µm²
-        description: Multiplexer area contribution.
+        description: Multiplexer area.
       - name: FUNC
         data_type: float
         unit: µm²
-        description: Functional (combinational logic) area contribution.
-      - name: n_layers
+        description: Functional (combinational logic) area.
+      - name: LOGIC
+        data_type: float
+        unit: µm²
+        description: Logic area.
+      - name: BUFFER
+        data_type: float
+        unit: µm²
+        description: Buffer area.
+      - name: MEM
+        data_type: float
+        unit: µm²
+        description: Memory area.
+      - name: ROM
+        data_type: float
+        unit: µm²
+        description: ROM area.
+      - name: REG
+        data_type: float
+        unit: µm²
+        description: Register area.
+      - name: FSM
+        data_type: float
+        unit: µm²
+        description: Finite state machine area.
+      # DesignSummary
+      - name: real_ops
         data_type: int
-        description: Number of dense (QDense) layers in the network.
-      - name: layer_sizes
-        data_type: list[int]
-        description: Neuron count per layer (input dim → l1 → … → output dim).
-      - name: activations
-        data_type: list[str]
-        description: Activation function per layer (relu | sigmoid | tanh).
-      - name: bitwidth
+        description: Number of real operations in the synthesised design.
+      - name: latency
         data_type: int
-        unit: bits
-        description: Fixed-point weight precision W in ac_fixed<W,3> (W ∈ {4,6,8,10,12,14}).
-      - name: reuse_factor
+        unit: clock cycles
+        description: Design latency (same as latency_cycles).
+      - name: throughput
         data_type: int
-        description: Catapult HLS ReuseFactor (1=fully unrolled, 4/8/16=partially reused).
-      - name: tech
-        data_type: str
-        description: Target ASIC technology (nangate45 | gf22fdx).
+        unit: clock cycles
+        description: Design throughput/II (same as thruput_cycles).
+      - name: reset_length
+        data_type: int
+        unit: clock cycles
+        description: Number of clock cycles required for reset.
+      - name: ii
+        data_type: int
+        description: Internal II field from DesignSummary (0 if not applicable).
+      # LayerResults — per-layer synthesis metrics
+      - name: LayerResults
+        data_type: list[object]
+        description: >-
+          Per-layer synthesis results. Each entry contains: Layer (HLS function name),
+          Unroll (unroll factor), II (initiation interval), Latency (cycles),
+          Thruput (cycles), Area (µm²).
+      # LayerSummary — per-layer architecture description
+      - name: LayerSummary
+        data_type: list[object]
+        description: >-
+          Per-layer architecture description. Each entry contains: Layer Name, Layer Class,
+          Input/Output Type and Shape, Weight Type, Bias Type, Reuse factor.
+      # Config — design and synthesis configuration
+      - name: Config
+        data_type: object
+        description: >-
+          Full hls4ml and Catapult HLS configuration for the design, including
+          ClockPeriod, IOType, ReuseFactor, Strategy, BramFactor, precision settings,
+          and per-layer HLS directives.
     splits: []
     language: not_applicable
     spatial_coverage:
@@ -396,11 +494,13 @@ interoperability:
       (1–3 layers) or Latin Hypercube Sampling (4–10 layers; GF22FDX 2–3 layers).
       (2) hls4ml C++ HLS project generated per design with QKeras quantisation
       (ac_fixed<W,3> weights, auto-precision for activations).
-      (3) Catapult HLS synthesises to RTL, targeting 5 ns clock; reports written
-      to JSON; synthesis outputs bundled in tar.gz per design.
+      (3) Catapult HLS synthesises to RTL, targeting 5 ns clock; synthesis metrics
+      written to JSON reports (part 1, covered by this card); full Catapult project
+      bundled in tar.gz per design (part 2, governed by Siemens EDA EULA, not
+      covered here).
       (4) Failed runs retried with GNU parallel --resume-failed; hard failures
       (missing tarballs) documented in failed_designs.txt per run group.
-      (5) Reports aggregated into per-run JSON collections; tarballs archived flat
+      (5) JSON reports aggregated into per-run collections; tarballs archived flat
       under nangate45/ or gf22fdx/ on CFS.
     instrumentation: >-
       Catapult HLS 2026.1 (Siemens EDA); Nangate 45 nm Open Cell Library
@@ -427,7 +527,7 @@ interoperability:
     data_collection_start: "2026-05-04"
     data_collection_end:
     issued:
-    modified: "2026-06-25"
+    modified: "2026-07-17"
 
   semantic_layer:
     schema_url:
@@ -449,14 +549,17 @@ interoperability:
     publications:
       - type: arxiv
         value: "2511.05615"
-        relationship: references
+        relationship: references  # FPGA predecessor paper (Hawks et al. 2025); update with ASIC paper arxiv ID when available
+      # - type: arxiv
+      #   value: "TBD"
+      #   relationship: is_described_by  # ASIC surrogate paper (in preparation); uncomment and fill when published
 
     software:
       - name: wa-hls4ml-search
         version: "Catapult-ASIC-dev branch"
         identifier:
           type: url
-          value: https://github.com/GiuseppeDiGuglielmo/wa-hls4ml-search
+          value: https://github.com/fastmachinelearning/wa-hls4ml-paper
         role:
           - Software
         relationship: used_to_create
@@ -522,9 +625,8 @@ reusability:
     known_contractual_rights: "Government has unlimited rights"
     notes: >-
       No public license assigned. Access restricted to authorized NERSC AmSC
-      project (amsc011) users. License selection pending Siemens EDA Catapult
-      HLS EULA review and DOE/Fermilab IP policy decision prior to any public
-      release.
+      project (amsc011) users. License selection pending DOE/Fermilab IP policy
+      decision prior to any public release.
 
   stewardship:
     level: Project_Managed
@@ -533,10 +635,10 @@ reusability:
       person:
         given_name: Giuseppe
         family_name: Di Guglielmo
-        email: giuseppe.diguglielmo@gmail.com
+        email: gdg@fnal.gov
         affiliation:
-          name: Columbia University
-          ror_id: https://ror.org/00hj8s172
+          name: Fermi National Accelerator Laboratory
+          ror_id: https://ror.org/05579410
     update_frequency: Ad_Hoc
     retention_policy: "Retained on NERSC CFS (amsc011) indefinitely; tarballed to HPSS for long-term archival."
     versioning_strategy: "Major version increment when new technology nodes or qualitatively different topology groups are added; minor version for additional sweep coverage."
@@ -565,23 +667,32 @@ reusability:
       internal heuristics but has not been measured.
     uncertainty_notes: "No stochastic uncertainty in synthesis outputs. Variability arises only from different ReuseFactor or architecture parameters."
     missing_data_codes:
-      - code: "absent tarball"
-        description: "Hard synthesis failure; design stem present in joblist but no .tar.gz produced."
+      - code: "absent or incomplete JSON report"
+        description: "Hard synthesis failure; design stem present in joblist but JSON report is absent or missing latency and area fields (QOFRSummary/AreaReport not populated)."
 
   citation:
     preferred_citation:
       author: >-
-        Hawks, Benjamin and Weitz, Jason and Demler, Dmitri and Tame-Narvaez, Karla
-        and Plotnikov, Dennis and Rahimifar, Mohammad Mehdi and Ezzaoui Rahali, Hamza
-        and Therrien, Audrey C. and Sproule, Donovan and Khoda, Elham E.
-        and Smith, Keegan A. and Marroquin, Russell and Di Guglielmo, Giuseppe
-        and Tran, Nhan and Duarte, Javier and Loncar, Vladimir
-      title: "wa-hls4ml: A Benchmark and Surrogate Models for hls4ml Resource and Latency Estimation"
-      year: "2025"
-      howpublished: "arXiv preprint"
-      url: https://arxiv.org/abs/2511.05615
+        Das, Arghya Ranjan and Weitz, Jason and Di Guglielmo, Giuseppe and others
+      title: "Scaling Out hls4ml for ASICs: A Surrogate Model for Neural Network Accelerator Synthesis Metrics"
+      year: "2026"
+      howpublished: "arXiv preprint (in preparation)"
+      url:       # update with arXiv URL when available
       eprinttype: arxiv
-      eprint: "2511.05615"
+      eprint:    # update with arXiv ID when available
+    additional_citations:
+      - author: >-
+          Hawks, Benjamin and Weitz, Jason and Demler, Dmitri and Tame-Narvaez, Karla
+          and Plotnikov, Dennis and Rahimifar, Mohammad Mehdi and Ezzaoui Rahali, Hamza
+          and Therrien, Audrey C. and Sproule, Donovan and Khoda, Elham E.
+          and Smith, Keegan A. and Marroquin, Russell and Di Guglielmo, Giuseppe
+          and Tran, Nhan and Duarte, Javier and Loncar, Vladimir
+        title: "wa-hls4ml: A Benchmark and Surrogate Models for hls4ml Resource and Latency Estimation"
+        year: "2025"
+        howpublished: "arXiv preprint"
+        url: https://arxiv.org/abs/2511.05615
+        eprinttype: arxiv
+        eprint: "2511.05615"
 
   integrity:
     checksum_available: "No"
@@ -642,8 +753,10 @@ ai_usability:
   ai_usage:
     training_use_status: "Yes"
     training_use_conditions: >-
-      Cite the wa-hls4ml paper (arXiv:2511.05615) when using this dataset for
-      model training or publication.
+      Cite the ASIC surrogate paper (Das et al. 2026, arXiv TBD) when using this
+      dataset for model training or publication. Also cite the FPGA predecessor
+      paper (Hawks et al. 2025, arXiv:2511.05615) for context on the broader
+      wa-hls4ml benchmark.
     inference_use_status: "Yes"
     inference_use_conditions: >-
       Intended as training data; inference use (e.g., as a lookup table or
@@ -651,7 +764,8 @@ ai_usability:
     evaluation_use_status: "Yes"
     evaluation_use_conditions: >-
       Benchmark evaluations of HLS resource prediction methods should cite the
-      wa-hls4ml paper.
+      ASIC surrogate paper (Das et al. 2026, arXiv TBD) and the FPGA predecessor
+      paper (Hawks et al. 2025, arXiv:2511.05615).
     restrictions: >-
       Not suitable for timing sign-off or production silicon design without
       additional full-flow verification.
