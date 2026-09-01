@@ -165,6 +165,9 @@ run_lhs_group() {
     done
 
     if (( done_count < total )); then
+        # Pre-dedup, only submit_gf22_nlayer_lhs.sh included the failure
+        # count here; submit_45nm_nlayer_lhs.sh's message lacked it. Sharing
+        # this code harmonizes both scripts onto the more informative form.
         echo "  WARNING: $done_count/$total completed after $round rounds ($(( total - done_count )) hard failures)"
     else
         echo "  Synthesis complete ($done_count/$total)"
