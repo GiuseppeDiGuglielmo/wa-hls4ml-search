@@ -4,7 +4,8 @@
 #
 # Parametrized via environment variables (set inline with --wrap):
 #   ORIG_RUN      — archive run dir name, e.g. run_20260531_093401_e6edde98
-#   FLOW_CFG      — flow config JSON (sets RF),  e.g. configs/catapult_flow/config_catapult_flow_rf1.json
+#   RF            — reuse factor of the run being redone: 1, 4, 8 or 16
+#   TECH          — nangate45 (default) or gf22
 #   KEEP_SCRATCH  — set to 1 to skip scratch cleanup (for inspection, default 0)
 #
 # MODEL_CFG is no longer needed — model weights come from sibling RF tarballs.
@@ -14,8 +15,10 @@
 set -euo pipefail
 
 : "${ORIG_RUN:?  env var ORIG_RUN must be set}"
-: "${FLOW_CFG:?  env var FLOW_CFG must be set}"
+: "${RF:?  env var RF must be set (1, 4, 8 or 16)}"
+TECH="${TECH:-nangate45}"
 KEEP_SCRATCH="${KEEP_SCRATCH:-0}"
+FLOW_CFG="configs/catapult_flow/config_catapult_flow.json"
 
 PARALLELISM=100
 SLURM_TIME=05:30:00
@@ -42,14 +45,10 @@ print(':'.join(f\"{s['port']}@{s['host']}\" for s in cfg['servers']))
 ")
 
 # ── Derive scratch base dir ───────────────────────────────────────────────────
-flow_stem=$(basename "$FLOW_CFG" .json)
-case "$flow_stem" in
-    configs/catapult_flow/config_catapult_flow_rf1) rf_suffix=rf1  ;;
-    configs/catapult_flow/config_catapult_flow_rf4) rf_suffix=rf4  ;;
-    configs/catapult_flow/config_catapult_flow_rf8) rf_suffix=rf8  ;;
-    configs/catapult_flow/config_catapult_flow)     rf_suffix=rf16 ;;
-    *) rf_suffix=$(echo "$flow_stem" | grep -oP 'rf\d+' || echo "rf?") ;;
-esac
+# RF is given directly now. It used to be recovered from the flow config's
+# filename by a case statement that matched a basename against full paths and so
+# never fired, leaving RF=16 reruns landing in a directory suffixed "rf?".
+rf_suffix="rf${RF}"
 source_path=$(cat "$ORIG_ARCHIVE/source_dir.txt" 2>/dev/null || echo "")
 arch_base=$(echo "$source_path" | grep -oP '(?<=/)[^/]*dense_[^/]+(?=_rf\d+/)' | head -1 || echo "rerun")
 BASE="${SCRATCH}/${arch_base}_${rf_suffix}_rerun2"
@@ -120,7 +119,13 @@ for src_file in glob.glob(f'{archive}/run_*/source_dir.txt'):
 print(f'  Sibling RF archive runs found: {len(sibling_runs)}')
 
 # Load flow config
-base_cfg = CatapultDataflowConfig.load_json(flow_cfg)
+sys.path.insert(0, os.path.join('${REPO_DIR}', 'slurm', 'sweeplib'))
+from sweep_spec import TECHS
+
+# The reuse factor and technology are applied to the one base flow config
+# rather than selected by picking one of eight near-identical files.
+base_cfg = CatapultDataflowConfig.load_json(flow_cfg).override(
+    default_reuse_factor=int('${RF}'), **TECHS['${TECH}'])
 
 build_root = os.path.join(run_dir, 'build')
 data_root  = os.path.join(run_dir, 'data', 'models')

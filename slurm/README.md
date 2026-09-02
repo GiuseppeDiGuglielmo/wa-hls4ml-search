@@ -14,19 +14,31 @@ This directory contains the SLURM-specific code for running Catapult HLS synthes
 | `examples/run_scale.sh` | 100-task production run (real models, ~45 min wall-clock with the 32-node QoS cap) |
 | `examples/run_scale_toy.sh` | 100-task toy stress test (~12 min, 99/100 success rate) |
 
-### Catapult ASIC orchestrators (`examples/`)
+### Catapult ASIC sweeps
 
-The scripts below drive Catapult HLS synthesis via **GNU parallel** (not SLURM job arrays).
-Each orchestrator spawns 3 nodes × 100 parallel slots = 300 concurrent Catapult instances
-(one per license), submits batches via `sbatch`, and auto-retries with `--resume-failed`.
+Catapult HLS synthesis is driven via **GNU parallel** (not SLURM job arrays). A sweep spawns
+3 nodes × 100 parallel slots = 300 concurrent Catapult instances (one per license), submits
+batches via `sbatch`, and auto-retries with `--resume-failed`.
+
+There is one entry point. Everything that used to be a per-campaign script is now a row in
+the catalog:
+
+| File | Purpose |
+|---|---|
+| `sweep.sh` | The only thing you submit: `sbatch slurm/sweep.sh <group> [--rf ...] [--nodes N] [--qos ...]`. `--list` prints a group's parameters; `DRY_RUN=1` builds everything and submits nothing. |
+| `sweeps.tsv` | The catalog: one row per campaign group (sizes, bitwidths, activations, reuse factors, sampling mode). Add rows, never edit them — see the header. |
+| `sweeplib/sweep_spec.py` | Parses a row and renders it back to the model-generator config and the flow-config overrides. |
+| `sweeplib/candidates.py` | Candidate list generators for the sampled modes (N-layer LHS, sz128). |
+| `sweeplib/build_joblist.py` | Candidates → models → joblist, building networks from scratch or rebuilding them from an archived 45nm tarball. |
+| `sweeplib/orchestrate.sh` | The submit / poll / retry / archive loop, in one copy. |
+| `sweeplib/enumerate_space.py` | Enumerates a group's designs without building models; the oracle behind the design-space check. |
+| `tests/check_design_space.py` | Asserts the catalog still describes exactly the archived design space. Run after touching `sweeps.tsv`. |
+
+### Tools (`examples/`)
 
 | Script | Purpose |
 |---|---|
-| `submit_45nm_sz128.sh` | 45nm sz128 extension: L=1/2/3, `N_LAYERS=N sbatch`. Cartesian (L≤2) or LHS (L=3). |
-| `submit_45nm_nlayer_lhs.sh` | 45nm deep networks: L≥4, `N_LAYERS=N sbatch`. LHS from scratch. |
-| `run_dense_1layer_gf22_cartesian.sh` | GF22nm 1-layer full cartesian (1,800 archs × 4 RF). |
-| `submit_gf22_nlayer_lhs.sh` | GF22nm L≥2 LHS: models extracted from 45nm archive, `N_LAYERS=N sbatch`. Supports `EXCLUDE_FILE`. |
-| `run_rerun_from_archive.sh` | Retry failed designs using model extracted from a sibling-RF tarball. |
+| `run_rerun_from_archive.sh` | Retry failed designs using model extracted from a sibling-RF tarball. `ORIG_RUN=<run> RF=<n> [TECH=gf22]`. |
 | `archive_run.sh` | Archive a completed run to nangate45/ or gf22fdx/ (auto-detects tech from path). |
 | `check_failures.sh` | Scan a run dir for missing tarballs; write `failed_designs.txt`. |
 | `populate_failed_designs.py` | Scan archive JSON reports for synthesis failures → `failed_designs.txt`. |

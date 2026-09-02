@@ -12,6 +12,11 @@ Together these pin every design that has ever been synthesised and archived. The
 migration is only correct if check_design_space.py reproduces this file exactly
 from the new slurm/sweeps.tsv catalog.
 
+The sweep rows were originally derived from the per-group JSON configs, before
+those were replaced by slurm/sweeps.tsv (see commit 393a6994). They now come
+from the catalog. Regenerating is for ADDING groups only: if an existing row's
+hash changes, that is the migration breaking, not the contract being stale.
+
 Run from the repo root, with the venv active:
     python slurm/tests/make_golden.py
 """
@@ -24,7 +29,7 @@ REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 sys.path.insert(0, os.path.join(REPO, "slurm", "sweeplib"))
 
 from enumerate_space import digest  # noqa: E402
-from sweep_spec import spec_from_json  # noqa: E402
+from sweep_spec import load_catalog, spec_from_json  # noqa: E402
 
 ARCHIVE = "/global/cfs/cdirs/amsc011/shared/wa-hls4ml-catapult"
 GOLDEN = os.path.join(REPO, "slurm", "tests", "golden_design_space.tsv")
@@ -32,6 +37,10 @@ GOLDEN = os.path.join(REPO, "slurm", "tests", "golden_design_space.tsv")
 # Referenced by no script and superseded by the catalog — deliberately excluded
 # so they don't become part of the contract.
 DEAD = {"config_dense_1layer_gf22_test.json", "config_dense_4layers.json"}
+
+# Random-sampling schema, kept but never part of the cartesian contract.
+KEPT_LEGACY_SCHEMA = {"config_dense_1to3layers.json", "config_dense_latency_fast.json",
+                      "config_dense_latency_fast_toy.json"}
 
 # The candidates files are the ground truth for the sampled groups: the samplers
 # must reproduce them bit-for-bit, not merely produce "a valid LHS".
@@ -52,15 +61,29 @@ CANDIDATES = [
 def collect():
     rows = []
     sweeps_dir = os.path.join(REPO, "configs", "model_sweeps")
-    for fn in sorted(os.listdir(sweeps_dir)):
-        if fn in DEAD or not fn.endswith(".json"):
-            continue
-        try:
-            spec = spec_from_json(os.path.join(sweeps_dir, fn))
-        except (ValueError, KeyError):
-            continue  # legacy random-sampling schema: no cartesian space to pin
-        count, sha = digest(spec)
-        rows.append(("sweep", fn[len("config_"): -len(".json")], count, sha))
+    if os.path.isdir(sweeps_dir) and any(
+            f.startswith("config_dense_") and f not in DEAD
+            and f not in KEPT_LEGACY_SCHEMA
+            for f in os.listdir(sweeps_dir)):
+        source = "legacy configs/model_sweeps/*.json"
+        for fn in sorted(os.listdir(sweeps_dir)):
+            if fn in DEAD or not fn.endswith(".json"):
+                continue
+            try:
+                spec = spec_from_json(os.path.join(sweeps_dir, fn))
+            except (ValueError, KeyError):
+                continue  # legacy random-sampling schema: no cartesian space to pin
+            count, sha = digest(spec)
+            rows.append(("sweep", fn[len("config_"): -len(".json")], count, sha))
+    else:
+        source = "slurm/sweeps.tsv"
+        for spec in load_catalog(os.path.join(REPO, "slurm", "sweeps.tsv")).values():
+            if not spec.legacy or spec.mode != "cartesian":
+                continue
+            count, sha = digest(spec)
+            rows.append(("sweep", spec.legacy, count, sha))
+        rows.sort(key=lambda r: r[1])
+    print("  sweep rows from: %s" % source)
 
     for tech, fn in CANDIDATES:
         with open(os.path.join(ARCHIVE, tech, fn), "rb") as f:

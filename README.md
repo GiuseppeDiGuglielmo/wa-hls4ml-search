@@ -10,9 +10,10 @@ Two backends are supported:
 
 ## Catapult/Perlmutter ASIC flow
 
-Synthesis is driven by **GNU parallel** orchestrators in `slurm/examples/`. Each job spawns
-3 SLURM nodes × 100 parallel Catapult instances (300 total = all available licenses), retries
-failures automatically with `--resume-failed`, and archives results flat to the shared CFS directory.
+Every sweep is submitted through the single entry point `slurm/sweep.sh`, which reads the
+group's parameters from the catalog `slurm/sweeps.tsv`. Each job spawns 3 SLURM nodes × 100
+parallel Catapult instances (300 total = all available licenses), retries failures
+automatically with `--resume-failed`, and archives results flat to the shared CFS directory.
 
 ### Prerequisites
 - Catapult 2026.1 installed under `$SCRATCH/cad/Siemens/Catapult/2026.1_1/`
@@ -23,16 +24,27 @@ failures automatically with `--resume-failed`, and archives results flat to the 
 
 | What | Command |
 |---|---|
-| 45nm sz128 extension (1–3 layers) | `N_LAYERS=2 sbatch slurm/examples/submit_45nm_sz128.sh` |
-| 45nm deep networks (4+ layers) | `N_LAYERS=4 sbatch slurm/examples/submit_45nm_nlayer_lhs.sh` |
-| GF22nm 1-layer cartesian | `sbatch slurm/examples/run_dense_1layer_gf22_cartesian.sh` |
-| GF22nm N-layer LHS | `N_LAYERS=3 sbatch slurm/examples/submit_gf22_nlayer_lhs.sh` |
+| List the sweep groups | `awk -F'\t' '!/^#/ && NF' slurm/sweeps.tsv` |
+| Show one group's parameters | `bash slurm/sweep.sh 3l_sz64_l3 --list` |
+| 45nm 3-layer cartesian, one size group | `sbatch slurm/sweep.sh 3l_sz64_l3` |
+| 45nm sz128 extension | `sbatch slurm/sweep.sh 45nm_sz128_2l` |
+| 45nm deep networks (4+ layers) | `sbatch slurm/sweep.sh 45nm_lhs_4l` |
+| GF22nm 1-layer cartesian | `sbatch slurm/sweep.sh gf22_1l_base` |
+| GF22nm N-layer LHS | `sbatch slurm/sweep.sh gf22_lhs_3l` |
+| Rehearse without submitting | `DRY_RUN=1 bash slurm/sweep.sh 3l_sz64_l3` |
 | Archive a completed run | `bash slurm/examples/archive_run.sh <RUN_DIR>` |
 | Check synthesis failures | `bash slurm/examples/check_failures.sh <RUN_DIR>` |
 | Monitor jobs + resources | `bash check_progress_resources.sh` |
 
 > **RF=1 with 128-neuron layers** requires longer wall time than the default `express_amsc` (6h).
-> Override with: `SLURM_TIME=1-22:00:00 SLURM_QOS=regular N_LAYERS=2 sbatch submit_45nm_sz128.sh`
+> Override with: `sbatch slurm/sweep.sh 45nm_sz128_2l --rf 1 --qos regular --time 1-22:00:00`
+
+### Adding a sweep
+
+Add a row to `slurm/sweeps.tsv` — never edit an existing one. A design's stem is
+`dense_{N}l_{idx}`, its position in the cartesian product of that row's columns, so changing a
+row renumbers every design it already produced and breaks the archive's `(run, stem)` join
+keys. `python slurm/tests/check_design_space.py` enforces this against a frozen contract.
 
 Results are archived to `/global/cfs/cdirs/amsc011/shared/wa-hls4ml-catapult/` (see `README.md` there).
 
