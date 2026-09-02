@@ -35,6 +35,36 @@ def _format_job_line(hls_dir, shell_script, flow_tcl, cfg_json):
     return JOB_SEP.join(parts)
 
 
+def parse_flow_sets(pairs):
+    """Turn --flow-set KEY=VALUE strings into kwargs for CatapultDataflowConfig.override.
+
+    Values are coerced to the dataclass field's declared type so that
+    `--flow-set default_reuse_factor=4` yields an int, not the string "4".
+    Unknown keys are rejected by override() itself.
+    """
+    import dataclasses
+
+    field_types = {f.name: f.type for f in dataclasses.fields(CatapultDataflowConfig)}
+    overrides = {}
+    for pair in pairs or []:
+        if "=" not in pair:
+            raise ValueError(f"--flow-set expects KEY=VALUE, got: {pair!r}")
+        key, _, raw = pair.partition("=")
+        key, raw = key.strip(), raw.strip()
+        if key not in field_types:
+            raise KeyError(f"Unknown flow config key: {key}")
+        ftype = field_types[key]
+        # Annotations may be strings, Optional[...] or Literal[...]; match on text.
+        text = ftype if isinstance(ftype, str) else str(ftype)
+        if "int" in text and "float" not in text:
+            overrides[key] = int(raw)
+        elif "float" in text:
+            overrides[key] = float(raw)
+        else:
+            overrides[key] = raw
+    return overrides
+
+
 def _parse_job_line(line):
     """Deserialize a joblist.txt line back into keyword arguments for _run_catapult_flow."""
     parts = line.strip().split(JOB_SEP)
@@ -304,6 +334,11 @@ def main(args):
         base_cfg = CatapultDataflowConfig()
         logger.info("Using default CatapultDataflowConfig()")
 
+    flow_overrides = parse_flow_sets(args.flow_set)
+    if flow_overrides:
+        base_cfg = base_cfg.override(**flow_overrides)
+        logger.info(f"Flow config overrides: {flow_overrides}")
+
     # --- Prepare phase: generate models, save configs, collect job entries ---
     job_lines = []
 
@@ -416,6 +451,9 @@ def create_parser():
     parser.add_argument('--catapult_shell', type=str, default=None, help='Path to catapult_shell.sh')
     parser.add_argument('--flow_tcl', type=str, default=None, help='Path to catapult_hls4ml_flow.tcl')
     parser.add_argument('--flow_config_json', type=str, default=None, help='Path to CatapultDataflowConfig JSON')
+    parser.add_argument('--flow-set', action='append', default=[], metavar='KEY=VALUE',
+        help='Override one flow config key (repeatable), e.g. --flow-set default_reuse_factor=4. '
+             'Applied on top of --flow_config_json.')
     parser.add_argument('--license_config', type=str, default=None, help='Path to license_servers.json. Enables parallel synthesis via GNU parallel.')
     parser.add_argument('--run-single-job', type=str, default=None, metavar='JOB_LINE', help='Run a single synthesis job from a tab-separated job line (used internally by GNU parallel)')
     parser.add_argument('--cartesian', action='store_true',
