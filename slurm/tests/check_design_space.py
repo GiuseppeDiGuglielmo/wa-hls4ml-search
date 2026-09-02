@@ -18,6 +18,7 @@ Run from the repo root, with the venv active:
 
 import argparse
 import hashlib
+import json
 import os
 import sys
 
@@ -30,6 +31,16 @@ from sweep_spec import load_catalog, spec_from_json  # noqa: E402
 ARCHIVE = "/global/cfs/cdirs/amsc011/shared/wa-hls4ml-catapult"
 GOLDEN = os.path.join(REPO, "slurm", "tests", "golden_design_space.tsv")
 CATALOG = os.path.join(REPO, "slurm", "sweeps.tsv")
+
+
+def _normalize(cfg):
+    """Compare generator configs by meaning: the legacy files spell the bitwidth
+    list either explicitly or as bitwidth_lb/ub, and carry no other optional keys."""
+    out = dict(cfg)
+    if "bitwidths" not in out and "bitwidth_lb" in out:
+        out["bitwidths"] = list(range(out.pop("bitwidth_lb"),
+                                      out.pop("bitwidth_ub") + 1, 2))
+    return json.loads(json.dumps(out, sort_keys=True))
 
 
 def read_golden():
@@ -84,6 +95,19 @@ def main():
                     continue
                 spec, src = spec_from_json(path), "json"
             got_count, got_sha = digest(spec)
+
+            # The stem digest pins the architecture enumeration, but not the
+            # quantizer widths that _build_dense_model reads. Compare the whole
+            # rendered generator config against the file it replaces.
+            legacy_path = os.path.join(REPO, "configs", "model_sweeps",
+                                       "config_%s.json" % name)
+            if src == "tsv" and os.path.exists(legacy_path):
+                with open(legacy_path) as f:
+                    want = json.load(f)
+                have = spec.to_gen_model_config()
+                if _normalize(have) != _normalize(want):
+                    failures.append((name, "rendered gen_model config differs from %s: "
+                                           "%s vs %s" % (legacy_path, have, want)))
         else:
             src = "file"
             path = os.path.join(ARCHIVE, name)

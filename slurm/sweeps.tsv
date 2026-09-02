@@ -1,0 +1,60 @@
+# Design-space catalog: one row per synthesis campaign group.
+#
+# This replaces the per-group files under configs/model_sweeps/. Each row is
+# rendered back to that JSON schema by slurm/sweeplib/sweep_spec.py, so the
+# model generator is unchanged and the stem numbering is unchanged with it.
+#
+# DO NOT MERGE ROWS. A design's stem is dense_{N}l_{idx} where idx is its
+# position in the cartesian product of these columns; folding two rows together
+# (say the 4,8,12 and 6,10,14 bitwidth groups) renumbers every stem and breaks
+# the (run, stem) join keys the shared archive, sample_lhs_from_archive.py and
+# run_rerun_from_archive.sh all rely on. Add a row instead.
+#
+# input, layers  size ranges as lb-ub, expanded to the powers of two inside them.
+#                layers is one range per dense layer, in order.
+# acts           activation order matters: it is the mask position, not a set.
+# mode           cartesian    enumerated from the columns
+#                lhs_nlayer   Latin hypercube over the columns, single seed=42 draw
+#                cart_sz128   cartesian, keeping only designs with a dim of 128
+#                archive_lhs  sampled from the 45nm archive, re-synthesised in GF22
+# candidates     for the sampled modes, the frozen design list under
+#                /global/cfs/cdirs/amsc011/shared/wa-hls4ml-catapult/
+# legacy         the configs/model_sweeps/ file this row replaces, and the key
+#                slurm/tests/check_design_space.py verifies it against
+#
+#group            	tech     	input	layers                                           	bitwidths     	acts             	rf      	mode       	candidates                                    	legacy                          	notes
+1l_base          	nangate45	4-64 	4-64                                             	4,6,8,10,12   	relu,tanh,sigmoid	1,4,8,16	cartesian  	-                                             	dense_single_layer              	-
+1l_bw14          	nangate45	4-64 	4-64                                             	14            	relu,tanh,sigmoid	1,4,8,16	cartesian  	-                                             	dense_single_layer_bw14         	-
+2l_base          	nangate45	4-32 	4-32,4-32                                        	4,8,12        	relu,tanh,sigmoid	1,4,8,16	cartesian  	-                                             	dense_2layers                   	-
+2l_bw61014       	nangate45	4-32 	4-32,4-32                                        	6,10,14       	relu,tanh,sigmoid	1,4,8,16	cartesian  	-                                             	dense_2layers_bw6_10_14         	-
+2l_sz64_a        	nangate45	64-64	4-64,4-64                                        	4,8,12        	relu,tanh,sigmoid	1,4,8,16	cartesian  	-                                             	dense_2layers_size64_A          	-
+2l_sz64_b        	nangate45	4-32 	64-64,4-64                                       	4,8,12        	relu,tanh,sigmoid	1,4,8,16	cartesian  	-                                             	dense_2layers_size64_B          	-
+2l_sz64_c        	nangate45	4-32 	4-32,64-64                                       	4,8,12        	relu,tanh,sigmoid	1,4,8,16	cartesian  	-                                             	dense_2layers_size64_C          	-
+2l_sz64_bw61014_a	nangate45	64-64	4-64,4-64                                        	6,10,14       	relu,tanh,sigmoid	1,4,8,16	cartesian  	-                                             	dense_2layers_size64_bw6_10_14_A	-
+2l_sz64_bw61014_b	nangate45	4-32 	64-64,4-64                                       	6,10,14       	relu,tanh,sigmoid	1,4,8,16	cartesian  	-                                             	dense_2layers_size64_bw6_10_14_B	-
+2l_sz64_bw61014_c	nangate45	4-32 	4-32,64-64                                       	6,10,14       	relu,tanh,sigmoid	1,4,8,16	cartesian  	-                                             	dense_2layers_size64_bw6_10_14_C	-
+3l_base          	nangate45	4-16 	4-16,4-16,4-16                                   	4,8,12        	relu,tanh,sigmoid	1,4,8,16	cartesian  	-                                             	dense_3layers                   	-
+3l_bw61014       	nangate45	4-16 	4-16,4-16,4-16                                   	6,10,14       	relu,tanh,sigmoid	1,4,8,16	cartesian  	-                                             	dense_3layers_bw6_10_14         	-
+3l_sz32_inp      	nangate45	32-32	4-32,4-32,4-32                                   	4,6,8,10,12,14	relu,tanh,sigmoid	1,4,8,16	cartesian  	-                                             	dense_3layers_sz32_inp          	-
+3l_sz32_l1       	nangate45	4-16 	32-32,4-32,4-32                                  	4,6,8,10,12,14	relu,tanh,sigmoid	1,4,8,16	cartesian  	-                                             	dense_3layers_sz32_l1           	-
+3l_sz32_l2       	nangate45	4-16 	4-16,32-32,4-32                                  	4,6,8,10,12,14	relu,tanh,sigmoid	1,4,8,16	cartesian  	-                                             	dense_3layers_sz32_l2           	-
+3l_sz32_l3       	nangate45	4-16 	4-16,4-16,32-32                                  	4,6,8,10,12,14	relu,tanh,sigmoid	1,4,8,16	cartesian  	-                                             	dense_3layers_sz32_l3           	-
+3l_sz64_l1       	nangate45	4-32 	64-64,4-64,4-64                                  	4,6,8,10,12,14	relu,tanh,sigmoid	1,4,8,16	cartesian  	-                                             	dense_3layers_sz64_l1           	-
+3l_sz64_l2       	nangate45	4-32 	4-32,64-64,4-64                                  	4,6,8,10,12,14	relu,tanh,sigmoid	1,4,8,16	cartesian  	-                                             	dense_3layers_sz64_l2           	-
+3l_sz64_l3       	nangate45	4-32 	4-32,4-32,64-64                                  	4,6,8,10,12,14	relu,tanh,sigmoid	1,4,8,16	cartesian  	-                                             	dense_3layers_sz64_l3           	-
+3l_sz64_inp_l1a  	nangate45	64-64	4-32,4-64,4-64                                   	4,6,8,10,12,14	relu,tanh,sigmoid	1,4,8,16	cartesian  	-                                             	dense_3layers_sz64_inp_l1a      	-
+3l_sz64_inp_l1b  	nangate45	64-64	64-64,4-64,4-64                                  	4,6,8,10,12,14	relu,tanh,sigmoid	1,4,8,16	cartesian  	-                                             	dense_3layers_sz64_inp_l1b      	-
+3l_profiling_32  	nangate45	32-32	32-32,32-32,32-32                                	14            	relu             	1       	cartesian  	-                                             	dense_3layers_profiling_32      	-
+3l_profiling_64  	nangate45	64-64	64-64,64-64,64-64                                	14            	relu             	1       	cartesian  	-                                             	dense_3layers_profiling_64      	-
+gf22_1l_base     	gf22     	4-64 	4-64                                             	4,6,8,10,12   	relu,tanh,sigmoid	1,4,8,16	cartesian  	-                                             	-                               	-
+gf22_1l_bw14     	gf22     	4-64 	4-64                                             	14            	relu,tanh,sigmoid	1,4,8,16	cartesian  	-                                             	-                               	-
+45nm_lhs_4l      	nangate45	4-64 	4-64,4-64,4-64,4-64                              	4,6,8,10,12,14	relu,sigmoid,tanh	1,4,8,16	lhs_nlayer 	nangate45/nangate45_lhs_4layer_2500.txt       	-                               	7 hard synthesis failures per RF group
+45nm_lhs_5l      	nangate45	4-64 	4-64,4-64,4-64,4-64,4-64                         	4,6,8,10,12,14	relu,sigmoid,tanh	1,4,8,16	lhs_nlayer 	nangate45/nangate45_lhs_5layer_2500.txt       	-                               	-
+45nm_lhs_6l      	nangate45	4-64 	4-64,4-64,4-64,4-64,4-64,4-64                    	4,6,8,10,12,14	relu,sigmoid,tanh	1,4,8,16	lhs_nlayer 	nangate45/nangate45_lhs_6layer_2500.txt       	-                               	-
+45nm_lhs_8l      	nangate45	4-64 	4-64,4-64,4-64,4-64,4-64,4-64,4-64,4-64          	4,6,8,10,12,14	relu,sigmoid,tanh	1,4,8,16	lhs_nlayer 	nangate45/nangate45_lhs_8layer_2500.txt       	-                               	-
+45nm_lhs_10l     	nangate45	4-64 	4-64,4-64,4-64,4-64,4-64,4-64,4-64,4-64,4-64,4-64	4,6,8,10,12,14	relu,sigmoid,tanh	1,4,8,16	lhs_nlayer 	nangate45/nangate45_lhs_10layer_2500.txt      	-                               	-
+45nm_sz128_1l    	nangate45	4-128	4-128                                            	4,6,8,10,12,14	relu,sigmoid,tanh	1,4,8,16	cart_sz128 	nangate45/nangate45_1layer_sz128_cartesian.txt	-                               	at least one dim=128
+45nm_sz128_2l    	nangate45	4-128	4-128,4-128                                      	4,6,8,10,12,14	relu,sigmoid,tanh	1,4,8,16	cart_sz128 	nangate45/nangate45_2layer_sz128_cartesian.txt	-                               	RF=1 incomplete 1470/4914; needs qos=regular
+gf22_lhs_2l      	gf22     	4-64 	4-64,4-64                                        	4,6,8,10,12,14	relu,sigmoid,tanh	1,4,8,16	archive_lhs	gf22fdx/gf22_lhs_2layer_1350.txt              	-                               	pass 2; pass 1 candidates file no longer exists
+gf22_lhs_3l_p1   	gf22     	4-64 	4-64,4-64,4-64                                   	4,6,8,10,12,14	relu,sigmoid,tanh	1,16    	archive_lhs	gf22fdx/gf22_lhs_3layer_500.txt               	-                               	pass 1; excluded from pass 2
+gf22_lhs_3l      	gf22     	4-64 	4-64,4-64,4-64                                   	4,6,8,10,12,14	relu,sigmoid,tanh	1,4,8,16	archive_lhs	gf22fdx/gf22_lhs_3layer_10000.txt             	-                               	pass 2; 7 hard failures per RF group

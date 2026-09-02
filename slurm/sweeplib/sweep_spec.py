@@ -126,13 +126,15 @@ def _parse_int_list(text: str) -> List[int]:
 
 
 def spec_from_row(row: dict) -> Spec:
-    """Build a Spec from one parsed slurm/sweeps.tsv row."""
-    layers = []
-    for i in range(1, int(row["layers"]) + 1):
-        cell = row[f"l{i}"]
-        if cell in ("", "-"):
-            raise ValueError(f"{row['group']}: missing l{i} for a {row['layers']}-layer sweep")
-        layers.append(_parse_range(cell))
+    """Build a Spec from one parsed slurm/sweeps.tsv row.
+
+    `layers` is a comma-separated list of per-layer size ranges, one entry per
+    dense layer: "4-32,4-32,64-64" is the 3-layer sz64-l3 group. A single column
+    keeps the 10-layer LHS rows on one line.
+    """
+    layers = [_parse_range(cell) for cell in row["layers"].split(",") if cell]
+    if not layers:
+        raise ValueError(f"{row['group']}: empty layers column")
 
     return Spec(
         group=row["group"],
@@ -155,7 +157,11 @@ def _optional(cell):
 
 
 def load_catalog(path: str) -> dict:
-    """Parse slurm/sweeps.tsv into {group: Spec}. '#' lines are comments."""
+    """Parse slurm/sweeps.tsv into {group: Spec}.
+
+    '#' lines are comments; the one whose first tab-separated field is 'group'
+    is the column header, so the file can carry a prose preamble above it.
+    """
     specs = {}
     with open(path) as f:
         header = None
@@ -164,12 +170,12 @@ def load_catalog(path: str) -> dict:
             if not line.strip():
                 continue
             if line.startswith("#"):
-                if header is None:
-                    header = line.lstrip("#").split("\t")
-                    header = [h.strip() for h in header]
+                fields = [h.strip() for h in line.lstrip("#").split("\t")]
+                if fields and fields[0] == "group":
+                    header = fields
                 continue
             if header is None:
-                raise ValueError(f"{path}: data row before the '#' header line")
+                raise ValueError(f"{path}: data row before the '#group' header line")
             cells = line.split("\t")
             cells += [""] * (len(header) - len(cells))
             row = dict(zip(header, (c.strip() for c in cells)))
