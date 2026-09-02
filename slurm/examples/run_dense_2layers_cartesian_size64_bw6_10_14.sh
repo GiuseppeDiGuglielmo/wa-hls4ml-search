@@ -10,29 +10,17 @@
 # Run from repo root: bash slurm/examples/run_dense_2layers_cartesian_size64_bw6_10_14.sh
 source $SCRATCH/venv_hls4ml/bin/activate
 
-COMMON_ARGS=(
-  --catapult_shell Perlmutter_scripts/catapult_shell.sh
-  --flow_tcl      util/catapult_hls4ml_flow.tcl
-  --license_config license_servers_perlmutter.json
-  --flow_config_json configs/catapult_flow/config_catapult_flow.json
-  --cartesian
-  --slurm --slurm-qos express_amsc --slurm-time 06:00:00
-  --slurm-parallelism 16 --slurm-mem-per-job 16G
-)
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+source "${REPO_DIR}/slurm/examples/common/dense2layer_cartesian.sh"
 
 OUT=$SCRATCH/catapult_dense_2layers_cartesian_size64_bw6_10_14
+FLOW=configs/catapult_flow/config_catapult_flow.json
 
 echo "=== Sub-run A: input=64, layers 4-64, bw 6/10/14 (675 designs) ==="
-python iter_manager_catapult.py -o "$OUT" \
-  --gen_model_config_json configs/model_sweeps/config_dense_2layers_size64_bw6_10_14_A.json \
-  "${COMMON_ARGS[@]}"
+run_2layer_config "$OUT" configs/model_sweeps/config_dense_2layers_size64_bw6_10_14_A.json "$FLOW"
 
 echo "=== Sub-run B: input=4-32, layer1=64, layer2=4-64, bw 6/10/14 (540 designs) ==="
-python iter_manager_catapult.py -o "$OUT" \
-  --gen_model_config_json configs/model_sweeps/config_dense_2layers_size64_bw6_10_14_B.json \
-  "${COMMON_ARGS[@]}"
+run_2layer_config "$OUT" configs/model_sweeps/config_dense_2layers_size64_bw6_10_14_B.json "$FLOW"
 
 echo "=== Sub-run C: input=4-32, layer1=4-32, layer2=64, bw 6/10/14 (432 designs) ==="
-python iter_manager_catapult.py -o "$OUT" \
-  --gen_model_config_json configs/model_sweeps/config_dense_2layers_size64_bw6_10_14_C.json \
-  "${COMMON_ARGS[@]}"
+run_2layer_config "$OUT" configs/model_sweeps/config_dense_2layers_size64_bw6_10_14_C.json "$FLOW"
