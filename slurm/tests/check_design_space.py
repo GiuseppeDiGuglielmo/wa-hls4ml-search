@@ -25,6 +25,7 @@ import sys
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(REPO, "slurm", "sweeplib"))
 
+from candidates import generate  # noqa: E402
 from enumerate_space import digest  # noqa: E402
 from sweep_spec import load_catalog, spec_from_json  # noqa: E402
 
@@ -79,7 +80,12 @@ def main():
         return 2
 
     failures = []
-    used = {"tsv": 0, "json": 0, "file": 0}
+    by_candidates = {sp.candidates: sp
+                     for sp in (load_catalog(CATALOG).values()
+                                if os.path.exists(CATALOG) else [])
+                     if sp.candidates}
+
+    used = {"tsv": 0, "json": 0, "file": 0, "regen": 0}
 
     for kind, name, exp_count, exp_sha in read_golden():
         if kind == "sweep":
@@ -118,6 +124,18 @@ def main():
                 data = f.read()
             got_count, got_sha = data.count(b"\n"), hashlib.sha256(data).hexdigest()
 
+            # Where a generator owns this file, regenerate it and require a
+            # bit-for-bit match, so the samplers stay pinned to the archive.
+            spec = by_candidates.get(name)
+            if spec is not None and spec.mode != "archive_lhs":
+                src = "regen"
+                lines = generate(spec)
+                blob = ("\n".join(lines) + ("\n" if lines else "")).encode()
+                if hashlib.sha256(blob).hexdigest() != got_sha:
+                    failures.append((name, "regenerated candidates differ from the "
+                                           "archived file (%d vs %d lines)"
+                                           % (len(lines), got_count)))
+
         used[src] += 1
         if (got_count, got_sha) != (exp_count, exp_sha):
             failures.append((name, "expected %d/%s got %d/%s"
@@ -127,7 +145,10 @@ def main():
 
     print("checked %d sweep groups (%d from catalog, %d from legacy JSON) "
           "and %d candidates files"
-          % (used["tsv"] + used["json"], used["tsv"], used["json"], used["file"]))
+          % (used["tsv"] + used["json"], used["tsv"], used["json"],
+             used["file"] + used["regen"]))
+    print("  of which %d candidates files were regenerated and byte-compared"
+          % used["regen"])
     if failures:
         print("\nFAILED (%d):" % len(failures))
         for name, why in failures:
