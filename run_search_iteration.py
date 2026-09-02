@@ -6,7 +6,7 @@ from qkeras.utils import _add_supported_quantized_objects
 import hls4ml
 import argparse
 import json
-from deperecated.gen_dense_models_v2 import generate_model_from_config
+from deprecated.gen_dense_models_v2 import generate_model_from_config
 from util.json_dataset_processor import process_json_entry
 import logging
 
