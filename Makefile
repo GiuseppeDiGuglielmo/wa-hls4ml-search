@@ -1,0 +1,49 @@
+# Read-only status targets for the Catapult sweeps. The same commands back the
+# check-runs agent skill (.claude/skills/check-runs/), so a person running
+# `make` and an agent get the same answer. Nothing here submits, cancels,
+# deletes or archives anything.
+
+PYTHON ?= python3
+RUN      ?=
+EXPECTED ?=
+TECH     ?=
+WHERE    ?=
+GREP     ?=
+ACCOUNT  ?= amsc011
+EXPRESS_QOS := express_amsc express_amsc_g
+
+.PHONY: help status runs run-status failures
+
+## help        Show this message
+help:
+	@grep -E '^## ' $(MAKEFILE_LIST) | sed 's/^## /  make /'
+
+## status      Your SLURM jobs, and use of each 32-node express pool by account [ACCOUNT=amsc011]
+status:
+	@squeue -u $$USER -o '%.10i %.12P %.14q %.24j %.2t %.10M %.6D %R'
+	@for q in $(EXPRESS_QOS); do \
+	  echo; \
+	  scontrol show assoc_mgr flags=qos qos=$$q \
+	    | grep -o -m1 'node=32([0-9]*)' \
+	    | sed -E "s/node=32\(([0-9]+)\)/$$q pool: \1 of 32 nodes in use (all AmSC + Genesis users)/"; \
+	  squeue -h -q $$q -t R -o '%a %u %D' \
+	    | awk -v me='$(ACCOUNT)' ' \
+	        { n[$$1] += $$3; if (index("," u[$$1] ",", "," $$2 ",") == 0) u[$$1] = u[$$1] (u[$$1] == "" ? "" : ",") $$2 } \
+	        END { if (!(me in n)) n[me] = 0; \
+	              for (a in n) printf "  %-12s %3d nodes  %s%s\n", a, n[a], (u[a] == "" ? "-" : "(" u[a] ")"), (a == me ? "  <- your account" : "") }' \
+	    | sort -k2,2nr -k1,1; \
+	done
+
+## runs        List runs on scratch and in the archive, with group/RF [TECH=nangate45|gf22fdx] [WHERE=scratch|archive|both] [GREP=text]
+runs:
+	@$(PYTHON) slurm/examples/list_runs.py $(if $(TECH),--tech $(TECH)) $(if $(WHERE),--where $(WHERE)) $(if $(GREP),--grep "$(GREP)")
+
+## run-status  Designs expected / good / failed, scratch vs archive: RUN=<run_dir or run name> [EXPECTED=N]
+run-status:
+	@test -n "$(RUN)" || { echo 'usage: make run-status RUN=<run_dir or run name>'; exit 2; }
+	@$(PYTHON) slurm/examples/run_status.py $(RUN) $(if $(EXPECTED),--expected $(EXPECTED))
+
+## failures    Missing reports/tarballs and failed SLURM tasks: RUN=<run_dir>
+failures:
+	@test -n "$(RUN)" || { echo 'usage: make failures RUN=<run_dir>'; exit 2; }
+	@bash slurm/examples/check_failures.sh $(RUN)
