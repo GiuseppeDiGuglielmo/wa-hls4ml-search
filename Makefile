@@ -38,12 +38,13 @@ check-jobs:
 check-list:
 	@$(PYTHON) slurm/examples/list_runs.py $(if $(TECH),--tech $(TECH)) $(if $(WHERE),--where $(WHERE)) $(if $(GREP),--grep "$(GREP)")
 
-## check-run    Designs expected / good / failed, scratch vs archive: RUN=<run_dir or run name> [EXPECTED=N]
+## check-run    Designs expected / good / failed, scratch vs archive: RUN=<run_dir, catapult_* folder, or run name> [EXPECTED=N]
 check-run:
-	@test -n "$(RUN)" || { echo 'usage: make check-run RUN=<run_dir or run name>'; exit 2; }
+	@test -n "$(RUN)" || { echo 'usage: make check-run RUN=<run_dir, catapult_* folder, or run name>'; exit 2; }
 	@$(PYTHON) slurm/examples/run_status.py $(RUN) $(if $(EXPECTED),--expected $(EXPECTED))
 
 ## check-failed Missing reports/tarballs and failed SLURM tasks: RUN=<run_dir>
 check-failed:
 	@test -n "$(RUN)" || { echo 'usage: make check-failed RUN=<run_dir>'; exit 2; }
+	@test -d "$(RUN)/build" || { echo 'check-failed: $(RUN) is not a scratch run directory (needs build/); for archive-only runs use make check-run'; exit 2; }
 	@bash slurm/examples/check_failures.sh $(RUN)

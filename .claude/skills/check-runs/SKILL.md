@@ -51,17 +51,21 @@ Run from the repo root. All read-only; use whichever fit, in any order.
   (`express_amsc`, `express_amsc_g`: two separate 32-node pools shared by all
   AmSC and Genesis users) the nodes in use and a breakdown by account and user,
   marking `ACCOUNT` (default `amsc011`).
-- `make check-list [TECH=nangate45|gf22fdx] [WHERE=scratch|archive|both] [GREP=text]`:
+- `make check-list [TECH=nangate45|gf22fdx] [WHERE=scratch|archive|both] [GREP=text]`
+  (GREP is case-insensitive):
   every run ID on scratch and in the archive, with its catalog group and RF (from
   PROVENANCE.md) and the scratch folder it lives in or came from. Use it to go from a
   group to run IDs, or from a run ID to its group.
-- `make check-run RUN=<run_dir or run name> [EXPECTED=N]`: expected, good, failed
+- `make check-run RUN=<run_dir, catapult_* folder, or run name> [EXPECTED=N]`: expected, good, failed
   and missing designs on scratch and in the archive, plus good designs not yet archived.
   The scratch side and the expected count (from `joblist.txt`) need the scratch run
-  directory; a bare run name reports the archive only. Takes seconds to a minute. `python3 slurm/examples/run_status.py <run> --list-failed`
+  directory; a `catapult_*` folder reports every `run_*` inside it; a bare run name or
+  archive path reports the archive only. A rerun folder
+  is measured against its `joblist_rerun*.txt`. It reads every JSON: seconds on scratch,
+  up to a few minutes for a large archive run on CFS. `python3 slurm/examples/run_status.py <run> --list-failed`
   prints failed stems.
 - `make check-failed RUN=<run_dir>`: missing reports or tarballs and failed SLURM tasks,
-  with the tail of their `.err` logs. Writes nothing.
+  with the tail of their `.err` logs. Scratch run directories only. Writes nothing.
 - `check_progress_resources.sh [JOB_ID...]`: node and resource usage; it appends to
   `node_history.csv` in the repo.
 - Archive `scripts/check_dataset.py --base nangate45 --run <run>`: by default it

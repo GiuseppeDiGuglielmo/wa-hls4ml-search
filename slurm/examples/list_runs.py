@@ -100,7 +100,7 @@ def main():
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--tech", choices=TECH_DIRS)
     ap.add_argument("--where", choices=("scratch", "archive", "both"))
-    ap.add_argument("--grep", help="keep lines containing this text")
+    ap.add_argument("--grep", help="keep lines containing this text (case-insensitive)")
     args = ap.parse_args()
 
     groups = provenance_groups(PROVENANCE)
@@ -112,10 +112,12 @@ def main():
         if args.where and where != args.where:
             continue
         row = (name, e["tech"], where, groups.get(name, "-"), e["source"] or "-")
-        if args.grep and args.grep not in " ".join(row):
+        if args.grep and args.grep.lower() not in " ".join(row).lower():
             continue
         rows.append(row)
 
+    if not os.environ.get("SCRATCH"):
+        print("note: $SCRATCH is not set; scratch runs are not listed", file=sys.stderr)
     fmt = "%-30s %-10s %-8s %-22s %s"
     print(fmt % ("RUN", "TECH", "WHERE", "GROUP (PROVENANCE)", "SOURCE"))
     for row in rows:

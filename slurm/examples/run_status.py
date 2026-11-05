@@ -69,12 +69,18 @@ def find_archive_run(name):
     return None
 
 
-def expected_count(run_dir):
-    path = os.path.join(run_dir, "joblist.txt") if run_dir else None
-    if path and os.path.isfile(path):
-        with open(path) as f:
-            return sum(1 for line in f if line.strip())
-    return None
+def joblist_tags(path):
+    """Design tags in a joblist: the basename of each line's first field (the build dir)."""
+    with open(path) as f:
+        return {os.path.basename(l.split("\t", 1)[0].rstrip("/")) for l in f if l.strip()}
+
+
+def joblists(run_dir):
+    """{file name: set of tags} for every joblist*.txt in the run directory."""
+    if not run_dir:
+        return {}
+    return {os.path.basename(p): joblist_tags(p)
+            for p in sorted(glob.glob(os.path.join(run_dir, "joblist*.txt")))}
 
 
 def line(label, value, expected=None):
@@ -89,18 +95,37 @@ def line(label, value, expected=None):
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("run", help="scratch run directory or bare run name")
+    ap.add_argument("run", help="scratch run directory, a folder of run_* directories, or a run name")
     ap.add_argument("--expected", type=int, default=None,
                     help="expected design count (default: lines in joblist.txt)")
     ap.add_argument("--list-failed", action="store_true",
                     help="print stems with a report but no valid QoR, one per line")
     args = ap.parse_args()
 
-    if os.path.isdir(args.run):
-        run_dir = os.path.abspath(args.run.rstrip("/"))
-        name = os.path.basename(run_dir)
+    if args.expected is not None and args.expected <= 0:
+        ap.error("--expected must be a positive number")
+
+    path = os.path.abspath(args.run.rstrip("/"))
+    inner = []
+    if os.path.isdir(path) and not os.path.basename(path).startswith("run_"):
+        inner = sorted(glob.glob(os.path.join(path, "run_*")))
+        if not inner:
+            sys.exit("run_status: %s is neither a run_* directory nor a folder of them" % path)
+    status = 0
+    for i, run in enumerate(inner or [args.run]):
+        if i:
+            print()
+        status = max(status, report(args, run))
+    return status
+
+
+def report(args, run_arg):
+    path = os.path.abspath(run_arg.rstrip("/"))
+    if os.path.isdir(path) and not path.startswith(ARCHIVE + "/"):
+        run_dir, name = path, os.path.basename(path)
     else:
-        run_dir, name = None, os.path.basename(args.run.rstrip("/"))
+        # A bare run name, or an archive path: look it up in the archive only.
+        run_dir, name = None, os.path.basename(path)
 
     scratch = None
     if run_dir:
@@ -111,7 +136,9 @@ def main():
                    os.path.join(archive_dir, "tarballs")) if archive_dir else None
 
     if scratch is None and archive is None:
-        sys.exit("run_status: no reports found for %s on scratch or in the archive" % args.run)
+        print("run_status: no reports found for %s on scratch or in the archive" % run_arg,
+              file=sys.stderr)
+        return 1
 
     if args.list_failed:
         side = scratch if scratch is not None else archive
@@ -119,16 +146,35 @@ def main():
             print(s)
         return 0
 
-    expected = args.expected or expected_count(run_dir)
+    lists = joblists(run_dir)
+    # A rerun folder keeps the full joblist.txt but only retries joblist_rerun*.txt.
+    rerun = set().union(*[t for n, t in lists.items() if n.startswith("joblist_rerun")]) \
+        if any(n.startswith("joblist_rerun") for n in lists) else None
+    target = rerun if rerun is not None else lists.get("joblist.txt")
+    expected = args.expected or (len(target) if target else None)
     print("Run      %s" % name)
-    print("Expected %s" % (expected if expected else "unknown (no joblist.txt; pass --expected)"))
+    if args.expected:
+        print("Expected %d (given)" % expected)
+    elif rerun is not None:
+        print("Expected %d (rerun folder: joblist_rerun*.txt; joblist.txt lists %d)"
+              % (expected, len(lists.get("joblist.txt", ()))))
+    elif expected:
+        print("Expected %d (joblist.txt)" % expected)
+    else:
+        print("Expected unknown (no joblist.txt; pass --expected)")
+    if len(lists) > 1:
+        shown = ["%s %d" % (n, len(t)) for n, t in lists.items()]
+        more = " ... (%d files)" % len(shown) if len(shown) > 4 else ""
+        print("Joblists %s%s" % (", ".join(shown[:4]), more))
 
     print("Scratch  %s" % (run_dir or "not given"))
     if scratch is not None:
         line("reports", len(scratch["reports"]), expected)
         line("good (valid QoR)", len(scratch["good"]), expected)
         line("failed (no valid QoR)", len(scratch["reports"] - scratch["good"]), expected)
-        if expected:
+        if target and not args.expected:
+            line("missing report", len(target - scratch["reports"]), expected)
+        elif expected:
             line("missing report", max(expected - len(scratch["reports"]), 0), expected)
         line("tarballs", len(scratch["tarballs"]), expected)
     elif run_dir:
