@@ -120,7 +120,7 @@ def main():
     print(fmt % ("RUN", "TECH", "WHERE", "GROUP (PROVENANCE)", "SOURCE"))
     for row in rows:
         print(fmt % row)
-    print("\n%d run(s). Details: make run-status RUN=<run name, or scratch dir for scratch counts>"
+    print("\n%d run(s). Details: make check-run RUN=<run name, or scratch dir for scratch counts>"
           % len(rows))
     return 0
 

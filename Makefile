@@ -12,14 +12,14 @@ GREP     ?=
 ACCOUNT  ?= amsc011
 EXPRESS_QOS := express_amsc express_amsc_g
 
-.PHONY: help status runs run-status failures
+.PHONY: help check-jobs check-list check-run check-failed
 
-## help        Show this message
+## help         Show this message
 help:
 	@grep -E '^## ' $(MAKEFILE_LIST) | sed 's/^## /  make /'
 
-## status      Your SLURM jobs, and use of each 32-node express pool by account [ACCOUNT=amsc011]
-status:
+## check-jobs   Your SLURM jobs, and use of each 32-node express pool by account [ACCOUNT=amsc011]
+check-jobs:
 	@squeue -u $$USER -o '%.10i %.12P %.14q %.24j %.2t %.10M %.6D %R'
 	@for q in $(EXPRESS_QOS); do \
 	  echo; \
@@ -34,16 +34,16 @@ status:
 	    | sort -k2,2nr -k1,1; \
 	done
 
-## runs        List runs on scratch and in the archive, with group/RF [TECH=nangate45|gf22fdx] [WHERE=scratch|archive|both] [GREP=text]
-runs:
+## check-list   List runs on scratch and in the archive, with group/RF [TECH=nangate45|gf22fdx] [WHERE=scratch|archive|both] [GREP=text]
+check-list:
 	@$(PYTHON) slurm/examples/list_runs.py $(if $(TECH),--tech $(TECH)) $(if $(WHERE),--where $(WHERE)) $(if $(GREP),--grep "$(GREP)")
 
-## run-status  Designs expected / good / failed, scratch vs archive: RUN=<run_dir or run name> [EXPECTED=N]
-run-status:
-	@test -n "$(RUN)" || { echo 'usage: make run-status RUN=<run_dir or run name>'; exit 2; }
+## check-run    Designs expected / good / failed, scratch vs archive: RUN=<run_dir or run name> [EXPECTED=N]
+check-run:
+	@test -n "$(RUN)" || { echo 'usage: make check-run RUN=<run_dir or run name>'; exit 2; }
 	@$(PYTHON) slurm/examples/run_status.py $(RUN) $(if $(EXPECTED),--expected $(EXPECTED))
 
-## failures    Missing reports/tarballs and failed SLURM tasks: RUN=<run_dir>
-failures:
-	@test -n "$(RUN)" || { echo 'usage: make failures RUN=<run_dir>'; exit 2; }
+## check-failed Missing reports/tarballs and failed SLURM tasks: RUN=<run_dir>
+check-failed:
+	@test -n "$(RUN)" || { echo 'usage: make check-failed RUN=<run_dir>'; exit 2; }
 	@bash slurm/examples/check_failures.sh $(RUN)
