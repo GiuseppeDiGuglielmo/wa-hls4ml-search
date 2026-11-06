@@ -25,10 +25,14 @@ def parse_catapult_report(output_dir):
     report = {}
     report['Config'] = config
 
-    sln_dir = os.path.join(output_dir, project_dir)
-    if not os.path.isdir(sln_dir):
-        logger.error(f'Project directory {sln_dir} does not exist.')
+    sln_dir, attempts = _find_project_attempt(output_dir, project_dir, project_name)
+    if sln_dir is None:
+        logger.error(f'Project directory {os.path.join(output_dir, project_dir)} does not exist.')
         return report
+    if len(attempts) > 1:
+        # Retries leave earlier, often interrupted, attempts next to the one used.
+        report['ProjectAttempts'] = {'used': os.path.basename(sln_dir),
+                                     'found': [os.path.basename(a) for a in attempts]}
 
     ver_dir = _find_latest_solution(sln_dir, project_name)
     if ver_dir is None:
@@ -89,6 +93,38 @@ def _load_config(output_dir):
             return yaml.safe_load(f)
 
     return None
+
+
+def _find_project_attempt(output_dir, project_dir, project_name):
+    """Pick the Catapult project folder to report from.
+
+    Each rerun of a design in the same output_dir makes a new project folder next
+    to the old one (Catapult, Catapult_1, Catapult_2, ...). The first one is often
+    an attempt cut off by the job time limit, so reading only `project_dir` reports
+    a finished design as failed. Return the newest attempt whose latest solution
+    has QoR results (nnet_qofr.csv), else the newest attempt with any solution,
+    else the newest folder; plus all attempt folders, oldest first.
+    """
+    pattern = re.compile(re.escape(project_dir) + r'(?:_(\d+))?$')
+    attempts = []
+    if os.path.isdir(output_dir):
+        for d in os.listdir(output_dir):
+            m = pattern.match(d)
+            if m and os.path.isdir(os.path.join(output_dir, d)):
+                attempts.append((int(m.group(1) or 0), os.path.join(output_dir, d)))
+    attempts = [path for _, path in sorted(attempts)]
+    if not attempts:
+        return None, []
+
+    with_solution = []
+    for path in reversed(attempts):
+        ver_dir = _find_latest_solution(path, project_name)
+        if ver_dir is None:
+            continue
+        if os.path.isfile(os.path.join(ver_dir, 'nnet_qofr.csv')):
+            return path, attempts
+        with_solution.append(path)
+    return (with_solution[0] if with_solution else attempts[-1]), attempts
 
 
 def _find_latest_solution(sln_dir, project_name):
