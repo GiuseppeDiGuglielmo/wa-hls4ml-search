@@ -14,7 +14,7 @@ You need:
 1. **NERSC account in `amsc011`**: confirm with `id -nG | tr ' ' '\n' | grep amsc011`
 2. **FNAL Kerberos credentials** — you should be able to `kinit <user>@FNAL.GOV` and SSH to `correlator4.fnal.gov`
 3. **Perlmutter login access** — you can `ssh <user>@perlmutter.nersc.gov`
-4. **`~/bin/siemens.sh`** on Perlmutter — per-user Catapult environment script (CATAPULT_VER, MGC_HOME, etc.). Step 7 below copies the canonical template (`Perlmutter_scripts/siemens.sh.example`) into place if you don't already have one.
+4. **`~/bin/cad_env_perlmutter.sh`** on Perlmutter — per-user Catapult environment script (CATAPULT_VER, MGC_HOME, etc.; the older name `~/bin/siemens.sh` still works). Step 7 below copies the canonical template (`Perlmutter_scripts/cad_env_perlmutter.sh.example`) into place if you don't already have one.
 
 ## One-time setup
 
@@ -91,14 +91,14 @@ cp license_servers_perlmutter.example.json license_servers_perlmutter.json
 # (CatAIhls4ml_c feature). Edit if you need different config.
 ```
 
-### 7. Verify `~/bin/siemens.sh` exists with `CATAPULT_VER=2026.1_1`
+### 7. Verify `~/bin/cad_env_perlmutter.sh` exists with `CATAPULT_VER=2026.1_1`
 
 ```bash
-grep CATAPULT_VER ~/bin/siemens.sh
+grep CATAPULT_VER ~/bin/cad_env_perlmutter.sh
 # Expected: export CATAPULT_VER=2026.1_1
 # If missing or older, copy the template:
-#   cp Perlmutter_scripts/siemens.sh.example ~/bin/siemens.sh
-# Then edit ~/bin/siemens.sh if your install lives somewhere other than
+#   cp Perlmutter_scripts/cad_env_perlmutter.sh.example ~/bin/cad_env_perlmutter.sh
+# Then edit ~/bin/cad_env_perlmutter.sh if your install lives somewhere other than
 # $SCRATCH/cad/Siemens/Catapult/2026.1_1/.
 ```
 
@@ -198,7 +198,7 @@ any path works.)
 | `QOSGrpNodeLimit` (PENDING reason) | `express_amsc` is capped at 32 nodes group-wide | Wait for in-flight tasks (yours or other AmSC users') to finish |
 | `Permission denied (gssapi-with-mic)` | Missing/expired Kerberos ticket | `KRB5_CONFIG=~/krb5.conf kinit <user>@FNAL.GOV` |
 | `apptainer: chdir ...: no such file or directory` | Path symlink mismatch | `Perlmutter_scripts/catapult_shell.sh` already binds both `$HOME` and `$_HOME_REAL`; if it still fails check `readlink -f $HOME` |
-| `catapult: invalid argument: -shell` | Using Catapult 2025.4_1 with `-product genesis` | Make sure `~/bin/siemens.sh` has `CATAPULT_VER=2026.1_1`; the `-product genesis` flag only works in 2026 |
+| `catapult: invalid argument: -shell` | Using Catapult 2025.4_1 with `-product genesis` | Make sure `~/bin/cad_env_perlmutter.sh` has `CATAPULT_VER=2026.1_1`; the `-product genesis` flag only works in 2026 |
 
 ## Going further
 

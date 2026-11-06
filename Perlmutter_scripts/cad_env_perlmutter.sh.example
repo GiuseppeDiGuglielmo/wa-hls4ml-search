@@ -1,7 +1,8 @@
 # Mentor Siemens Catapult environment for Perlmutter (NERSC) — AmSC project.
 #
-# Copy this template to ~/bin/siemens.sh:
-#   cp Perlmutter_scripts/siemens.sh.example ~/bin/siemens.sh
+# Copy this template to ~/bin/cad_env_perlmutter.sh (catapult_shell.sh sources
+# it inside the container; the older name ~/bin/siemens.sh is still accepted):
+#   cp Perlmutter_scripts/cad_env_perlmutter.sh.example ~/bin/cad_env_perlmutter.sh
 # The defaults below assume Catapult 2026.1_1 is at:
 #   $SCRATCH/cad/Siemens/Catapult/2026.1_1/
 # (See QUICKSTART.md step 5 for the rsync command from correlator4.)

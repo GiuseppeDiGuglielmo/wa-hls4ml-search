@@ -15,6 +15,9 @@
 #   --cmd <tcl>         TCL command to run (default: puts [pwd]; exit)
 #   --env-setup <mode>  Which env script to source: siemens (default) or genesis
 #                       Override via env var ENV_SETUP=...
+#                       siemens sources ~/bin/cad_env_perlmutter.sh, or the older
+#                       ~/bin/siemens.sh if that is the one present; set
+#                       CAD_ENV_SCRIPT=<path> to use another script.
 #   --dry-run           Print apptainer command without running it
 #   -h, --help          Show help
 
@@ -33,7 +36,7 @@ fi
 # CATAPULT_VER=... before invoking this script.
 export CATAPULT_VER="${CATAPULT_VER:-2026.1_1}"
 
-# Path to the Catapult install. siemens.sh defaults to a locked-down
+# Path to the Catapult install. The env script may default to a locked-down
 # /pscratch/sd/g/gdg/... path which is unreadable to non-`gdg` users; we
 # override to a per-user copy under $SCRATCH (each user must rsync their own
 # copy first — see QUICKSTART.md). Override with CATAPULT_PATH_OVERRIDE=...
@@ -41,7 +44,8 @@ export CATAPULT_VER="${CATAPULT_VER:-2026.1_1}"
 export CATAPULT_PATH_OVERRIDE="${CATAPULT_PATH_OVERRIDE:-${SCRATCH:-/pscratch/sd/${USER:0:1}/${USER}}/cad/Siemens/Catapult/${CATAPULT_VER}}"
 
 # --env-setup picks which env script to source inside the container:
-#   siemens (default, current behavior): ${HOME}/bin/siemens.sh
+#   siemens (default): ${HOME}/bin/cad_env_perlmutter.sh, else ${HOME}/bin/siemens.sh,
+#                      or ${CAD_ENV_SCRIPT} when set
 #   genesis (project tool-containers):   ${TOOL_CONTAINERS}/envsetup.sh
 ENV_SETUP_MODE="${ENV_SETUP:-siemens}"
 
@@ -105,7 +109,13 @@ fi
 
 case "${ENV_SETUP_MODE}" in
     siemens)
-        ENV_SCRIPT="${HOME}/bin/siemens.sh"
+        if [[ -n "${CAD_ENV_SCRIPT:-}" ]]; then
+            ENV_SCRIPT="${CAD_ENV_SCRIPT}"
+        elif [[ -f "${HOME}/bin/cad_env_perlmutter.sh" || ! -f "${HOME}/bin/siemens.sh" ]]; then
+            ENV_SCRIPT="${HOME}/bin/cad_env_perlmutter.sh"
+        else
+            ENV_SCRIPT="${HOME}/bin/siemens.sh"   # older name, still accepted
+        fi
         ;;
     genesis)
         ENV_SCRIPT="${TOOL_CONTAINERS:-/global/homes/g/gdg/research/projects/genesis/tool-containers}/envsetup.sh"
@@ -118,7 +128,7 @@ esac
 [[ -f "${ENV_SCRIPT}" ]] || {
     echo "ERROR: env script not found: ${ENV_SCRIPT}" >&2
     if [[ "${ENV_SETUP_MODE}" == "siemens" ]]; then
-        echo "Copy it from correlator4: scp \${FNAL_USER}@correlator4.fnal.gov:~/bin/siemens.sh ~/bin/" >&2
+        echo "Copy the template: cp Perlmutter_scripts/cad_env_perlmutter.sh.example ~/bin/cad_env_perlmutter.sh" >&2
     else
         echo "Set TOOL_CONTAINERS to a directory containing envsetup.sh, or switch to --env-setup siemens" >&2
     fi
@@ -150,8 +160,8 @@ cmd=(
 )
 
 if [[ -n "${LM_LICENSE_FILE:-}" ]]; then
-    # Pass via *_OVERRIDE env vars so we can re-export AFTER siemens.sh —
-    # siemens.sh prepends "40003@localhost:" to LM_LICENSE_FILE and sets
+    # Pass via *_OVERRIDE env vars so we can re-export AFTER the env script —
+    # the older siemens.sh prepends "40003@localhost:" to LM_LICENSE_FILE and sets
     # SALT_LICENSE_SERVER=40003@localhost. Both target a non-existent local
     # daemon (was a tunnel in the old setup), causing mgls_errno=515.
     # Derive SALT_LICENSE_SERVER from the same port@host as LM_LICENSE_FILE.
@@ -164,16 +174,16 @@ if [[ -n "${LM_LICENSE_FILE:-}" ]]; then
 fi
 
 # Propagate CATAPULT_VER + TOOL_CONTAINERS + CATAPULT_PATH_OVERRIDE into the
-# container so we can re-derive the install paths after siemens.sh runs.
+# container so we can re-derive the install paths after the env script runs.
 cmd+=(--env "CATAPULT_VER=${CATAPULT_VER}")
 cmd+=(--env "CATAPULT_PATH_OVERRIDE=${CATAPULT_PATH_OVERRIDE}")
 if [[ -n "${TOOL_CONTAINERS:-}" ]]; then
     cmd+=(--env "TOOL_CONTAINERS=${TOOL_CONTAINERS}")
 fi
 
-# After sourcing siemens.sh, re-export CATAPULT_PATH and derived vars so we
-# point at our local 2026.1_1 copy (siemens.sh hardcodes a locked path).
-# Also re-export LM_LICENSE_FILE / SALT_LICENSE_SERVER (siemens.sh prepends bad
+# After sourcing the env script, re-export CATAPULT_PATH and derived vars so we
+# point at our local 2026.1_1 copy (the env script may hardcode a locked path).
+# Also re-export LM_LICENSE_FILE / SALT_LICENSE_SERVER (older siemens.sh prepends bad
 # 40003@localhost values that prevent license checkout).
 cmd+=(
     "${SIF}"
