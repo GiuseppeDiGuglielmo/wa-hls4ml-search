@@ -200,7 +200,7 @@ bit-for-bit by `slurm/sweeplib/candidates.py`, which `check_design_space.py` ver
 | `45nm_sz128_1l`| 4  | `run_20260613_092915_0a250799` | 198 | ✅ |
 | `45nm_sz128_1l`| 8  | `run_20260613_101537_70605348` | 198 | ✅ |
 | `45nm_sz128_1l`| 16 | `run_20260613_103730_fd31d345` | 198 | ✅ |
-| `45nm_sz128_2l`| 1  | `run_20260613_110449_079328c7` | 1,470 / 4,914 | ⚠️ |
+| `45nm_sz128_2l`| 1  | `run_20260613_110449_079328c7` | 4,914 | ✅ |
 | `45nm_sz128_2l`| 4  | `run_20260614_174103_d02199b7` | 4,914 | ✅ |
 | `45nm_sz128_2l`| 8  | `run_20260615_014236_9a742bcf` | 4,914 | ✅ |
 | `45nm_sz128_2l`| 16 | `run_20260615_060740_63216104` | 4,914 | ✅ |
@@ -208,15 +208,19 @@ bit-for-bit by `slurm/sweeplib/candidates.py`, which `check_design_space.py` ver
 The 4-layer group loses 7 designs per RF to hard synthesis failures (2,493 of 2,500).
 
 ⚠️ **The four `45nm_sz128_2l` runs are missing from the shared archive's `README.md`** and from
-its dataset summary — 16,212 archived designs that the index does not mention. They were found
+its dataset summary — 19,656 archived designs that the index does not mention. They were found
 on 2026-09-02 by diffing the archive's run directories against the README.
 
-⚠️ **`45nm_sz128_2l` RF=1 is incomplete** at 1,470 of 4,914. Designs with input=128 and a
-128-neuron layer exceed the 6 h `express_amsc` limit at RF=1. Finish it with:
-
-```bash
-sbatch slurm/sweep.sh 45nm_sz128_2l --rf 1 --qos regular --time 1-22:00:00
-```
+**`45nm_sz128_2l` RF=1 was completed on 2026-11-05 without new synthesis.** The archive
+held 1,470 of 4,914 designs, and 1,650 scratch reports had no QoR. Designs with input=128
+and a 128-neuron layer exceed the 6 h `express_amsc` limit, and each `--resume-failed`
+retry wrote a new `Catapult_N/` project folder that the report parser did not read. So
+1,649 designs had finished on a retry but still looked failed. After the parser fix in
+`catapult_report.py`, their reports and tarballs were rewritten from the build folders and
+the run was archived: 4,913 good, 1 hard failure (`dense_2l_sz128_541`, no good attempt).
+The 27 archive reports this replaced are kept in `reports_stale_20261105/` next to
+`reports/`, and the scratch run keeps its old files in `data/reports/raw_stale_20261105/`
+and `tarballs_stale_20261105/`, plus a per-design log, `recovered_from_retries_20261105.tsv`.
 
 `N_LAYERS=3` was supported by the old script but never run; there is no 3-layer sz128 data.
 
