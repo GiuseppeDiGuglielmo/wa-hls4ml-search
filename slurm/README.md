@@ -39,7 +39,8 @@ the catalog:
 | Script | Purpose |
 |---|---|
 | `run_rerun_from_archive.sh` | Retry failed designs using model extracted from a sibling-RF tarball. `ORIG_RUN=<run> RF=<n> [TECH=gf22]`. |
-| `archive_run.sh` | Archive a completed run to nangate45/ or gf22fdx/ (auto-detects tech from path). |
+| `archive_sync.py` | Copy a run into the archive; dry run by default, `--apply` to copy. Replaces stale archive reports (backed up first), never deletes. Called by `orchestrate.sh`; `make archive-dry` / `make archive`. |
+| `archive_run.sh` | Older archiver: skips reports already archived, and `--yes` deletes the scratch run. No longer called by sweeps. |
 | `check_failures.sh` | Scan a run dir for missing tarballs; write `failed_designs.txt`. |
 | `populate_failed_designs.py` | Scan archive JSON reports for synthesis failures → `failed_designs.txt`. |
 | `sample_lhs_from_archive.py` | KD-tree LHS sampling from the 45nm archive → candidates file for GF22 runs. |

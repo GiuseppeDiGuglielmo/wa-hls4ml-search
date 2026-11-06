@@ -39,10 +39,14 @@ pass `TECH=` to override.
 Run it when no SLURM job is still writing to the run (`make check-jobs`): a tarball
 being written could be copied half-done and would then show up as "kept, differs".
 
-## The older script
+## How sweeps archive
 
-`slurm/examples/archive_run.sh` is what `slurm/sweeplib/orchestrate.sh` calls at the
-end of every sweep, with `--yes`. It copies only reports not already in the archive
-(stale ones stay stale), overwrites tarballs whose size differs, and with `--yes`
-**deletes the scratch run** once archive counts match `joblist.txt`. Do not run it
-by hand; use the targets above.
+At the end of every sweep `slurm/sweeplib/orchestrate.sh` runs
+`archive_sync.py --apply` with the tech folder from the catalog, so a sweep copies
+its results itself and leaves the scratch run in place. Removing scratch is a manual
+step for the user, after `make check-run` shows the run fully archived.
+
+`slurm/examples/archive_run.sh` is the older archiver. It copies only reports not
+already in the archive (stale ones stay stale), overwrites tarballs whose size
+differs, and with `--yes` **deletes the scratch run** once archive counts match
+`joblist.txt`. Do not run it; use the targets above.

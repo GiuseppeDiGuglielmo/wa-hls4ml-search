@@ -8,13 +8,17 @@
 #
 # Variables the caller must set:
 #   REPO_DIR VENV LM_LICENSE_FILE
-#   GROUP RF BASE RUN_DIR JOBLIST
+#   GROUP RF BASE RUN_DIR JOBLIST TECH (catalog tech: nangate45 or gf22)
 #   N_NODES PARALLELISM MEM_PER_NODE
 #   SLURM_ACCOUNT SLURM_QOS SLURM_TIME SLURM_CONSTRAINT
 #   MAX_ROUNDS   retry rounds before giving up (default 20)
 #
 # DRY_RUN=1 builds the joblist, the node split and the sbatch scripts but
 # submits nothing and archives nothing.
+#
+# Archiving copies into the shared archive with archive_sync.py, which never
+# deletes: the scratch run stays until someone removes it by hand after
+# `make check-run` shows it is fully archived.
 
 wait_for_jobs() {
     local tar_dir="$1"; shift
@@ -149,7 +153,13 @@ run_group() {
         echo "  Synthesis complete ($done_count/$total)"
     fi
 
-    echo "  Archiving ${GROUP} rf${RF} ..."
-    bash "${REPO_DIR}/slurm/examples/archive_run.sh" "${RUN_DIR}" --yes
+    local archive_tech
+    case "${TECH:-}" in
+        gf22)      archive_tech=gf22fdx ;;
+        nangate45) archive_tech=nangate45 ;;
+        *) echo "ERROR: unknown TECH '${TECH:-}', not archiving ${RUN_DIR}" >&2; return 1 ;;
+    esac
+    echo "  Archiving ${GROUP} rf${RF} to ${archive_tech} (copy only; scratch is kept) ..."
+    python3 "${REPO_DIR}/slurm/examples/archive_sync.py" "${RUN_DIR}" --tech "${archive_tech}" --apply
     echo "  Done: ${GROUP} rf${RF}."
 }
