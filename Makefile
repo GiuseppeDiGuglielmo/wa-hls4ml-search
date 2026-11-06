@@ -10,6 +10,7 @@
 # archive copies into the shared archive; run archive-dry first.
 # scratch-clean is the only target that deletes, and only after archive-verify.
 
+SHELL := /bin/bash
 PYTHON ?= python3
 # NERSC's Python (3.7+), for tools that import the sweep catalog or the pipeline.
 NERSC_PY ?= /global/common/software/nersc/pe/conda-envs/latest/python-3.13/nersc-python/bin/python
@@ -132,7 +133,7 @@ why-failed:
 ## reparse        Rewrite reports whose QoR sits in a retry folder (list only; APPLY=1 rewrites, old files backed up): RUN= [WORKERS=8]
 reparse:
 	$(call need_run, [APPLY=1])
-	@$(NERSC_PY) slurm/examples/reparse.py $(RUN) $(if $(APPLY),--apply --workers $(WORKERS)) 2>&1 | grep -v ' - INFO - '
+	@set -o pipefail; $(NERSC_PY) slurm/examples/reparse.py $(RUN) $(if $(APPLY),--apply --workers $(WORKERS)) 2>&1 | { grep -v ' - INFO - ' || true; }
 
 ## rerun-failed   Synthesise again only designs with no QoR anywhere (plan only; SUBMIT=1 submits): RUN= [QOS= TIME= MEM= PARALLELISM=]
 rerun-failed:

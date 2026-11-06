@@ -103,6 +103,13 @@ def main():
     stem = args.stem[:-5] if args.stem.endswith(".json") else args.stem
     archive_dir = find_archive_run(name)
 
+    known = (run_dir and (os.path.isdir(os.path.join(run_dir, "build", stem)) or
+                          os.path.isfile(os.path.join(run_dir, "data", "reports", "raw", stem + ".json")))) or \
+        (archive_dir and os.path.isfile(os.path.join(archive_dir, "reports", stem + ".json")))
+    if not known:
+        print("design_show: no design %s in %s (no build folder or report on scratch or in the archive)"
+              % (stem, name), file=sys.stderr)
+        return 1
     print("Design   %s  in %s" % (stem, name))
     if run_dir:
         show_report("Scratch", os.path.join(run_dir, "data", "reports", "raw", stem + ".json"))
@@ -144,4 +151,6 @@ def main():
 
 
 if __name__ == "__main__":
+    import signal
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)  # quiet exit when piped to head
     sys.exit(main())

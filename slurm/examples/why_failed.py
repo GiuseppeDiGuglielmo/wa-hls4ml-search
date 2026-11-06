@@ -84,7 +84,9 @@ def main():
     args = ap.parse_args()
     run_dir = os.path.abspath(args.run_dir.rstrip("/"))
     if not os.path.isdir(os.path.join(run_dir, "build")):
-        sys.exit("why_failed: %s is not a scratch run directory (needs build/)" % run_dir)
+        inner = sorted(glob.glob(os.path.join(run_dir, "run_*", "build")))
+        hint = ("; it holds: " + ", ".join(os.path.basename(os.path.dirname(p)) for p in inner)) if inner else ""
+        sys.exit("why_failed: %s is not a scratch run directory (needs build/)%s" % (run_dir, hint))
 
     exits, oom, timeouts, lic, jobs = scan_logs(run_dir)
     print("Run      %s" % os.path.basename(run_dir))
@@ -155,4 +157,6 @@ def main():
 
 
 if __name__ == "__main__":
+    import signal
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)  # quiet exit when piped to head
     sys.exit(main())
