@@ -3,16 +3,19 @@ name: check-runs
 description: >-
   Facts for inspecting wa-hls4ml Catapult sweep runs on Perlmutter: where scratch
   run folders and the shared CFS archive live, what counts as a finished design,
-  and which read-only tools (make check-jobs, check-list, check-run, check-failed) report
-  progress and failures. Use when asked how runs or jobs are doing, how complete a
-  sweep group or reuse factor is, what failed, or what is missing from the archive.
+  and which read-only tools (make check-jobs, check-list, check-run, check-failed,
+  why-failed, design-show) report progress, failures and their causes. Use when
+  asked how runs or jobs are doing, how complete a sweep group or reuse factor is,
+  what failed and why, what one design did, or what is missing from the archive.
 ---
 
 # Inspecting sweep runs
 
 Read-only. Do not submit, cancel, delete, move or archive anything while using
 this skill; if an action looks needed, report it and let the user decide.
-Copying good scratch designs into the archive is covered by the archive-run skill.
+Copying good scratch designs into the archive is covered by the archive-run skill;
+repairing a run (reparse, rerun-failed) by the run-catapult skill; dataset-wide
+counts by the dataset skill.
 
 ## Where things are
 
@@ -78,6 +81,14 @@ Run from the repo root. All read-only; use whichever fit, in any order.
   prints failed stems.
 - `make check-failed RUN=<run_dir>`: missing reports or tarballs and failed SLURM tasks,
   with the tail of their `.err` logs. Scratch run directories only. Writes nothing.
+- `make why-failed RUN=<run_dir> [FAST=1]`: Catapult exit codes, oom_kill events,
+  time-limit cancels, license errors and sacct states from `slurm_logs/`, then
+  attempts and peak memory per design, and the designs still without QoR with the
+  flow step they stopped at. Reads every `messages.txt`: ~3 min for 5k designs;
+  FAST=1 skips the memory part.
+- `make design-show RUN=<run_dir or run name> STEM=<stem>`: one design's report and QoR
+  on scratch and in the archive, each `Catapult_N` attempt (start time, last flow
+  step, peak memory, QoR or not) and its GNU parallel joblog entries.
 - `check_progress_resources.sh [JOB_ID...]`: node and resource usage; it appends to
   `node_history.csv` in the repo.
 - Archive `scripts/check_dataset.py --base nangate45 --run <run>`: by default it

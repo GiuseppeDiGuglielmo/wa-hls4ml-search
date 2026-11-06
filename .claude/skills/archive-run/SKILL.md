@@ -3,9 +3,11 @@ name: archive-run
 description: >-
   Facts and gates for copying a wa-hls4ml Catapult scratch run into the shared CFS
   archive with make archive-dry / make archive (copy only, backs up stale archive
-  reports, never deletes). Use when asked to archive a run, sync scratch results to
-  the archive, replace stale or failed archive reports, or when check-run shows good
-  designs on scratch that are not archived.
+  reports), proving the copy with make archive-verify, freeing scratch with make
+  scratch-clean (the only deleting target), and listing runs the archive README
+  misses (make archive-index). Use when asked to archive a run, sync scratch results
+  to the archive, replace stale archive reports, check that a run is safely
+  archived, free scratch space, or update the archive's run index.
 ---
 
 # Archiving a sweep run
@@ -18,7 +20,8 @@ is an action, so it has gates:
 3. Afterwards run `make check-run RUN=<scratch run_dir>` and report both sides.
 
 Never delete scratch data as part of archiving; that is a separate decision for the
-user. Facts for finding runs and judging completeness are in the check-runs skill.
+user (see "Freeing scratch"). Facts for finding runs and judging completeness are in
+the check-runs skill.
 
 ## What the tools do
 
@@ -38,6 +41,26 @@ pass `TECH=` to override.
 
 Run it when no SLURM job is still writing to the run (`make check-jobs`): a tarball
 being written could be copied half-done and would then show up as "kept, differs".
+
+## Proving and freeing
+
+- `make archive-verify RUN=<scratch run_dir> [ALL=1]`: every scratch report is in the
+  archive with identical bytes, every tarball with the same size, 20 random tarballs
+  (ALL=1: all) with the same MD5, and no good design only on scratch. Last line
+  `VERIFIED` or `NOT VERIFIED`. Also lists scratch-only `*_stale_*` backups.
+  Read-only; ~1 min for 5k designs.
+- `make scratch-clean RUN=<scratch run_dir> [APPLY=1]`: removes the whole scratch run
+  folder, including `build/` with every Catapult attempt, which the archive does not
+  keep. It runs archive-verify itself and refuses unless it passes; refuses paths
+  that are not `$SCRATCH/catapult_*/run_*`, runs changed in the last hour, and runs
+  with scratch-only `*_stale_*` backups (unless `--drop-backups` by hand). Without
+  APPLY=1 it only reports size. Never run APPLY=1 without the user's explicit yes
+  for that run, and say what build/ data will be lost.
+- `make archive-index [APPLY=1]`: archive runs whose ID the archive `README.md` does
+  not mention, with measured design and good counts, as a markdown table. APPLY=1
+  copies the README to `README.md.bak_<YYYYMMDD_HHMM>` and appends the table. It
+  does not fix stale numbers in rows that exist (e.g. the `45nm_sz128_2l` RF=1 row
+  still said "incomplete" on 2026-11-05); those need a hand edit, with the user's OK.
 
 ## How sweeps archive
 

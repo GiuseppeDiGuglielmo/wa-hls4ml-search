@@ -169,6 +169,7 @@ hlsproj
 
 # Dataset files
 dataset
+!/.claude/skills/dataset/
 /kube/hf_secret.yml
 !/plots/resource_calculated_2layer_data.json
 

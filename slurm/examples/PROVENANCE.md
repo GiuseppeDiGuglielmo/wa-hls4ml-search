@@ -207,9 +207,10 @@ bit-for-bit by `slurm/sweeplib/candidates.py`, which `check_design_space.py` ver
 
 The 4-layer group loses 7 designs per RF to hard synthesis failures (2,493 of 2,500).
 
-⚠️ **The four `45nm_sz128_2l` runs are missing from the shared archive's `README.md`** and from
-its dataset summary — 19,656 archived designs that the index does not mention. They were found
-on 2026-09-02 by diffing the archive's run directories against the README.
+The four `45nm_sz128_2l` runs were missing from the shared archive's `README.md` until
+2026-09-02, when they were found by diffing the archive's run directories against it and added.
+⚠️ As of 2026-11-05 its RF=1 row still reads "incomplete — 3,444 of 4,914 missing"; the run is
+now complete (see below). `make archive-index` lists runs the README does not mention.
 
 **`45nm_sz128_2l` RF=1 was completed on 2026-11-05 without new synthesis.** The archive
 held 1,470 of 4,914 designs, and 1,650 scratch reports had no QoR. Designs with input=128
