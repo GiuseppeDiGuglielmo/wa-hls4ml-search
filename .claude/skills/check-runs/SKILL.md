@@ -42,8 +42,8 @@ counts by the dataset skill.
 ## What "done" means
 
 A design is good when its report JSON parses and `QOFRSummary` has positive
-`total_area`, `latency_cycles` and `thruput_cycles` (the archive's own rule, in
-`scripts/check_dataset.py`). A report holding only `Config` and `LayerSummary` is a
+`total_area`, `latency_cycles` and `thruput_cycles` (the archive's own rule, in its
+`check_dataset.py`). A report holding only `Config` and `LayerSummary` is a
 failed synthesis. A tarball proves nothing on its own, and scratch and archive
 counts can differ: the archive holds only what was copied.
 
@@ -91,7 +91,8 @@ Run from the repo root. All read-only; use whichever fit, in any order.
   step, peak memory, QoR or not) and its GNU parallel joblog entries.
 - `check_progress_resources.sh [JOB_ID...]`: node and resource usage; it appends to
   `node_history.csv` in the repo.
-- Archive `scripts/check_dataset.py --base nangate45 --run <run>`: by default it
+- The archive's `check_dataset.py --base nangate45 --run <run>` (in the archive's
+  `scripts/` folder, run from the archive root): by default it
   writes `check_cache.json` and `failed_designs.txt` into the shared archive. Pass
   `--cache` and `--failed-list` paths in your own space to keep it read-only.
 - Plain `squeue`, `sacct` (e.g. `sacct -u $USER -S now-7days -X` for what ran

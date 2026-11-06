@@ -21,8 +21,8 @@ Read-only. Measure; don't quote the documents.
   `source_dir.txt` (its scratch origin). Some hold `reports_stale_*`/`tarballs_stale_*`
   backups and `archive_sync.log` from later repairs.
 - `README.md`: hand-written index with per-run notes (weights fixed vs programmable,
-  completeness), `scripts/check_dataset.py` (its own validator; writes caches into the
-  archive unless given paths elsewhere), `backup/`, transfer scripts.
+  completeness); `scripts/` there holds `check_dataset.py` (its own validator; writes
+  caches into the archive unless given paths elsewhere) and transfer scripts; `backup/`.
 
 Stems are `dense_<N>l_<index>`, the index into the catalog row's design space, so a
 design is identified by (run, stem); the same stem in another run is another RF or
