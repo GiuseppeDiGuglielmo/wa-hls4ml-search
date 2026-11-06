@@ -12,6 +12,7 @@ description: >-
 
 Read-only. Do not submit, cancel, delete, move or archive anything while using
 this skill; if an action looks needed, report it and let the user decide.
+Copying good scratch designs into the archive is covered by the archive-run skill.
 
 ## Where things are
 

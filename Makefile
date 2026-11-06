@@ -1,7 +1,8 @@
-# Read-only status targets for the Catapult sweeps. The same commands back the
-# check-runs agent skill (.claude/skills/check-runs/), so a person running
-# `make` and an agent get the same answer. Nothing here submits, cancels,
-# deletes or archives anything.
+# Targets for the Catapult sweeps. The same commands back the agent skills in
+# .claude/skills/ (check-runs, archive-run), so a person running `make` and an
+# agent get the same answer. The check-* targets are read-only. archive-dry
+# prints a plan; archive copies into the shared archive. Nothing here submits,
+# cancels or deletes anything.
 
 PYTHON ?= python3
 RUN      ?=
@@ -12,7 +13,7 @@ GREP     ?=
 ACCOUNT  ?= amsc011
 EXPRESS_QOS := express_amsc express_amsc_g
 
-.PHONY: help check-jobs check-list check-run check-failed
+.PHONY: help check-jobs check-list check-run check-failed archive-dry archive
 
 ## help         Show this message
 help:
@@ -48,3 +49,13 @@ check-failed:
 	@test -n "$(RUN)" || { echo 'usage: make check-failed RUN=<run_dir>'; exit 2; }
 	@test -d "$(RUN)/build" || { echo 'check-failed: $(RUN) is not a scratch run directory (needs build/); for archive-only runs use make check-run'; exit 2; }
 	@bash slurm/examples/check_failures.sh $(RUN)
+
+## archive-dry  What archive would copy or replace for a scratch run (writes nothing): RUN=<run_dir> [TECH=nangate45|gf22fdx]
+archive-dry:
+	@test -n "$(RUN)" || { echo 'usage: make archive-dry RUN=<scratch run_dir>'; exit 2; }
+	@$(PYTHON) slurm/examples/archive_sync.py $(RUN) $(if $(TECH),--tech $(TECH))
+
+## archive      Copy a scratch run into the shared archive; backs up stale reports, never deletes: RUN=<run_dir> [TECH=...]
+archive:
+	@test -n "$(RUN)" || { echo 'usage: make archive RUN=<scratch run_dir>  (run make archive-dry first)'; exit 2; }
+	@$(PYTHON) slurm/examples/archive_sync.py $(RUN) $(if $(TECH),--tech $(TECH)) --apply
