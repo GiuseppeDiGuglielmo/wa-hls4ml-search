@@ -1,8 +1,9 @@
 # Targets for the Catapult sweeps. The same commands back the agent skills in
-# .claude/skills/ (check-runs, archive-run), so a person running `make` and an
-# agent get the same answer. The check-* targets are read-only. archive-dry
-# prints a plan; archive copies into the shared archive. Nothing here submits,
-# cancels or deletes anything.
+# .claude/skills/ (check-runs, archive-run, run-catapult), so a person running
+# `make` and an agent get the same answer. The check-* targets are read-only.
+# archive-dry prints a plan; archive copies into the shared archive.
+# catapult-probe and sweep-check spend nothing (PROBE=1 takes one license for
+# a few seconds); sweep submits jobs. Nothing here cancels or deletes anything.
 
 PYTHON ?= python3
 RUN      ?=
@@ -12,8 +13,26 @@ WHERE    ?=
 GREP     ?=
 ACCOUNT  ?= amsc011
 EXPRESS_QOS := express_amsc express_amsc_g
+GROUP    ?=
+RF       ?=
+QOS      ?=
+TIME     ?=
+NODES    ?=
+PARALLELISM ?=
+MEM      ?=
+MEMFREE  ?=
+PROBE    ?=
+PROBE_DIR = $(SCRATCH)/catapult_probe
+SWEEP_OPTS = $(if $(RF),--rf $(RF)) $(if $(QOS),--qos $(QOS)) $(if $(TIME),--time $(TIME)) \
+             $(if $(NODES),--nodes $(NODES)) $(if $(PARALLELISM),--parallelism $(PARALLELISM)) \
+             $(if $(MEM),--mem $(MEM)) $(if $(MEMFREE),--memfree $(MEMFREE))
+# Same license string sweep.sh builds from license_servers_perlmutter.json.
+LICENSES = $$(python3 -c "import json; c=json.load(open('license_servers_perlmutter.json')); print(':'.join('%s@%s' % (s['port'], s['host']) for s in c['servers']))")
+# The venv prints a harmless distutils-precedence.pth traceback on each python3 call.
+VENV_NOISE = -e distutils -e add_shim -e 'site.py' -e 'exec(line)' -e 'File "<string>"' -e '^ *Traceback' -e 'Remainder of file' -e '^ *$$'
 
-.PHONY: help check-jobs check-list check-run check-failed archive-dry archive
+.PHONY: help check-jobs check-list check-run check-failed archive-dry archive \
+        catapult-probe sweep-check sweep
 
 ## help         Show this message
 help:
@@ -59,3 +78,26 @@ archive-dry:
 archive:
 	@test -n "$(RUN)" || { echo 'usage: make archive RUN=<scratch run_dir>  (run make archive-dry first)'; exit 2; }
 	@$(PYTHON) slurm/examples/archive_sync.py $(RUN) $(if $(TECH),--tech $(TECH)) --apply
+
+## catapult-probe Can the launcher start Catapult? Dry run; PROBE=1 starts it once in $SCRATCH/catapult_probe (one license, seconds)
+catapult-probe:
+	@mkdir -p $(PROBE_DIR)
+	@if [ -n "$(PROBE)" ]; then \
+	  LM_LICENSE_FILE=$(LICENSES) bash Perlmutter_scripts/catapult_shell.sh --work-dir $(PROBE_DIR) \
+	    --cmd 'puts "catapult-probe: OK in [pwd]"; exit' 2>&1 | grep -E 'catapult-probe: OK|rror' \
+	    || { echo 'catapult-probe: no OK line; run the launcher by hand to see its output'; exit 1; }; \
+	else \
+	  bash Perlmutter_scripts/catapult_shell.sh --dry-run --work-dir $(PROBE_DIR) | tr ' ' '\n' | grep -E 'apptainer$$|\.sif$$|cad_env|siemens\.sh'; \
+	  echo "(dry run; PROBE=1 starts Catapult once to check the license)"; \
+	fi
+
+## sweep-check  Plan + sbatch --test-only for a sweep, builds and submits nothing: GROUP=<group> [RF= QOS= TIME= NODES= PARALLELISM= MEM= MEMFREE=]
+sweep-check:
+	@test -n "$(GROUP)" || { echo 'usage: make sweep-check GROUP=<group from slurm/sweeps.tsv> [RF=1,4 ...]'; exit 2; }
+	@bash slurm/sweep.sh $(GROUP) $(SWEEP_OPTS) --check 2>&1 | grep -v $(VENV_NOISE)
+	@mkdir -p logs; echo "Sweep driver job:"; sbatch --test-only slurm/sweep.sh $(GROUP) $(SWEEP_OPTS) 2>&1 | sed 's/^/  /'
+
+## sweep        Submit a sweep (uses licenses and nodes; run sweep-check first): GROUP=<group> [same options]
+sweep:
+	@test -n "$(GROUP)" || { echo 'usage: make sweep GROUP=<group> [RF=...]  (run make sweep-check first)'; exit 2; }
+	@mkdir -p logs; sbatch slurm/sweep.sh $(GROUP) $(SWEEP_OPTS)

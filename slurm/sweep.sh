@@ -20,6 +20,7 @@
 #          --exclude gf22fdx/gf22_lhs_3layer_500.txt
 #   sbatch slurm/sweep.sh 45nm_sz128_2l --rf 1 --qos regular --time 1-22:00:00
 #   bash   slurm/sweep.sh 1l_base --list          # show the row and exit
+#   bash   slurm/sweep.sh 1l_base --check         # plan + sbatch --test-only, builds nothing
 #   DRY_RUN=1 bash slurm/sweep.sh 1l_base         # build everything, submit nothing
 #
 # Options:
@@ -41,6 +42,8 @@
 #   --exclude PATH  archive-relative candidates file to exclude (archive_lhs only)
 #   --candidates P  use this candidates file instead of the row's
 #   --list          print the resolved row and exit
+#   --check         print the resolved plan, validate one synthesis job script
+#                   with sbatch --test-only, and exit (no models, no runs)
 
 set -euo pipefail
 
@@ -59,7 +62,7 @@ shift
 
 RF_LIST=""; N_NODES=3; PARALLELISM=100; MEM_PER_NODE=0; MEMFREE=64G
 SLURM_QOS_SYNTH=express_amsc; SLURM_TIME=05:30:00
-N_LHS=""; EXCLUDE=""; CANDIDATES_OVERRIDE=""; LIST_ONLY=0
+N_LHS=""; EXCLUDE=""; CANDIDATES_OVERRIDE=""; LIST_ONLY=0; CHECK_ONLY=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --rf)          RF_LIST="$2"; shift 2 ;;
@@ -73,6 +76,7 @@ while [[ $# -gt 0 ]]; do
         --exclude)     EXCLUDE="$2"; shift 2 ;;
         --candidates)  CANDIDATES_OVERRIDE="$2"; shift 2 ;;
         --list)        LIST_ONLY=1; shift ;;
+        --check)       CHECK_ONLY=1; shift ;;
         *) echo "unknown option: $1" >&2; exit 2 ;;
     esac
 done
@@ -141,6 +145,21 @@ export REPO_DIR VENV LM_LICENSE_FILE N_NODES PARALLELISM MEM_PER_NODE MEMFREE \
        SLURM_ACCOUNT SLURM_QOS SLURM_TIME SLURM_CONSTRAINT
 
 source "${REPO_DIR}/slurm/sweeplib/orchestrate.sh"
+
+if (( CHECK_ONLY )); then
+    echo "Plan: rf=${RF_LIST}  nodes=${N_NODES} x ${PARALLELISM} slots  mem=${MEM_PER_NODE} (0 = whole node)"
+    echo "      memfree=${MEMFREE}  qos=${SLURM_QOS}  time=${SLURM_TIME}  account=${SLURM_ACCOUNT}"
+    echo "      output: ${SCRATCH}/catapult_${GROUP}_rf<RF>/run_*/; licenses: ${LM_LICENSE_FILE}"
+    CHECK_DIR=$(mktemp -d)
+    mkdir -p "${CHECK_DIR}/slurm_logs"
+    RUN_DIR="$CHECK_DIR" BASE="$CHECK_DIR" RF="${RF_LIST%%,*}"
+    script=$(make_synth_script check /dev/null)
+    echo "Synthesis job script (one per node per round):"
+    sbatch --test-only "$script" 2>&1 | sed 's/^/  /'
+    status=${PIPESTATUS[0]}
+    rm -rf "$CHECK_DIR"
+    exit "$status"
+fi
 
 # ── Candidates, for the sampled modes ─────────────────────────────────────────
 CANDIDATES=""
