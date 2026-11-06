@@ -9,7 +9,8 @@
 # Variables the caller must set:
 #   REPO_DIR VENV LM_LICENSE_FILE
 #   GROUP RF BASE RUN_DIR JOBLIST TECH (catalog tech: nangate45 or gf22)
-#   N_NODES PARALLELISM MEM_PER_NODE
+#   N_NODES PARALLELISM MEM_PER_NODE (0 = whole node)
+#   MEMFREE      GNU parallel --memfree per node, e.g. 64G (empty or 0: off)
 #   SLURM_ACCOUNT SLURM_QOS SLURM_TIME SLURM_CONSTRAINT
 #   MAX_ROUNDS   retry rounds before giving up (default 20)
 #
@@ -67,6 +68,10 @@ split_joblist() {
 make_synth_script() {
     local label="$1" jl="$2"
     local script="${RUN_DIR}/parallel_synth_${label}.sh"
+    # Gate job starts on free memory: below MEMFREE no new design starts, below
+    # half of it parallel kills its youngest job (retried in the next round).
+    local memfree_opt=""
+    [[ -n "${MEMFREE:-}" && "${MEMFREE}" != 0 ]] && memfree_opt="--memfree ${MEMFREE} "
     cat > "$script" <<SBATCH_EOF
 #!/bin/bash
 #SBATCH --job-name=${GROUP}_rf${RF}_${label}
@@ -89,7 +94,7 @@ cd "${REPO_DIR}"
 parallel \\
     --joblog "${RUN_DIR}/parallel_${label}.log" \\
     --resume-failed \\
-    --line-buffer \\
+    ${memfree_opt}--line-buffer \\
     -j ${PARALLELISM} \\
     python "${REPO_DIR}/iter_manager_catapult.py" -o "${BASE}" --run-single-job {} \\
     < "${jl}"

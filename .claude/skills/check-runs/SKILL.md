@@ -44,6 +44,17 @@ A design is good when its report JSON parses and `QOFRSummary` has positive
 failed synthesis. A tarball proves nothing on its own, and scratch and archive
 counts can differ: the archive holds only what was copied.
 
+## Why designs fail
+
+- Every Catapult start in a build folder makes a new `catapult_native/Catapult_N/`
+  project; many folders mean many attempts. The report is parsed from the newest
+  attempt with QoR (`ProjectAttempts` in the JSON names it).
+- `Catapult exited with code 137` in `slurm_logs/*.err` is SIGKILL. When `sacct`
+  shows the step `OUT_OF_MEMORY` (or the log says `oom_kill events`), it was memory:
+  peak Catapult memory per design runs from under 2 GB to about 19 GB, highest for
+  128-wide layers, and shows in `messages.txt` as `peak memory usage`. `DUE TO TIME
+  LIMIT` in the `.err` is the job's wall time instead.
+
 ## Tools
 
 Run from the repo root. All read-only; use whichever fit, in any order.

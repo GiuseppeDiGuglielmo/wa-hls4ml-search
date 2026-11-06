@@ -26,7 +26,15 @@
 #   --rf LIST       reuse factors to run (default: the row's rf column)
 #   --nodes N       synthesis nodes per group (default 3, i.e. 300 license slots)
 #   --parallelism N synthesis slots per node (default 100)
-#   --mem SIZE      memory per node (default 200G; the sz64 groups used 400G)
+#   --mem SIZE      memory per node (default 0 = all of it, ~488G on a CPU node;
+#                   older runs used 200G, the sz64 groups 400G). Required with
+#                   --qos shared, which does not give a whole node.
+#   --memfree SIZE  start a design only while the node has this much free memory
+#                   (GNU parallel --memfree; default 64G, 0 disables). Catapult
+#                   peak memory per design ranges from <2G to ~19G, so a fixed
+#                   slot count alone gets designs OOM-killed. The value is read
+#                   from /proc/meminfo, which ignores the ~27G SLURM keeps back
+#                   on each node, hence 64G and not ~20G.
 #   --qos NAME      SLURM QOS for the synthesis nodes (default express_amsc)
 #   --time HH:MM:SS wall time per synthesis node (default 05:30:00)
 #   --n-lhs N       LHS sample count for the sampled modes
@@ -49,7 +57,7 @@ GROUP="${1:-}"
 }
 shift
 
-RF_LIST=""; N_NODES=3; PARALLELISM=100; MEM_PER_NODE=200G
+RF_LIST=""; N_NODES=3; PARALLELISM=100; MEM_PER_NODE=0; MEMFREE=64G
 SLURM_QOS_SYNTH=express_amsc; SLURM_TIME=05:30:00
 N_LHS=""; EXCLUDE=""; CANDIDATES_OVERRIDE=""; LIST_ONLY=0
 while [[ $# -gt 0 ]]; do
@@ -58,6 +66,7 @@ while [[ $# -gt 0 ]]; do
         --nodes)       N_NODES="$2"; shift 2 ;;
         --parallelism) PARALLELISM="$2"; shift 2 ;;
         --mem)         MEM_PER_NODE="$2"; shift 2 ;;
+        --memfree)     MEMFREE="$2"; shift 2 ;;
         --qos)         SLURM_QOS_SYNTH="$2"; shift 2 ;;
         --time)        SLURM_TIME="$2"; shift 2 ;;
         --n-lhs)       N_LHS="$2"; shift 2 ;;
@@ -67,6 +76,10 @@ while [[ $# -gt 0 ]]; do
         *) echo "unknown option: $1" >&2; exit 2 ;;
     esac
 done
+if [[ "$SLURM_QOS_SYNTH" == shared && "$MEM_PER_NODE" == 0 ]]; then
+    echo "error: --qos shared needs an explicit --mem (0 asks for a whole node)" >&2
+    exit 2
+fi
 
 source "$VENV"
 cd "$REPO_DIR"
@@ -124,7 +137,7 @@ export LM_LICENSE_FILE
 SLURM_ACCOUNT=amsc011
 SLURM_CONSTRAINT=cpu
 SLURM_QOS="$SLURM_QOS_SYNTH"
-export REPO_DIR VENV LM_LICENSE_FILE N_NODES PARALLELISM MEM_PER_NODE \
+export REPO_DIR VENV LM_LICENSE_FILE N_NODES PARALLELISM MEM_PER_NODE MEMFREE \
        SLURM_ACCOUNT SLURM_QOS SLURM_TIME SLURM_CONSTRAINT
 
 source "${REPO_DIR}/slurm/sweeplib/orchestrate.sh"
