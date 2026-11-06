@@ -80,9 +80,12 @@ def measure(runs, fast):
                 good = hit["good"]
             else:
                 sys.stderr.write("  reading %d reports of %s (%d/%d)\n" % (len(reps), key, i + 1, len(runs)))
+                sys.stderr.flush()
                 good = sum(1 for n in reps if is_good(os.path.join(rep_dir, n)))
                 cache[key] = {"stamp": stamp, "good": good}
                 dirty = True
+                if i % 10 == 9:  # keep progress if the scan is interrupted
+                    save_cache(cache)
         out[name] = {"tech": tech, "reports": len(reps), "tarballs": tars, "good": good}
     if dirty:
         save_cache(cache)
