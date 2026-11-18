@@ -35,7 +35,7 @@ counts. Unless noted, the test run was `run_20260613_110449_079328c7`
 |---|---|---|
 | `env-check` | checks venv, container, every Catapult install, licenses | yes |
 | `license-check` | checks each license server answers and lists its Catapult features | yes, fixed |
-| `catapult-probe` | launcher dry run; `PROBE=1` starts Catapult once (one license) | dry run, fixed |
+| `catapult-probe` | launcher dry run; `PROBE=1` starts Catapult once (one license) | yes, fixed: fails, licenses expired |
 | `sweep-estimate` | designs, runtime, memory and node-hours from past runs | yes |
 | `sweep-check` | the sweep plan plus `sbatch --test-only` | yes |
 | `sweep` | **submits** a sweep (nodes, up to 300 licenses) | no |
@@ -44,7 +44,8 @@ counts. Unless noted, the test run was `run_20260613_110449_079328c7`
 | `design-synth` | plans a rerun of one design in a debug folder; `SUBMIT=1` submits it | plan only |
 
 `sweep-check`, `sweep`, `rerun-failed` and `design-synth` need the DSE venv
-(installed 2026-11-17). Nothing was submitted, and `PROBE=1` was not run.
+(installed 2026-11-17). Nothing was submitted. `PROBE=1` on 2026.1_1 failed with
+errno 522 on both license servers: the Genesis licenses have expired (see the skill).
 
 Fixed in this round: `license-check` now lists features with the install's own
 `lmutil` (the new installs have a working one), Catapult features only;

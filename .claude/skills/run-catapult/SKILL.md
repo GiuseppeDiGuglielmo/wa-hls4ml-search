@@ -93,12 +93,20 @@ own server, which the launcher overrides.
 **Scratch purge.** Files unread for 8 weeks on `$SCRATCH` are deleted. On
 2026-11-05 this had gutted both the Catapult install (820 files left, 712 dangling
 links) and the venv (Python reads `.pyc`, so `.py` sources looked unread and went).
-Symptoms: Catapult fails with `mgls_errno = 522` "License server does not support
-this feature (CatapultGenesis)" and `import tensorflow` fails. `make env-check`
-reports it. Both now live outside `$SCRATCH`, in `/global/common/software/amsc011/public`:
+Symptom: `import tensorflow` fails; `make env-check` reports it. Both now live outside `$SCRATCH`, in `/global/common/software/amsc011/public`:
 Catapult per version, and the DSE venv `venv_hls4ml` (TensorFlow 2.11 needs Python
 3.10, installed with conda as `python310`). QUICKSTART's "Rebuilding the shared
 installs" has the commands; rebuilding is the user's call.
+
+**errno 522 is the license, not the install.** `mgls_errno = 522` "License server
+does not support this feature (CatapultGenesis)" means no server offers a valid
+Genesis license; `-product genesis` needs it. Check expiry with
+`<install>/Mgc_home/bin/lmutil lmstat -i -c <port@host>`. On 2026-11-17 the probe
+failed on both servers: `fasic-admin1` lists `CatUltrGenesis_c` and
+`CatAIhls4ml_c` that expired 2026-07-01 (200) and 2026-09-15 (100); `fasic-135413`
+has `CatAIhls4ml_c` x5 to 2027-05-31 and no Genesis feature. June runs used
+`fasic-admin1` while it was valid. Renewal is for FNAL/Siemens; no sweep can run
+until then.
 
 **Two venvs.** The DSE venv (`WA_HLS4ML_VENV`) builds models and job lists outside
 the container. Catapult's own hls4ml flow uses `~/ccs_venv`, which Catapult creates
