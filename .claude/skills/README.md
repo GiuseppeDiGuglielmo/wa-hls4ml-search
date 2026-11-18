@@ -18,6 +18,97 @@ Two general skills complete the set. They are not in this repo: `perlmutter` (QO
 node types, scratch, allocations) and `slurm` (sbatch, sacct, job arrays). They come
 from the genesis-skills repository and are installed in `~/.claude/skills/`.
 
+## How a sweep runs
+
+What happens after `make sweep`, and which Python environment, container and
+storage each step uses:
+
+```mermaid
+flowchart TD
+    A["make sweep GROUP=g RF=n"] --> B["sbatch slurm/sweep.sh<br/>qos shared, up to 2 days<br/>reads the group from slurm/sweeps.tsv"]
+    B --> C["DSE venv (WA_HLS4ML_VENV)<br/>gen_models.py builds the Keras models<br/>iter_manager_catapult.py writes joblist.txt"]
+    C --> D["$SCRATCH/catapult_g_rfn/run_*/<br/>models + joblist.txt"]
+    D --> E["slurm/sweeplib/orchestrate.sh<br/>one job per node, default 3 nodes x 100 slots<br/>express_amsc, GNU parallel --memfree"]
+    E --> F["per design:<br/>Perlmutter_scripts/catapult_shell.sh"]
+    F --> G["Apptainer container<br/>catapult_rocky.sif (Rocky Linux 8)"]
+    G --> H["Catapult (Siemens install)<br/>its own hls4ml flow in ~/ccs_venv<br/>one license from the license servers"]
+    H --> I["build/stem/catapult_native/Catapult_N/<br/>one folder per attempt"]
+    I --> J["data/reports/raw/stem.json<br/>tarballs/stem.tar.gz"]
+    J --> K{"tarball count<br/>still rising?"}
+    K -- "yes: next round, failed designs only" --> E
+    K -- "no" --> L["archive_sync.py --apply"]
+    L --> M[("CFS archive<br/>/global/cfs/cdirs/amsc011/shared/wa-hls4ml-catapult/tech/run_*/")]
+```
+
+Scratch keeps everything, including every Catapult attempt under `build/`, until the
+purge (files unread for 8 weeks) or `make scratch-clean`. The archive keeps one
+report and one project tarball per design.
+
+## How skills and targets fit together
+
+Each box is a skill; inside it are the make targets it covers. Arrows follow a run
+from start to archive. Colors show what a target changes: blue only reads, amber
+does nothing without its flag (`PROBE=1`, `SUBMIT=1`, `APPLY=1`), red acts every
+time it runs.
+
+```mermaid
+flowchart LR
+    subgraph RC["run-catapult skill"]
+        direction TB
+        envcheck["env-check"]
+        lic["license-check"]
+        probe["catapult-probe<br/>PROBE=1"]
+        est["sweep-estimate"]
+        swc["sweep-check"]
+        sw["sweep"]
+        rep["reparse<br/>APPLY=1"]
+        rer["rerun-failed<br/>SUBMIT=1"]
+        syn["design-synth<br/>SUBMIT=1"]
+    end
+    subgraph CR["check-runs skill"]
+        direction TB
+        jobs["check-jobs"]
+        list["check-list"]
+        crun["check-run"]
+        cfail["check-failed"]
+        why["why-failed"]
+        show["design-show"]
+    end
+    subgraph AR["archive-run skill"]
+        direction TB
+        adry["archive-dry"]
+        arc["archive"]
+        aver["archive-verify"]
+        clean["scratch-clean<br/>APPLY=1"]
+        aidx["archive-index<br/>APPLY=1"]
+    end
+    subgraph DS["dataset skill"]
+        direction TB
+        dsum["dataset-summary"]
+        pdiff["provenance-diff"]
+    end
+
+    envcheck --> est --> swc --> sw
+    sw --> jobs
+    sw --> crun
+    crun --> why --> rep --> rer
+    why --> show --> syn
+    sw -. "automatic at the end" .-> arc
+    crun --> adry --> arc --> aver --> clean
+    arc --> dsum
+    arc --> aidx
+
+    classDef read fill:#e3eefb,stroke:#2f6db5,color:#0b2545
+    classDef flag fill:#fdf0d5,stroke:#b7791f,color:#3d2a00
+    classDef acts fill:#fbe0e0,stroke:#c0392b,color:#4a0d0d
+    class envcheck,lic,est,swc,jobs,list,crun,cfail,why,show,adry,aver,dsum,pdiff read
+    class probe,rep,rer,syn,clean,aidx flag
+    class sw,arc acts
+```
+
+`check-list` and `check-run` also serve the dataset skill for one run, and
+`archive-index` for the archive README.
+
 ## Every target
 
 What a target can change decides how freely it is run:
