@@ -49,6 +49,7 @@ SCRIPT = """#!/bin/bash
 set -euo pipefail
 source "{venv}"
 export LM_LICENSE_FILE="{lic}"
+export CATAPULT_PRODUCT="{product}"
 cd "{repo}"
 
 parallel \\
@@ -62,9 +63,18 @@ parallel \\
 
 
 def licenses():
+    """License servers for the job: WA_LICENSES (port@host[:...]) if set, else the
+    servers in license_servers_perlmutter.json."""
+    if os.environ.get("WA_LICENSES"):
+        return os.environ["WA_LICENSES"]
     import json
     with open(os.path.join(REPO, "license_servers_perlmutter.json")) as f:
         return ":".join("%s@%s" % (s["port"], s["host"]) for s in json.load(f)["servers"])
+
+
+def product():
+    """Catapult product the launcher asks a license for (CATAPULT_PRODUCT)."""
+    return os.environ.get("CATAPULT_PRODUCT", "genesis")
 
 
 def main():
@@ -127,7 +137,7 @@ def main():
     base = os.path.dirname(run)
     venv = os.environ.get("WA_HLS4ML_VENV", "/global/common/software/amsc011/public/venv_hls4ml/bin/activate")
     fields = dict(name=os.path.basename(base)[:40], cpus=2 * jobs if qos == "shared" else 256, mem=mem,
-                  time=args.time, qos=qos, run=run, tag=args.tag, venv=venv, lic=licenses(), repo=REPO,
+                  time=args.time, qos=qos, run=run, tag=args.tag, venv=venv, lic=licenses(), product=product(), repo=REPO,
                   memfree=memfree, jobs=jobs, base=base,
                   joblist=os.path.join(run, "joblist_retry_%s.txt" % args.tag))
     print("Job      qos=%s  time=%s  mem=%s  slots=%d  %s" % (qos, args.time, mem, jobs, memfree.strip()))

@@ -113,7 +113,10 @@ until then.
 with `LICENSES=1717@fasic-135413.fnal.gov`, `make catapult-probe PROBE=1` passed and
 `flow package require /HLS4ML` loaded. `fasic-135413` has only 5 `CatapultUltra_c`
 (to 2027-05-31), so at most 5 designs can run at once, and a full synthesis under
-ultra had not been tried yet.
+ultra had not been tried yet. `rerun-failed` and `design-synth` jobs take
+`CATAPULT_PRODUCT` and, from `WA_LICENSES=port@host`, the license server (else the
+license file), e.g. `CATAPULT_PRODUCT=ultra WA_LICENSES=1717@fasic-135413.fnal.gov
+make design-synth ... QOS=express_amsc`.
 
 **Two venvs.** The DSE venv (`WA_HLS4ML_VENV`) builds models and job lists outside
 the container. Catapult's own hls4ml flow uses `~/ccs_venv`, which Catapult creates

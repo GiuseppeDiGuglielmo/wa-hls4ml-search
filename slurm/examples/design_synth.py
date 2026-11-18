@@ -27,7 +27,7 @@ import uuid
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
-from rerun_failed import licenses  # noqa: E402
+from rerun_failed import licenses, product  # noqa: E402
 
 SCRIPT = """#!/bin/bash
 #SBATCH --job-name=debug_{stem}
@@ -45,6 +45,7 @@ SCRIPT = """#!/bin/bash
 set -euo pipefail
 source "{venv}"
 export LM_LICENSE_FILE="{lic}"
+export CATAPULT_PRODUCT="{product}"
 cd "{repo}"
 /usr/bin/time -v python "{repo}/iter_manager_catapult.py" -o "{base}" --run-single-job "$(cat {run}/joblist.txt)"
 """
@@ -80,12 +81,13 @@ def main():
     fields[0] = new_build
     venv = os.environ.get("WA_HLS4ML_VENV", "/global/common/software/amsc011/public/venv_hls4ml/bin/activate")
     script = SCRIPT.format(stem=args.stem[:40], mem=args.mem, time=args.time, qos=args.qos, run=new_run,
-                           venv=venv, lic=licenses(), repo=REPO, base=base)
+                           venv=venv, lic=licenses(), product=product(), repo=REPO, base=base)
     top = [n for n in os.listdir(src) if os.path.isfile(os.path.join(src, n))]
 
     print("Design   %s from %s" % (args.stem, run))
     print("Copy     %s -> %s (%d files: %s)" % (src, new_build, len(top), ", ".join(sorted(top))[:120]))
     print("Job      qos=%s mem=%s time=%s, one design, /usr/bin/time -v for peak memory" % (args.qos, args.mem, args.time))
+    print("License  %s, product %s (WA_LICENSES, CATAPULT_PRODUCT)" % (licenses(), product()))
     if not args.submit:
         with tempfile.TemporaryDirectory() as tmp:
             path = os.path.join(tmp, "debug.sh")
