@@ -54,21 +54,36 @@ need_run  = @test -n "$(RUN)" || { echo 'usage: make $@ RUN=<scratch run_dir>$(1
         archive-dry archive archive-verify scratch-clean archive-index \
         dataset-summary provenance-diff sweep-estimate
 
-## help           Show this message
+# help: each target's '## target | args | kind | skill | description' line,
+# grouped by the agent skill that uses it (.claude/skills/README.md).
 help:
-	@grep -E '^##[@ ]' $(MAKEFILE_LIST) | sed -e 's/^##@ /\n/' -e 's/^## /  make /'
+	@echo 'Catapult sweeps on Perlmutter. Usage: make <target> [ARG=value ...]'
+	@echo 'Unmarked targets only read.  flag: acts only with PROBE=1, SUBMIT=1 or APPLY=1.  acts: acts every time.'
+	@awk -F' [|] ' '/^## [a-z-]+ [|]/ { sub(/^## /, "", $$1); \
+	    row[$$1] = sprintf("  %-16s %-22s %-5s %s", $$1, $$2, ($$3 == "read" ? "" : $$3), $$5) } \
+	  END { n = split("run-catapult:tool chain, sweeps, repairs:env-check license-check catapult-probe sweep-estimate sweep-check sweep reparse rerun-failed design-synth;" \
+	                  "check-runs:status and failures:check-jobs check-list check-run check-failed why-failed design-show;" \
+	                  "archive-run:archive and scratch:archive-dry archive archive-verify scratch-clean archive-index;" \
+	                  "dataset:the archived dataset:dataset-summary provenance-diff", grp, ";"); \
+	    for (i = 1; i <= n; i++) { split(grp[i], f, ":"); printf "\n%s: %s\n", f[1], f[2]; \
+	      m = split(f[3], t, " "); for (k = 1; k <= m; k++) print (t[k] in row ? row[t[k]] : "  " t[k] "  (no help line)") } }' $(MAKEFILE_LIST)
+	@echo
+	@echo 'sweep opts: RF= QOS= TIME= NODES= PARALLELISM= MEM= MEMFREE='
+	@echo 'rerun-failed and design-synth also take QOS= TIME= MEM=.  TECH=nangate45|gf22fdx'
+	@echo 'RUN= is a scratch run folder; check-run and design-show also take a run name.'
+	@echo 'More: .claude/skills/README.md'
 
-##@ Tool chain: does Catapult work here?
+# --- Tool chain: does Catapult work here? ---
 
-## env-check      venv, container, Apptainer, Catapult install (purge damage), env script, license file, parallel
+## env-check |  | read | run-catapult | Check venv, container, Catapult install and licenses
 env-check:
 	@$(PYTHON) slurm/examples/catapult_env.py env
 
-## license-check  Is each license server reachable; with LMUTIL=<path to lmutil>, its features
+## license-check | [LMUTIL=] | read | run-catapult | Check each license server answers
 license-check:
 	@$(PYTHON) slurm/examples/catapult_env.py license $(if $(LMUTIL),--lmutil $(LMUTIL))
 
-## catapult-probe Launcher dry run; PROBE=1 starts Catapult once in $SCRATCH/catapult_probe (one license, seconds)
+## catapult-probe | [PROBE=1] | flag | run-catapult | Launcher dry run; PROBE=1 starts Catapult once (1 license)
 catapult-probe:
 	@mkdir -p $(PROBE_DIR)
 	@if [ -n "$(PROBE)" ]; then \
@@ -80,21 +95,21 @@ catapult-probe:
 	  echo "(dry run; PROBE=1 starts Catapult once to check the license)"; \
 	fi
 
-##@ One design
+# --- One design ---
 
-## design-show    Report, QoR, every Catapult attempt (last step, peak memory) and joblog entries: RUN=<run_dir or name> STEM=<stem>
+## design-show | RUN= STEM= | read | check-runs | One design's report and every Catapult attempt
 design-show:
 	@test -n "$(RUN)" -a -n "$(STEM)" || { echo 'usage: make design-show RUN=<run_dir or run name> STEM=<stem>'; exit 2; }
 	@$(PYTHON) slurm/examples/design_show.py $(RUN) $(STEM)
 
-## design-synth   Synthesise one design again in $SCRATCH/catapult_debug (plan only; SUBMIT=1 submits): RUN= STEM= [QOS= MEM= TIME=]
+## design-synth | RUN= STEM= [SUBMIT=1] | flag | run-catapult | Rerun one design in $SCRATCH/catapult_debug
 design-synth:
 	@test -n "$(RUN)" -a -n "$(STEM)" || { echo 'usage: make design-synth RUN=<scratch run_dir> STEM=<stem> [SUBMIT=1]'; exit 2; }
 	@$(PYTHON) slurm/examples/design_synth.py $(RUN) $(STEM) $(JOB_OPTS) $(if $(SUBMIT),--submit)
 
-##@ One run (a group at one RF)
+# --- One run (a group at one RF) ---
 
-## check-jobs     Your SLURM jobs, and use of each 32-node express pool by account [ACCOUNT=amsc011]
+## check-jobs | [ACCOUNT=] | read | check-runs | Your jobs and the express node pools
 check-jobs:
 	@squeue -u $$USER -o '%.10i %.12P %.14q %.24j %.2t %.10M %.6D %R'
 	@for q in $(EXPRESS_QOS); do \
@@ -110,86 +125,86 @@ check-jobs:
 	    | sort -k2,2nr -k1,1; \
 	done
 
-## check-list     List runs on scratch and in the archive, with group/RF [TECH=nangate45|gf22fdx] [WHERE=scratch|archive|both] [GREP=text]
+## check-list | [TECH= WHERE= GREP=] | read | check-runs | Every run on scratch and in the archive
 check-list:
 	@$(PYTHON) slurm/examples/list_runs.py $(if $(TECH),--tech $(TECH)) $(if $(WHERE),--where $(WHERE)) $(if $(GREP),--grep "$(GREP)")
 
-## check-run      Designs expected / good / failed, scratch vs archive: RUN=<run_dir, catapult_* folder, or run name> [EXPECTED=N]
+## check-run | RUN= | read | check-runs | Expected, good, failed and missing designs of a run
 check-run:
 	@test -n "$(RUN)" || { echo 'usage: make check-run RUN=<run_dir, catapult_* folder, or run name>'; exit 2; }
 	@$(PYTHON) slurm/examples/run_status.py $(RUN) $(if $(EXPECTED),--expected $(EXPECTED))
 
-## check-failed   Missing reports, reports without QoR, missing tarballs (archived ones only counted), failed SLURM tasks: RUN=<run_dir>
+## check-failed | RUN= | read | check-runs | Missing reports and tarballs, reports without QoR
 check-failed:
 	@test -n "$(RUN)" || { echo 'usage: make check-failed RUN=<run_dir>'; exit 2; }
 	@test -d "$(RUN)/build" || { echo 'check-failed: $(RUN) is not a scratch run directory (needs build/); for archive-only runs use make check-run'; exit 2; }
 	@bash slurm/examples/check_failures.sh $(RUN)
 
-## why-failed     Causes of Catapult failures: exit codes, OOM kills, time limits, attempts vs peak memory: RUN=<run_dir> [FAST=1 skips memory]
+## why-failed | RUN= [FAST=1] | read | check-runs | Why designs failed: exit codes, OOM kills, time limits
 why-failed:
 	$(call need_run,)
 	@$(PYTHON) slurm/examples/why_failed.py $(RUN) $(if $(FAST),--no-memory)
 
-## reparse        Rewrite reports whose QoR sits in a retry folder (list only; APPLY=1 rewrites, old files backed up): RUN= [WORKERS=8]
+## reparse | RUN= [APPLY=1] | flag | run-catapult | Fix reports whose QoR is in a retry folder
 reparse:
 	$(call need_run, [APPLY=1])
 	@set -o pipefail; $(NERSC_PY) slurm/examples/reparse.py $(RUN) $(if $(APPLY),--apply --workers $(WORKERS)) 2>&1 | { grep -v ' - INFO - ' || true; }
 
-## rerun-failed   Synthesise again only designs with no QoR anywhere (plan only; SUBMIT=1 submits): RUN= [QOS= TIME= MEM= PARALLELISM=]
+## rerun-failed | RUN= [SUBMIT=1] | flag | run-catapult | Resubmit designs with no QoR anywhere
 rerun-failed:
 	$(call need_run, [SUBMIT=1])
 	@$(PYTHON) slurm/examples/rerun_failed.py $(RUN) $(JOB_OPTS) $(if $(PARALLELISM),--parallelism $(PARALLELISM)) $(if $(MEMFREE),--memfree $(MEMFREE)) $(if $(SUBMIT),--submit)
 
-## sweep-check    Plan + sbatch --test-only for a sweep, builds and submits nothing: GROUP=<group> [RF= QOS= TIME= NODES= PARALLELISM= MEM= MEMFREE=]
+## sweep-check | GROUP= [sweep opts] | read | run-catapult | Sweep plan and sbatch --test-only; submits nothing
 sweep-check:
 	@test -n "$(GROUP)" || { echo 'usage: make sweep-check GROUP=<group from slurm/sweeps.tsv> [RF=1,4 ...]'; exit 2; }
 	@bash slurm/sweep.sh $(GROUP) $(SWEEP_OPTS) --check 2>&1 | grep -v $(VENV_NOISE)
 	@mkdir -p logs; echo "Sweep driver job:"; sbatch --test-only slurm/sweep.sh $(GROUP) $(SWEEP_OPTS) 2>&1 | sed 's/^/  /'
 
-## sweep          Submit a sweep (uses licenses and nodes; run sweep-check first): GROUP=<group> [same options]
+## sweep | GROUP= [sweep opts] | acts | run-catapult | Submit a sweep (nodes, licenses); run sweep-check first
 sweep:
 	@test -n "$(GROUP)" || { echo 'usage: make sweep GROUP=<group> [RF=...]  (run make sweep-check first)'; exit 2; }
 	@mkdir -p logs; sbatch slurm/sweep.sh $(GROUP) $(SWEEP_OPTS)
 
-##@ Archive
+# --- Archive ---
 
-## archive-dry    What archive would copy or replace for a scratch run (writes nothing): RUN=<run_dir> [TECH=nangate45|gf22fdx]
+## archive-dry | RUN= | read | archive-run | What archive would copy
 archive-dry:
 	$(call need_run,)
 	@$(PYTHON) slurm/examples/archive_sync.py $(RUN) $(if $(TECH),--tech $(TECH))
 
-## archive        Copy a scratch run into the shared archive; backs up stale reports, never deletes: RUN=<run_dir> [TECH=...]
+## archive | RUN= | acts | archive-run | Copy a run into the shared archive; never deletes
 archive:
 	$(call need_run,  (run make archive-dry first))
 	@$(PYTHON) slurm/examples/archive_sync.py $(RUN) $(if $(TECH),--tech $(TECH)) --apply
 
-## archive-verify Does the archive hold everything of a scratch run (content, sizes, MD5 sample)? RUN= [ALL=1: MD5 of every tarball]
+## archive-verify | RUN= [ALL=1] | read | archive-run | Check the archive holds everything of a run
 archive-verify:
 	$(call need_run,)
 	@$(PYTHON) slurm/examples/archive_verify.py $(RUN) $(if $(TECH),--tech $(TECH)) $(if $(ALL),--all)
 
-## scratch-clean  Remove a scratch run after archive-verify passes (report only; APPLY=1 deletes): RUN=<run_dir>
+## scratch-clean | RUN= [APPLY=1] | flag | archive-run | Delete a scratch run once verified
 scratch-clean:
 	$(call need_run, [APPLY=1])
 	@$(PYTHON) slurm/examples/scratch_clean.py $(RUN) $(if $(TECH),--tech $(TECH)) $(if $(APPLY),--apply)
 
-## archive-index  Archive runs not mentioned in the archive README (list only; APPLY=1 appends them, after a backup)
+## archive-index | [APPLY=1] | flag | archive-run | Runs missing from the archive README
 archive-index:
 	@$(PYTHON) slurm/examples/dataset.py index $(if $(APPLY),--apply)
 
-##@ Whole dataset
+# --- Whole dataset ---
 
-## dataset-summary Reports and good designs per archive run, by tech and group [TECH=] [FAST=1: counts only] (cached in ~/.cache/wa-hls4ml)
+## dataset-summary | [TECH= FAST=1] | read | dataset | Reports and good designs per run and tech
 dataset-summary:
 	@$(PYTHON) slurm/examples/dataset.py summary $(if $(TECH),--tech $(TECH)) $(if $(FAST),--fast)
 
-## provenance-diff Where slurm/examples/PROVENANCE.md disagrees with the archive [FAST=1: counts only]
+## provenance-diff | [FAST=1] | read | dataset | Where PROVENANCE.md disagrees with the archive
 provenance-diff:
 	@$(PYTHON) slurm/examples/dataset.py provenance-diff $(if $(FAST),--fast)
 
-##@ Planning
+# --- Planning ---
 
-## sweep-estimate Designs, runtime, peak memory, slots per node and node-hours from past runs: GROUP=<group> [RF= NODES=]
+## sweep-estimate | GROUP= [RF=] | read | run-catapult | Designs, runtime, memory and node-hours from past runs
 sweep-estimate:
 	@test -n "$(GROUP)" || { echo 'usage: make sweep-estimate GROUP=<group from slurm/sweeps.tsv> [RF=1,4]'; exit 2; }
 	@$(NERSC_PY) slurm/examples/sweep_estimate.py $(GROUP) $(if $(RF),--rf $(RF)) $(if $(NODES),--nodes $(NODES))
