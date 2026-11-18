@@ -184,7 +184,77 @@ make dataset-summary; make provenance-diff      # whole dataset
   archive unless it is given `--cache` and `--failed-list` paths elsewhere.
   `make dataset-summary` and `make check-run` apply the same rule for a good design.
 
+## Test status
+
+Each skill was tested by running its targets on real runs and comparing the
+output with independent counts (`ls`, `grep`, `stat`, `sacct`). Only read-only
+paths and dry runs were exercised: nothing was submitted, copied or deleted by
+a target. The test run, unless noted, is `run_20260613_110449_079328c7`
+(nangate45, `45nm_sz128_2l`, RF=1, 4,914 designs), which is on scratch and in
+the archive.
+
+| Skill | Targets | Status | Fixes |
+|---|---|---|---|
+| `run-catapult` | 9 | **Not tested yet.** 5 can be tested without the DSE venv | |
+| `check-runs` | 6 | Tested 2026-11-17, all targets | `f0946393` |
+| `archive-run` | 5 | Tested 2026-11-17, read-only paths and dry runs | `5cab59b4`, `dd7a2416` |
+| `dataset` | 2 | Tested 2026-11-17, all targets | `ddb9b5f2` |
+| `perlmutter`, `slurm` | none | Not tested here; they come from genesis-skills | |
+
+### run-catapult
+
+| Target | Tested | Result |
+|---|---|---|
+| `env-check` | no | |
+| `license-check` | no | |
+| `catapult-probe` | no | dry run testable now; `PROBE=1` takes one license |
+| `sweep-estimate` | no | |
+| `sweep-check` | no | needs the DSE venv |
+| `sweep` | no | needs the DSE venv; submits nodes and licenses |
+| `reparse` | no | plan testable now |
+| `rerun-failed` | no | needs the DSE venv |
+| `design-synth` | no | needs the DSE venv |
+
+The skill's "How Catapult is started" section still describes the install on
+`$SCRATCH`; Catapult 2026.1_1 and 2026.3_1 now live under
+`/global/common/software/amsc011/public/Siemens/Catapult/`. Update it with the
+launcher.
+
+### check-runs
+
+| Target | Tested | Result |
+|---|---|---|
+| `check-jobs` | yes | OK: no jobs, both express pools empty |
+| `check-list` | yes | OK: 141 archive-only, 13 scratch-only, 1 on both. Skill now says `WHERE=scratch` means only on scratch |
+| `check-run` | yes | OK: 4,913 of 4,914 good on scratch and in the archive, 50 s |
+| `check-failed` | yes | **Fixed.** Listed 1,437 purged tarballs as failures although the archive has them, and missed the design without QoR. Now counts archived tarballs, lists reports without QoR, runs in 26 s instead of 94 s |
+| `why-failed` | yes | OK: retries were OOM kills (exit 137); 1 design without QoR. `FAST=1` 2 min |
+| `design-show` | yes | **Fixed.** Showed the purge date as each attempt's start time (folder mtime); now shows when `messages.txt` was last written |
+
+### archive-run
+
+| Target | Tested | Result |
+|---|---|---|
+| `archive-dry` | yes | OK: nothing to copy, 4 s |
+| `archive` | no | writes the shared archive; nothing to copy for the test run |
+| `archive-verify` | yes | OK: `VERIFIED`, reports identical, sizes and MD5 sample match, 17 s |
+| `scratch-clean` | dry run only | OK: refused while scratch-only backups existed; after they were removed it passed and measured 3.3 TB in 2.27M files (~10 min). **Fixed:** now says it is measuring instead of looking stuck. `APPLY=1` not run |
+| `archive-index` | dry run only | OK: all 142 runs are in the archive README (checked with `grep`). `APPLY=1` not run |
+
+Found while testing and fixed by hand with the user's OK: the archive README still
+called the RF=1 run incomplete (row, totals and disk table corrected, backup
+`README.md.bak_20261117_2135`); 106 GB of scratch-only `*_stale_20261105` backups
+in the test run were deleted.
+
+### dataset
+
+| Target | Tested | Result |
+|---|---|---|
+| `dataset-summary` | yes | OK: 142 runs, 549,163 reports, 549,148 good. Cached good counts match `check-run` for two runs. `FAST=1` 10 s, cached 1 s |
+| `provenance-diff` | yes | **Fixed.** Skipped the 8 runs PROVENANCE.md names only in its notes, so it missed a design without QoR in legacy run `run_20260504_205339_a5d590d6`. Now checks them. Skill now lists the runs excluded from training |
+
 ## Keeping this page right
 
 When a target is added or changes what it touches, update the Makefile help line,
-the skill that covers it, and the table above in the same commit.
+the skill that covers it, and the table above in the same commit. After testing a skill,
+update its rows under "Test status" with the date, the run used and the fix commits.
