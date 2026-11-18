@@ -6,6 +6,8 @@
 
 Targets are joblist.txt designs whose report is missing or has no valid QoR and
 that have no QoR in any Catapult* attempt either (those only need reparse.py).
+Designs whose model (build/<stem>/keras_model.h5) or flow config
+(dataflow_config.json) is missing are skipped and listed.
 Without --submit it prints the targets and validates the job with
 sbatch --test-only, writing nothing.
 
@@ -98,7 +100,7 @@ def main():
     only = set(open(args.stems).read().split()) if args.stems else None
     raw = os.path.join(run, "data", "reports", "raw")
 
-    lines, reparse_first = [], []
+    lines, reparse_first, no_inputs = [], [], []
     for line in open(joblist):
         if not line.strip():
             continue
@@ -109,6 +111,13 @@ def main():
             continue
         if has_qor_attempt(os.path.join(run, "build", stem, "catapult_native")):
             reparse_first.append(stem)
+            continue
+        # The job needs the model and the flow config; the scratch purge deletes them.
+        f = line.rstrip("\n").split("\t")
+        need = [os.path.join(f[0], "keras_model.h5")] + f[3:4]
+        gone = [os.path.relpath(x, run) for x in need if not os.path.isfile(x)]
+        if gone:
+            no_inputs.append((stem, gone))
             continue
         lines.append((stem, line if line.endswith("\n") else line + "\n"))
 
@@ -121,8 +130,13 @@ def main():
     if reparse_first:
         print("Skipped  %d design(s) whose QoR is already in a retry folder: run make reparse first"
               % len(reparse_first))
+    if no_inputs:
+        print("Skipped  %d design(s) whose inputs are gone (scratch purge?); restore them first"
+              % len(no_inputs))
+        for stem, gone in no_inputs[:10]:
+            print("  %s: %s" % (stem, ", ".join(gone)))
     if not lines:
-        return 0
+        return 1 if no_inputs else 0
 
     n = len(lines)
     small = n <= 8
