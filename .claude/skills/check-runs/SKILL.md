@@ -69,7 +69,9 @@ Run from the repo root. All read-only; use whichever fit, in any order.
 - `make check-list [TECH=nangate45|gf22fdx] [WHERE=scratch|archive|both] [GREP=text]`
   (GREP is case-insensitive):
   every run ID on scratch and in the archive, with its catalog group and RF (from
-  PROVENANCE.md) and the scratch folder it lives in or came from. Use it to go from a
+  PROVENANCE.md) and the scratch folder it lives in or came from. `WHERE` filters on
+  the WHERE column, so `scratch` means only on scratch (not archived) and `both` means
+  on scratch and archived; leave it out to see every run. Use it to go from a
   group to run IDs, or from a run ID to its group.
 - `make check-run RUN=<run_dir, catapult_* folder, or run name> [EXPECTED=N]`: expected, good, failed
   and missing designs on scratch and in the archive, plus good designs not yet archived.
@@ -79,16 +81,20 @@ Run from the repo root. All read-only; use whichever fit, in any order.
   is measured against its `joblist_rerun*.txt`. It reads every JSON: seconds on scratch,
   up to a few minutes for a large archive run on CFS. `python3 slurm/examples/run_status.py <run> --list-failed`
   prints failed stems.
-- `make check-failed RUN=<run_dir>`: missing reports or tarballs and failed SLURM tasks,
-  with the tail of their `.err` logs. Scratch run directories only. Writes nothing.
+- `make check-failed RUN=<run_dir>`: missing reports, reports without valid QoR,
+  missing tarballs and failed SLURM tasks, with the tail of their `.err` logs.
+  Tarballs gone from scratch (e.g. purged) but present in the archive are only
+  counted, not listed. Scratch run directories only; ~30 s for 5k designs. Writes nothing.
 - `make why-failed RUN=<run_dir> [FAST=1]`: Catapult exit codes, oom_kill events,
   time-limit cancels, license errors and sacct states from `slurm_logs/`, then
   attempts and peak memory per design, and the designs still without QoR with the
   flow step they stopped at. Reads every `messages.txt`: ~3 min for 5k designs;
   FAST=1 skips the memory part.
 - `make design-show RUN=<run_dir or run name> STEM=<stem>`: one design's report and QoR
-  on scratch and in the archive, each `Catapult_N` attempt (start time, last flow
-  step, peak memory, QoR or not) and its GNU parallel joblog entries.
+  on scratch and in the archive, each `Catapult_N` attempt (when its `messages.txt`
+  was last written, last flow step, peak memory, QoR or not) and its GNU parallel
+  joblog entries. Folder mtimes are not attempt times: the scratch purge resets them
+  when it deletes files inside.
 - `check_progress_resources.sh [JOB_ID...]`: node and resource usage; it appends to
   `node_history.csv` in the repo.
 - The archive's `check_dataset.py --base nangate45 --run <run>` (in the archive's

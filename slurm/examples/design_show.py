@@ -37,6 +37,19 @@ def attempts(catapult_native):
     return [(n, p) for _, n, p in sorted(found)]
 
 
+def last_log_time(path):
+    """When the newest solution's messages.txt was last written, or "-".
+
+    Not the attempt folder's own mtime: deleting files inside it (the scratch
+    purge) moves that to the purge date.
+    """
+    logs = glob.glob(os.path.join(path, "*.v*", "messages.txt"))
+    if not logs:
+        return "-"
+    newest = max(os.stat(f).st_mtime for f in logs)
+    return time.strftime("%Y-%m-%d %H:%M", time.localtime(newest))
+
+
 def attempt_facts(path):
     """Last completed step, peak memory (GB), QoR present, for the newest solution."""
     sols = sorted(glob.glob(os.path.join(path, "*.v*")),
@@ -129,7 +142,7 @@ def main():
         print("Attempts none (%s)" % ("no %s" % native if not os.path.isdir(native) else "no Catapult* folders"))
     else:
         print("Attempts %d in %s" % (len(tries), native))
-        print("         %-12s %-17s %-12s %-9s %s" % ("folder", "started", "last step", "peak mem", "QoR"))
+        print("         %-12s %-17s %-12s %-9s %s" % ("folder", "last log", "last step", "peak mem", "QoR"))
         shown = tries if len(tries) <= 12 else tries[:5] + [None] + tries[-6:]
         for t in shown:
             if t is None:
@@ -137,7 +150,7 @@ def main():
                 continue
             n, p = t
             step, peak, qor = attempt_facts(p)
-            started = time.strftime("%Y-%m-%d %H:%M", time.localtime(os.stat(p).st_mtime))
+            started = last_log_time(p)
             print("         %-12s %-17s %-12s %-9s %s" % (n, started, step,
                                                        "%.1f GB" % peak if peak else "-", "yes" if qor else "no"))
 
