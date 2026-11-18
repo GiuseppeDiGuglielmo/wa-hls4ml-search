@@ -80,7 +80,7 @@ help:
 env-check:
 	@$(PYTHON) slurm/examples/catapult_env.py env
 
-## license-check | [LMUTIL=] | Check each license server answers
+## license-check | [LMUTIL=] | Check each license server answers and list its Catapult features
 license-check:
 	@$(PYTHON) slurm/examples/catapult_env.py license $(if $(LMUTIL),--lmutil $(LMUTIL))
 
@@ -92,7 +92,10 @@ catapult-probe:
 	    --cmd 'puts "catapult-probe: OK in [pwd]"; exit' 2>&1 | grep -E 'catapult-probe: OK|rror' \
 	    || { echo 'catapult-probe: no OK line; run the launcher by hand to see its output'; exit 1; }; \
 	else \
-	  bash Perlmutter_scripts/catapult_shell.sh --dry-run --work-dir $(PROBE_DIR) | tr ' ' '\n' | grep -E 'apptainer$$|\.sif$$|cad_env|siemens\.sh'; \
+	  LM_LICENSE_FILE=$(LICENSES) bash Perlmutter_scripts/catapult_shell.sh --dry-run --work-dir $(PROBE_DIR) \
+	    | tr ' ' '\n' | sed -n -e 's|.*/apptainer$$|apptainer   &|p' -e 's|.*\.sif$$|container   &|p' \
+	      -e 's|^CATAPULT_PATH_OVERRIDE=|catapult    |p' -e 's|^LM_LICENSE_FILE=\([0-9][^"\\]*\)$$|license     \1|p' \
+	      -e 's#^\(/[^ ]*/\(cad_env_perlmutter\|siemens\)\.sh\).*#env script  \1#p'; \
 	  echo "(dry run; PROBE=1 starts Catapult once to check the license)"; \
 	fi
 

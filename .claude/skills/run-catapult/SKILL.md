@@ -20,8 +20,13 @@ first, then a plan the user approves, then the action.
 1. `make env-check`: venv imports, container, Apptainer, Catapult install, env
    script, license file, GNU parallel, launcher dry run. Every line must be OK.
    It also detects purge damage (see below). Read-only, ~20 s.
-2. `make license-check [LMUTIL=<path>]`: each license server answers on its port.
-   Feature lists need a working `lmutil`; the 2026.1_1 install has none.
+2. `make license-check [LMUTIL=<path>]`: each license server answers on its port,
+   and its Catapult features, using the selected install's `lmutil`. On
+   2026-11-17 `fasic-admin1` (the sweep server) listed 200 `CatAIhls4ml_c` and 200
+   `CatUltrGenesis_c` as "unsupported by licensed server" (FlexLM cannot count
+   SALT features; only `catapult-probe PROBE=1` proves a checkout);
+   `fasic-135413` (the env script's server) has 5 `CatAIhls4ml_c` and no Genesis
+   feature.
 3. `make catapult-probe`: launcher dry run. `make catapult-probe PROBE=1` starts
    Catapult once (one license, seconds) and must print `catapult-probe: OK`. Ask
    before PROBE=1.
@@ -61,7 +66,10 @@ for a yes, then rerun with the flag.
   `/usr/bin/time -v`. Then `make design-show RUN=<debug run> STEM=<stem>`.
 
 `sbatch --test-only` start estimates for `shared` can be months off (seen 2026-11-05);
-past shared jobs started within hours.
+past shared jobs started within hours. On 2026-11-17, before the `scrambled_patch`
+reservation (2026-11-18 07:00-19:00), every `shared` test failed with "Requested node
+configuration is not available" while `regular` was accepted: a machine state, not
+a script bug. `sweep-check`, `rerun-failed` and `design-synth` all report it.
 
 ## How Catapult is started
 

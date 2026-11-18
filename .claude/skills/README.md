@@ -7,7 +7,7 @@ add no commands of their own, so a person and an agent get the same answer.
 
 | Skill | Use it to | Targets | Tested |
 |---|---|---|---|
-| [`run-catapult`](run-catapult/SKILL.md) | check the tool chain, plan and submit a sweep, repair a run | 9 | not yet |
+| [`run-catapult`](run-catapult/SKILL.md) | check the tool chain, plan and submit a sweep, repair a run | 9 | 2026-11-17, plans only |
 | [`check-runs`](check-runs/SKILL.md) | see how jobs and runs are doing, what failed and why | 6 | 2026-11-17 |
 | [`archive-run`](archive-run/SKILL.md) | copy a run to the shared archive, verify it, free scratch | 5 | 2026-11-17 |
 | [`dataset`](dataset/SKILL.md) | count the archived dataset and check its docs | 2 | 2026-11-17 |
@@ -33,18 +33,25 @@ counts. Unless noted, the test run was `run_20260613_110449_079328c7`
 
 | Target | What it does | Tested |
 |---|---|---|
-| `env-check` | checks venv, container, Catapult install, licenses | no |
-| `license-check` | checks each license server answers | no |
-| `catapult-probe` | launcher dry run; `PROBE=1` starts Catapult once (one license) | no |
-| `sweep-estimate` | designs, runtime, memory and node-hours from past runs | no |
-| `sweep-check` | the sweep plan plus `sbatch --test-only` | no |
+| `env-check` | checks venv, container, every Catapult install, licenses | yes |
+| `license-check` | checks each license server answers and lists its Catapult features | yes, fixed |
+| `catapult-probe` | launcher dry run; `PROBE=1` starts Catapult once (one license) | dry run, fixed |
+| `sweep-estimate` | designs, runtime, memory and node-hours from past runs | yes |
+| `sweep-check` | the sweep plan plus `sbatch --test-only` | yes |
 | `sweep` | **submits** a sweep (nodes, up to 300 licenses) | no |
-| `reparse` | lists reports whose QoR is in a retry folder; `APPLY=1` rewrites them | no |
-| `rerun-failed` | plans a rerun of designs with no QoR; `SUBMIT=1` submits it | no |
-| `design-synth` | plans a rerun of one design in a debug folder; `SUBMIT=1` submits it | no |
+| `reparse` | lists reports whose QoR is in a retry folder; `APPLY=1` rewrites them | plan only |
+| `rerun-failed` | plans a rerun of designs with no QoR; `SUBMIT=1` submits it | plan only |
+| `design-synth` | plans a rerun of one design in a debug folder; `SUBMIT=1` submits it | plan only |
 
 `sweep-check`, `sweep`, `rerun-failed` and `design-synth` need the DSE venv
-(installed 2026-11-17).
+(installed 2026-11-17). Nothing was submitted, and `PROBE=1` was not run.
+
+Fixed in this round: `license-check` now lists features with the install's own
+`lmutil` (the new installs have a working one), Catapult features only;
+`catapult-probe` without `PROBE=1` now shows the install and license server it
+would use. On 2026-11-17 Slurm rejected every `shared` job ahead of a Perlmutter
+patch window, so `sweep-check`, `rerun-failed` and `design-synth` reported
+"Requested node configuration is not available"; check again after it.
 
 ### check-runs
 

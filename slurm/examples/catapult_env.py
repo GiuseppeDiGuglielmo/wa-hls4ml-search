@@ -207,15 +207,18 @@ def check_license(lmutil):
             continue
         if lmutil:
             rc, out = run([lmutil, "lmstat", "-a", "-c", srv], timeout=120)
-            users = [l.strip() for l in (out or "").splitlines() if l.startswith("Users of ")]
+            users = [l.strip() for l in (out or "").splitlines()
+                     if re.match(r"Users of (cat|\S*genesis)", l, re.I)]
             if rc != 0 and not users:
                 report("WARN", "  lmstat", ((out or "").strip().splitlines() or ["no output"])[-1][:120])
             for l in users:
                 print("      %s" % l)
-    if not lmutil:
-        print("note: no lmutil given (LMUTIL=<path>); the Catapult 2026.1_1 install has only a"
-              " dangling link, so features are not listed. 'make catapult-probe PROBE=1' tests"
-              " the feature itself.")
+    if lmutil:
+        print("note: features listed by %s (Catapult features only). 'unsupported by licensed"
+              " server' means FlexLM cannot count them; 'make catapult-probe PROBE=1' tests a"
+              " checkout." % lmutil)
+    else:
+        print("note: no lmutil found; pass LMUTIL=<path> to list features.")
 
 
 def main():
@@ -230,7 +233,13 @@ def main():
     else:
         if args.lmutil and not os.access(args.lmutil, os.X_OK):
             sys.exit("catapult_env: lmutil %s is not executable" % args.lmutil)
-        check_license(args.lmutil)
+        lmutil = args.lmutil
+        if not lmutil:   # the lmutil of the install the launcher would use
+            inst = os.environ.get("CATAPULT_PATH_OVERRIDE") or os.path.join(
+                os.environ.get("CATAPULT_ROOT", CATAPULT_ROOT), os.environ.get("CATAPULT_VER", "2026.1_1"))
+            cand = os.path.join(inst, "Mgc_home", "bin", "lmutil")
+            lmutil = cand if os.access(cand, os.X_OK) else None
+        check_license(lmutil)
     if failed:
         print("\n%d check(s) failed: %s" % (len(failed), ", ".join(failed)))
         return 1
