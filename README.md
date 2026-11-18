@@ -40,10 +40,9 @@ automatically with `--resume-failed`, and archives results flat to the shared CF
 | Monitor jobs + resources | `make check-jobs`, `bash check_progress_resources.sh` |
 | Every target | `make help` |
 
-`make help` lists all targets. [`.claude/skills/README.md`](.claude/skills/README.md) maps
-each one to the agent skill that uses it and says what it changes (read-only, plan with a
-flag, or acts), which Python it needs and how long it takes. Do not use the old
-`slurm/examples/archive_run.sh`: with `--yes` it deletes the scratch run.
+`make help` lists all targets. [`.claude/skills/README.md`](.claude/skills/README.md) groups
+them by agent skill and says which ones change anything and which have been tested. Do not
+use the old `slurm/examples/archive_run.sh`: with `--yes` it deletes the scratch run.
 
 > **RF=1 with 128-neuron layers** requires longer wall time than the default `express_amsc` (6h).
 > Override with: `sbatch slurm/sweep.sh 45nm_sz128_2l --rf 1 --qos regular --time 1-22:00:00`
