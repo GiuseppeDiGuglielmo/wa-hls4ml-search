@@ -43,8 +43,8 @@ counts. Unless noted, the test run was `run_20260613_110449_079328c7`
 | `rerun-failed` | plans a rerun of designs with no QoR; `SUBMIT=1` submits it | no |
 | `design-synth` | plans a rerun of one design in a debug folder; `SUBMIT=1` submits it | no |
 
-`sweep-check`, `sweep`, `rerun-failed` and `design-synth` need the DSE venv, which
-is not installed yet.
+`sweep-check`, `sweep`, `rerun-failed` and `design-synth` need the DSE venv
+(installed 2026-11-17).
 
 ### check-runs
 

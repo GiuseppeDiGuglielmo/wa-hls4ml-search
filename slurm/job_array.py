@@ -100,7 +100,7 @@ def write_script(run_dir, joblist_path, total_licenses, lm_license_file,
     # their own venv without editing this code.
     venv_activate = os.environ.get(
         "WA_HLS4ML_VENV",
-        os.path.join(os.environ.get("SCRATCH", ""), "venv_hls4ml", "bin", "activate"),
+        "/global/common/software/amsc011/public/venv_hls4ml/bin/activate",
     )
 
     parallelism = getattr(args, 'slurm_parallelism', 1)

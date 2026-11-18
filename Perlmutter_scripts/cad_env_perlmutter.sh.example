@@ -3,15 +3,15 @@
 # Copy this template to ~/bin/cad_env_perlmutter.sh (catapult_shell.sh sources
 # it inside the container; the older name ~/bin/siemens.sh is still accepted):
 #   cp Perlmutter_scripts/cad_env_perlmutter.sh.example ~/bin/cad_env_perlmutter.sh
-# The defaults below assume Catapult 2026.1_1 is at:
-#   $SCRATCH/cad/Siemens/Catapult/2026.1_1/
-# (See QUICKSTART.md step 5 for the rsync command from correlator4.)
+# The defaults below use the amsc011 shared installs (see QUICKSTART.md step 3):
+#   /global/common/software/amsc011/public/Siemens/Catapult/<CATAPULT_VER>/
+# For sweeps the launcher sets the install path itself, overriding CATAPULT_PATH.
 
-export CATAPULT_VER=2026.1_1
+export CATAPULT_VER="${CATAPULT_VER:-2026.1_1}"
 export QUESTASIM_VER=2024.3_4
 
 # Override CATAPULT_PATH if your install lives elsewhere.
-export CATAPULT_PATH="${CATAPULT_PATH:-${SCRATCH:-$HOME}/cad/Siemens/Catapult/${CATAPULT_VER}}"
+export CATAPULT_PATH="${CATAPULT_PATH:-/global/common/software/amsc011/public/Siemens/Catapult/${CATAPULT_VER}}"
 export MGC_HOME="${CATAPULT_PATH}/Mgc_home"
 export CATAPULT_HOME="${MGC_HOME}"
 export SYSTEMC="${MGC_HOME}/shared"

@@ -25,6 +25,7 @@ import time
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 HOME = os.path.expanduser("~")
 SCRATCH = os.environ.get("SCRATCH", "")
+CATAPULT_ROOT = "/global/common/software/amsc011/public/Siemens/Catapult"
 PURGE_DAYS = 56          # Perlmutter scratch: files unread for 8 weeks may be purged
 LICENSE_JSON = os.path.join(REPO, "license_servers_perlmutter.json")
 SERVER_RE = re.compile(r"\b(\d+)@([A-Za-z0-9.\-]+)")
@@ -92,8 +93,30 @@ def tree_damage(root):
     return files, dangling, py, pyc
 
 
+def check_install(inst, used):
+    """Report one Catapult install: present, not purged, how recently read."""
+    tag = "catapult %s%s" % (os.path.basename(inst), " (used)" if used else "")
+    exe = os.path.join(inst, "Mgc_home", "bin", "catapult")
+    if not os.path.isfile(exe):
+        report("FAIL", tag, "%s not found" % exe)
+        return
+    files, dangling, _, _ = tree_damage(os.path.join(inst, "Mgc_home"))
+    if dangling > files or files < 5000:
+        report("FAIL", tag, "%d files, %d dangling links under Mgc_home: the install looks"
+               " purged; reinstall it, outside $SCRATCH if possible" % (files, dangling))
+        return
+    days = (time.time() - os.stat(exe).st_atime) / 86400.0
+    detail = "%s: %d files, %d dangling links, catapult last read %.0f days ago" % (inst, files, dangling, days)
+    if inst.startswith("/pscratch/"):
+        detail += "; on scratch, purged after %d days unread" % PURGE_DAYS
+        if days > PURGE_DAYS - 14:
+            report("WARN", tag, detail)
+            return
+    report("OK", tag, detail)
+
+
 def check_env():
-    venv = os.environ.get("WA_HLS4ML_VENV", os.path.join(SCRATCH, "venv_hls4ml", "bin", "activate"))
+    venv = os.environ.get("WA_HLS4ML_VENV", "/global/common/software/amsc011/public/venv_hls4ml/bin/activate")
     py = os.path.join(os.path.dirname(venv), "python")
     if not os.path.isfile(venv):
         report("FAIL", "venv", "%s not found" % venv)
@@ -130,24 +153,17 @@ def check_env():
     report("OK" if app else "FAIL", "apptainer", app or "not on PATH or CVMFS (try module load apptainer)")
 
     ver = os.environ.get("CATAPULT_VER", "2026.1_1")
-    inst = os.environ.get("CATAPULT_PATH_OVERRIDE", os.path.join(SCRATCH, "cad", "Siemens", "Catapult", ver))
-    exe = os.path.join(inst, "Mgc_home", "bin", "catapult")
-    if not os.path.isfile(exe):
-        report("FAIL", "catapult install", "%s not found" % exe)
+    if os.environ.get("CATAPULT_PATH_OVERRIDE"):
+        installs = [os.environ["CATAPULT_PATH_OVERRIDE"]]
     else:
-        files, dangling, _, _ = tree_damage(os.path.join(inst, "Mgc_home"))
-        if dangling > files or files < 5000:
-            report("FAIL", "catapult files", "%d files, %d dangling links under Mgc_home: the install looks"
-                   " purged; reinstall it (QUICKSTART step 5), outside $SCRATCH if possible" % (files, dangling))
-        else:
-            report("OK", "catapult files", "%d files, %d dangling links" % (files, dangling))
-        days = (time.time() - os.stat(exe).st_atime) / 86400.0
-        detail = "%s (catapult last read %.0f days ago)" % (inst, days)
-        if inst.startswith("/pscratch/") and days > PURGE_DAYS - 14:
-            report("WARN", "catapult install", detail + "; scratch purges after %d days unread" % PURGE_DAYS)
-        else:
-            report("OK", "catapult install", detail + ("; on scratch, purged after %d days unread"
-                                                        % PURGE_DAYS if inst.startswith("/pscratch/") else ""))
+        root = os.environ.get("CATAPULT_ROOT", CATAPULT_ROOT)
+        installs = sorted(d for d in glob.glob(os.path.join(root, "*")) if os.path.isdir(os.path.join(d, "Mgc_home")))
+        if os.path.join(root, ver) not in installs:
+            installs.append(os.path.join(root, ver))   # reported as missing
+    for inst in installs:
+        check_install(inst, os.path.basename(inst) == ver or len(installs) == 1)
+    if not os.environ.get("CATAPULT_PATH_OVERRIDE"):
+        report("OK", "catapult version", "CATAPULT_VER=%s is used (set CATAPULT_VER to pick another)" % ver)
 
     script = env_script()
     report("OK" if os.path.isfile(script) else "FAIL", "env script", script)

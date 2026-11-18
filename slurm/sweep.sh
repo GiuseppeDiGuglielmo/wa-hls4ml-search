@@ -51,7 +51,7 @@ REPO_DIR="${SLURM_SUBMIT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 CATALOG="${REPO_DIR}/slurm/sweeps.tsv"
 ARCHIVE_BASE="/global/cfs/cdirs/amsc011/shared/wa-hls4ml-catapult"
 BASE_FLOW_CFG="${REPO_DIR}/configs/catapult_flow/config_catapult_flow.json"
-VENV="${WA_HLS4ML_VENV:-${SCRATCH}/venv_hls4ml/bin/activate}"
+VENV="${WA_HLS4ML_VENV:-/global/common/software/amsc011/public/venv_hls4ml/bin/activate}"
 
 GROUP="${1:-}"
 [[ -n "$GROUP" && "$GROUP" != -* ]] || {

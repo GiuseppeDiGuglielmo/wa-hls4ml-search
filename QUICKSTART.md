@@ -12,13 +12,12 @@ synthesis arrays on Perlmutter.
 You need:
 
 1. **NERSC account in `amsc011`**: confirm with `id -nG | tr ' ' '\n' | grep amsc011`
-2. **FNAL Kerberos credentials** — you should be able to `kinit <user>@FNAL.GOV` and SSH to `correlator4.fnal.gov`
-3. **Perlmutter login access** — you can `ssh <user>@perlmutter.nersc.gov`
-4. **`~/bin/cad_env_perlmutter.sh`** on Perlmutter — per-user Catapult environment script (CATAPULT_VER, MGC_HOME, etc.; the older name `~/bin/siemens.sh` still works). Step 7 below copies the canonical template (`Perlmutter_scripts/cad_env_perlmutter.sh.example`) into place if you don't already have one.
+2. **Perlmutter login access** — you can `ssh <user>@perlmutter.nersc.gov`
+3. **`~/bin/cad_env_perlmutter.sh`** on Perlmutter — per-user Catapult environment script (CATAPULT_VER, MGC_HOME, etc.; the older name `~/bin/siemens.sh` still works). Step 5 below copies the canonical template (`Perlmutter_scripts/cad_env_perlmutter.sh.example`) into place if you don't already have one.
 
 ## One-time setup
 
-Do these steps once on Perlmutter. Estimated time: 30 minutes (mostly the rsync).
+Do these steps once on Perlmutter. Estimated time: 10 minutes.
 
 ### 1. Clone the repo with submodules
 
@@ -40,50 +39,26 @@ cp Perlmutter_scripts/.env.example Perlmutter_scripts/.env
 nano Perlmutter_scripts/.env
 ```
 
-### 3. Create your Python virtual environment
+### 3. Use the shared Catapult and Python installs
 
-Perlmutter's default Python does not support TF 2.11, so load the right module
-first:
+Nothing to install. Catapult and the Python environment are shared by the
+`amsc011` group under `/global/common/software/amsc011/public/`, outside
+`$SCRATCH` so the scratch purge cannot delete them:
 
-```bash
-module load python/3.10-24.1.0
-python3 --version  # should show 3.10.x
-python3 -m venv $SCRATCH/venv_hls4ml
-source $SCRATCH/venv_hls4ml/bin/activate
-pip install --upgrade pip
-pip install -r requirements.venv.txt
-```
+| What | Where | Chosen by |
+|---|---|---|
+| Catapult 2026.1_1 and 2026.3_1 | `Siemens/Catapult/<version>/` | `CATAPULT_VER` (default `2026.1_1`) |
+| DSE venv: TensorFlow 2.11, QKeras, hls4ml 0.8.1, ray | `venv_hls4ml/` | `WA_HLS4ML_VENV` (default: this one) |
 
-> **Custom venv path?** Set `WA_HLS4ML_VENV=/path/to/your/venv/bin/activate`
-> in your shell rc — the SLURM scripts will pick it up.
+Catapult's own hls4ml flow uses a second venv, `~/ccs_venv`, in your home
+directory. Catapult creates it the first time it runs (about 7.6 GB, so check
+your home quota with `showquota`). It cannot replace the DSE venv.
 
-### 4. Get a Kerberos ticket so you can reach correlator4
+To use another install, set `CATAPULT_PATH_OVERRIDE=/path/to/<version>` or
+`WA_HLS4ML_VENV=/path/to/venv/bin/activate`. To rebuild the shared ones, see
+"Rebuilding the shared installs" at the end.
 
-```bash
-KRB5_CONFIG=~/krb5.conf kinit <fnal_user>@FNAL.GOV
-# Enter your FNAL password when prompted
-klist  # verify the ticket
-```
-
-### 5. Rsync Catapult 2026.1_1 from correlator4 → your $SCRATCH (16 GB, ~10 min)
-
-The shared install at `/pscratch/sd/g/gdg/cad/Siemens/Catapult/2026.1_1`
-is owned `gdg:gdg` mode 0770 — not readable to amsc011 group members.
-Each user gets their own copy:
-
-```bash
-mkdir -p $SCRATCH/cad/Siemens/Catapult
-rsync -av --partial --info=progress2 \
-  -e "ssh -o GSSAPIAuthentication=yes -o GSSAPIDelegateCredentials=yes \
-        -o PreferredAuthentications=gssapi-with-mic" \
-  <fnal_user>@correlator4.fnal.gov:/data/Siemens/catapult/2026.1_1 \
-  $SCRATCH/cad/Siemens/Catapult/
-```
-
-> **Custom Catapult location?** Set `CATAPULT_PATH_OVERRIDE=/path/to/2026.1_1`
-> before running the SLURM scripts; default is `$SCRATCH/cad/Siemens/Catapult/2026.1_1`.
-
-### 6. Configure your license server
+### 4. Configure your license server
 
 ```bash
 cp license_servers_perlmutter.example.json license_servers_perlmutter.json
@@ -91,21 +66,21 @@ cp license_servers_perlmutter.example.json license_servers_perlmutter.json
 # (CatAIhls4ml_c feature). Edit if you need different config.
 ```
 
-### 7. Verify `~/bin/cad_env_perlmutter.sh` exists with `CATAPULT_VER=2026.1_1`
+### 5. Check `~/bin/cad_env_perlmutter.sh`
 
 ```bash
-grep CATAPULT_VER ~/bin/cad_env_perlmutter.sh
-# Expected: export CATAPULT_VER=2026.1_1
-# If missing or older, copy the template:
+ls ~/bin/cad_env_perlmutter.sh
+# If missing, copy the template:
 #   cp Perlmutter_scripts/cad_env_perlmutter.sh.example ~/bin/cad_env_perlmutter.sh
-# Then edit ~/bin/cad_env_perlmutter.sh if your install lives somewhere other than
-# $SCRATCH/cad/Siemens/Catapult/2026.1_1/.
 ```
 
-### 8. Verify the Apptainer container image (`catapult_rocky.sif`) is in place
+The launcher sets the Catapult path itself (step 3), so the path inside this
+script does not matter for sweeps.
+
+### 6. Verify the Apptainer container image (`catapult_rocky.sif`) is in place
 
 The container provides Rocky Linux 8 + the libraries Catapult depends on
-(it does NOT bundle Catapult itself — that's what step 5's rsync is for).
+(it does NOT bundle Catapult itself; the launcher mounts the shared install, step 3).
 The default expected location is `~/work/tool-containers/catapult_rocky.sif`.
 
 ```bash
@@ -181,7 +156,7 @@ you just lose the report-collection. To re-collect after the array finishes:
 
 ```bash
 cd $HOME/work/wa-hls4ml-search
-source $SCRATCH/venv_hls4ml/bin/activate
+source /global/common/software/amsc011/public/venv_hls4ml/bin/activate
 python iter_manager_catapult.py -o $SCRATCH/anywhere \
   --collect-slurm $SCRATCH/catapult_*/run_<timestamp>_<uuid>
 ```
@@ -194,13 +169,40 @@ any path works.)
 | Error | Cause | Fix |
 |---|---|---|
 | `mgls_errno = 515` | License server unreachable | Verify `nc -zv fasic-135413.fnal.gov 1717` works; check `license_servers_perlmutter.json` points there |
-| `command not found: catapult` | Wrong `CATAPULT_PATH_OVERRIDE` | Verify `$SCRATCH/cad/Siemens/Catapult/2026.1_1/Mgc_home/bin/catapult` exists; re-rsync if not |
+| `command not found: catapult` | Wrong `CATAPULT_VER` or `CATAPULT_PATH_OVERRIDE` | Run `make env-check`; it lists every install it finds |
 | `QOSGrpNodeLimit` (PENDING reason) | `express_amsc` is capped at 32 nodes group-wide | Wait for in-flight tasks (yours or other AmSC users') to finish |
-| `Permission denied (gssapi-with-mic)` | Missing/expired Kerberos ticket | `KRB5_CONFIG=~/krb5.conf kinit <user>@FNAL.GOV` |
 | `apptainer: chdir ...: no such file or directory` | Path symlink mismatch | `Perlmutter_scripts/catapult_shell.sh` already binds both `$HOME` and `$_HOME_REAL`; if it still fails check `readlink -f $HOME` |
-| `catapult: invalid argument: -shell` | Using Catapult 2025.4_1 with `-product genesis` | Make sure `~/bin/cad_env_perlmutter.sh` has `CATAPULT_VER=2026.1_1`; the `-product genesis` flag only works in 2026 |
+| `catapult: invalid argument: -shell` | Using Catapult 2025.4_1 with `-product genesis` | Use a 2026 version (`CATAPULT_VER=2026.1_1`); the `-product genesis` flag only works in 2026 |
 
 ## Going further
 
 - **`slurm/README.md`** — internal docs for the SLURM module + an index of every file the SLURM workflow touches
 - **`Perlmutter_scripts/perlmutter_slurm/README.md`** — reference SLURM tutorials (the submodule), great for learning SLURM patterns beyond this project
+
+## Rebuilding the shared installs
+
+Only needed if an install is missing or `make env-check` reports it broken. Run
+these on a login node: `/global/common` is read-only on compute nodes.
+
+**Catapult** (one folder per version), from the Siemens installers in
+`/global/common/software/amsc011/public/packages/`:
+
+```bash
+bash /global/common/software/amsc011/public/packages/install_linux64_catapult_<version>.bin
+# install into /global/common/software/amsc011/public/Siemens/Catapult/<version>
+```
+
+**DSE venv.** TensorFlow 2.11 needs Python 3.10, which NERSC no longer ships as a
+module, so conda installs it first:
+
+```bash
+P=/global/common/software/amsc011/public
+module load python
+conda create -y -p $P/python310 -c conda-forge --override-channels "python=3.10" pip
+$P/python310/bin/python3 -m venv $P/venv_hls4ml
+source $P/venv_hls4ml/bin/activate
+pip install --no-cache-dir --upgrade pip
+pip install --no-cache-dir -r requirements.venv.txt
+```
+
+Then run `make env-check`.

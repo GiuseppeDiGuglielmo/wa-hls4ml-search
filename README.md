@@ -16,8 +16,9 @@ parallel Catapult instances (300 total = all available licenses), retries failur
 automatically with `--resume-failed`, and archives results flat to the shared CFS directory.
 
 ### Prerequisites
-- Catapult 2026.1 installed under `$SCRATCH/cad/Siemens/Catapult/2026.1_1/`
-- `$SCRATCH/venv_hls4ml/` Python venv (or set `WA_HLS4ML_VENV`)
+- Catapult, shared under `/global/common/software/amsc011/public/Siemens/Catapult/<version>/`
+  (2026.1_1 and 2026.3_1; `CATAPULT_VER` picks one, default 2026.1_1)
+- The DSE Python venv, shared at `/global/common/software/amsc011/public/venv_hls4ml/` (or set `WA_HLS4ML_VENV`)
 - `license_servers_perlmutter.json` at repo root (copy from `.example`)
 
 ### Quick reference

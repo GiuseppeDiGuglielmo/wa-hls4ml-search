@@ -5,7 +5,7 @@
 #   grep -r BramFactor $SCRATCH/catapult_runs_bramtest/
 #
 # Run from repo root: bash slurm/examples/run_bram_test_large.sh
-source $SCRATCH/venv_hls4ml/bin/activate
+source "${WA_HLS4ML_VENV:-/global/common/software/amsc011/public/venv_hls4ml/bin/activate}"
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 source "${REPO_DIR}/slurm/examples/common/bram_test.sh"

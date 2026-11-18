@@ -125,7 +125,7 @@ def main():
     # sense on a whole node.
     memfree = "--memfree %s " % args.memfree if args.memfree not in ("", "0") and qos != "shared" else ""
     base = os.path.dirname(run)
-    venv = os.environ.get("WA_HLS4ML_VENV", os.path.join(os.environ.get("SCRATCH", ""), "venv_hls4ml", "bin", "activate"))
+    venv = os.environ.get("WA_HLS4ML_VENV", "/global/common/software/amsc011/public/venv_hls4ml/bin/activate")
     fields = dict(name=os.path.basename(base)[:40], cpus=2 * jobs if qos == "shared" else 256, mem=mem,
                   time=args.time, qos=qos, run=run, tag=args.tag, venv=venv, lic=licenses(), repo=REPO,
                   memfree=memfree, jobs=jobs, base=base,

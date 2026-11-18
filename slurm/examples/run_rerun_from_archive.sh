@@ -34,7 +34,7 @@ ORIG_ARCHIVE="$ARCHIVE/$ORIG_RUN"
 [ -d "$ORIG_ARCHIVE" ] || { echo "ERROR: $ORIG_ARCHIVE not found in archive" >&2; exit 1; }
 
 REPO_DIR="${SLURM_SUBMIT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
-VENV="${WA_HLS4ML_VENV:-${SCRATCH}/venv_hls4ml/bin/activate}"
+VENV="${WA_HLS4ML_VENV:-/global/common/software/amsc011/public/venv_hls4ml/bin/activate}"
 source "$VENV"
 
 LM_LICENSE_FILE=$(python3 -c "

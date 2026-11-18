@@ -78,7 +78,7 @@ def main():
     new_build = os.path.join(new_run, "build", args.stem)
     fields = line.split("\t")
     fields[0] = new_build
-    venv = os.environ.get("WA_HLS4ML_VENV", os.path.join(scratch, "venv_hls4ml", "bin", "activate"))
+    venv = os.environ.get("WA_HLS4ML_VENV", "/global/common/software/amsc011/public/venv_hls4ml/bin/activate")
     script = SCRIPT.format(stem=args.stem[:40], mem=args.mem, time=args.time, qos=args.qos, run=new_run,
                            venv=venv, lic=licenses(), repo=REPO, base=base)
     top = [n for n in os.listdir(src) if os.path.isfile(os.path.join(src, n))]

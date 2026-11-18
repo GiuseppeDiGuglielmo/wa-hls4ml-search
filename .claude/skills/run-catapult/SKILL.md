@@ -69,7 +69,10 @@ Each joblist line names `Perlmutter_scripts/catapult_shell.sh`. It runs
 `apptainer exec --contain` (Apptainer from CVMFS or the module) on
 `~/work/tool-containers/catapult_rocky.sif`, a Rocky Linux 8.10 image with the
 libraries Catapult needs. Catapult itself is not in the image: it is
-`$SCRATCH/cad/Siemens/Catapult/2026.1_1`, reached through the `/pscratch` bind.
+`/global/common/software/amsc011/public/Siemens/Catapult/$CATAPULT_VER`
+(2026.1_1 by default; 2026.3_1 also installed), bound read-only into the container.
+`CATAPULT_PATH_OVERRIDE` points at another install; it wins over the path in the
+env script.
 Inside, the launcher sources `~/bin/cad_env_perlmutter.sh` (older name
 `~/bin/siemens.sh`; `CAD_ENV_SCRIPT=` overrides), then re-exports `CATAPULT_PATH`
 and the license variables and runs `catapult -product genesis -shell`.
@@ -84,8 +87,15 @@ own server, which the launcher overrides.
 links) and the venv (Python reads `.pyc`, so `.py` sources looked unread and went).
 Symptoms: Catapult fails with `mgls_errno = 522` "License server does not support
 this feature (CatapultGenesis)" and `import tensorflow` fails. `make env-check`
-reports it. Reinstalling (QUICKSTART step 5 for Catapult, a new venv) is the
-user's call, preferably outside `$SCRATCH`.
+reports it. Both now live outside `$SCRATCH`, in `/global/common/software/amsc011/public`:
+Catapult per version, and the DSE venv `venv_hls4ml` (TensorFlow 2.11 needs Python
+3.10, installed with conda as `python310`). QUICKSTART's "Rebuilding the shared
+installs" has the commands; rebuilding is the user's call.
+
+**Two venvs.** The DSE venv (`WA_HLS4ML_VENV`) builds models and job lists outside
+the container. Catapult's own hls4ml flow uses `~/ccs_venv`, which Catapult creates
+and finds by itself; its Python comes from inside the 2026.1_1 install. One cannot
+replace the other (`~/ccs_venv` has no ray and TensorFlow 2.15).
 
 ## What a sweep does
 

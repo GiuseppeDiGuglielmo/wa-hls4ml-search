@@ -36,12 +36,12 @@ fi
 # CATAPULT_VER=... before invoking this script.
 export CATAPULT_VER="${CATAPULT_VER:-2026.1_1}"
 
-# Path to the Catapult install. The env script may default to a locked-down
-# /pscratch/sd/g/gdg/... path which is unreadable to non-`gdg` users; we
-# override to a per-user copy under $SCRATCH (each user must rsync their own
-# copy first — see QUICKSTART.md). Override with CATAPULT_PATH_OVERRIDE=...
-# if your install lives somewhere else.
-export CATAPULT_PATH_OVERRIDE="${CATAPULT_PATH_OVERRIDE:-${SCRATCH:-/pscratch/sd/${USER:0:1}/${USER}}/cad/Siemens/Catapult/${CATAPULT_VER}}"
+# Catapult installs, one folder per version, shared by the amsc011 project and
+# outside $SCRATCH so the purge cannot reach them. Override with CATAPULT_ROOT=...
+# for another tree, or CATAPULT_PATH_OVERRIDE=... for one install anywhere.
+# This path wins over CATAPULT_PATH from the env script.
+CATAPULT_ROOT="${CATAPULT_ROOT:-/global/common/software/amsc011/public/Siemens/Catapult}"
+export CATAPULT_PATH_OVERRIDE="${CATAPULT_PATH_OVERRIDE:-${CATAPULT_ROOT}/${CATAPULT_VER}}"
 
 # --env-setup picks which env script to source inside the container:
 #   siemens (default): ${HOME}/bin/cad_env_perlmutter.sh, else ${HOME}/bin/siemens.sh,
@@ -154,6 +154,9 @@ cmd=(
     --bind /tmp
     --bind "${WORK_DIR}"
     --bind /pscratch:/pscratch
+    # The folder holding every Catapult version, read-only: ~/ccs_venv (the venv
+    # Catapult's own hls4ml flow uses) runs a Python from inside an install.
+    --bind "$(dirname "${CATAPULT_PATH_OVERRIDE}"):$(dirname "${CATAPULT_PATH_OVERRIDE}"):ro"
     --bind /etc/group:/etc/group:ro
     --bind /etc/resolv.conf:/etc/resolv.conf:ro
     --bind /etc/hosts:/etc/hosts:ro
@@ -182,7 +185,7 @@ if [[ -n "${TOOL_CONTAINERS:-}" ]]; then
 fi
 
 # After sourcing the env script, re-export CATAPULT_PATH and derived vars so we
-# point at our local 2026.1_1 copy (the env script may hardcode a locked path).
+# point at the install chosen above (the env script may name another one).
 # Also re-export LM_LICENSE_FILE / SALT_LICENSE_SERVER (older siemens.sh prepends bad
 # 40003@localhost values that prevent license checkout).
 cmd+=(

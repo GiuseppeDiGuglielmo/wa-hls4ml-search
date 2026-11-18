@@ -5,7 +5,7 @@
 # is NOT the bottleneck; the QoS node-cap is.
 # Walltime 2h tuned for real models (~20-40 min each).
 # Run from repo root: bash slurm/examples/run_scale.sh
-source $SCRATCH/venv_hls4ml/bin/activate
+source "${WA_HLS4ML_VENV:-/global/common/software/amsc011/public/venv_hls4ml/bin/activate}"
 python iter_manager_catapult.py \
   -o $SCRATCH/catapult_scale                              $(: output directory) \
   --catapult_shell Perlmutter_scripts/catapult_shell.sh   $(: Apptainer wrapper that launches Catapult) \

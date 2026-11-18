@@ -58,8 +58,8 @@ The SLURM driver lives here, but it depends on a few sibling files. For a comple
 | `Perlmutter_scripts/perlmutter_slurm/` (submodule) | Reference SLURM tutorials (08_array_parallel_catapult is the same-design-N-times pattern; 07_array_parallel shows outer-array + inner-GNU-parallel for true 100-concurrent on the 32-node QoS cap) |
 | `~/bin/cad_env_perlmutter.sh` (per-user, NOT in repo; template `Perlmutter_scripts/cad_env_perlmutter.sh.example`) | Catapult environment setup (CATAPULT_VER, MGC_HOME, etc.) — sourced inside the container by catapult_shell.sh |
 | `license_servers_perlmutter.json` (gitignored, copy from .example) | Per-user license server config: `{"servers": [{"host": "fasic-135413.fnal.gov", "port": 1717, "licenses": 100}]}`. Drives both `LM_LICENSE_FILE` env var and the SLURM array `%total_licenses` throttle. |
-| `$SCRATCH/cad/Siemens/Catapult/2026.1_1/` (per-user) | The Catapult install. Each user rsyncs from correlator4:/data/Siemens/catapult/2026.1_1/ — see QUICKSTART.md. |
-| `$SCRATCH/venv_hls4ml/` (per-user, override with `WA_HLS4ML_VENV` env) | Python virtual env activated by each SLURM task before invoking iter_manager_catapult.py |
+| `/global/common/software/amsc011/public/Siemens/Catapult/<version>/` (shared, amsc011) | The Catapult installs. `CATAPULT_VER` picks one (default 2026.1_1); `CATAPULT_PATH_OVERRIDE` points at another. See QUICKSTART.md. |
+| `/global/common/software/amsc011/public/venv_hls4ml/` (shared, override with `WA_HLS4ML_VENV`) | DSE Python venv activated by each SLURM task before invoking iter_manager_catapult.py |
 
 ## How a single SLURM task flows
 
@@ -105,7 +105,7 @@ job_array.submit(args, run_dir, joblist_path, job_lines, total_licenses,
 
 ## Quick start
 
-See **`QUICKSTART.md` at the repo root** for the full new-user setup (Kerberos, rsync the Catapult install, venv, smoke test).
+See **`QUICKSTART.md` at the repo root** for the full new-user setup (shared installs, license file, container, smoke test).
 
 To run quickly once setup is done:
 ```bash

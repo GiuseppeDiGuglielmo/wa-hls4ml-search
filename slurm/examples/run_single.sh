@@ -2,7 +2,7 @@
 # 1-task smoke test. Verifies SLURM submission, license checkout, and
 # end-to-end synthesis with one real model in ~10-30 min wall-clock.
 # Run from repo root: bash slurm/examples/run_single.sh
-source $SCRATCH/venv_hls4ml/bin/activate
+source "${WA_HLS4ML_VENV:-/global/common/software/amsc011/public/venv_hls4ml/bin/activate}"
 python iter_manager_catapult.py \
   -o $SCRATCH/catapult_runs                               $(: output directory) \
   --catapult_shell Perlmutter_scripts/catapult_shell.sh   $(: Apptainer wrapper that launches Catapult) \

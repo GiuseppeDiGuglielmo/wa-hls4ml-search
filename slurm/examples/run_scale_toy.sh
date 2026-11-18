@@ -2,7 +2,7 @@
 # 100-task scale run with TOY models — license-stress test, fast iteration.
 # Use this to validate the full pipeline without long synthesis times.
 # Run from repo root: bash slurm/examples/run_scale_toy.sh
-source $SCRATCH/venv_hls4ml/bin/activate
+source "${WA_HLS4ML_VENV:-/global/common/software/amsc011/public/venv_hls4ml/bin/activate}"
 python iter_manager_catapult.py \
   -o $SCRATCH/catapult_scale_toy                              $(: output directory) \
   --catapult_shell Perlmutter_scripts/catapult_shell.sh       $(: Apptainer wrapper that launches Catapult) \
