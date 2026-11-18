@@ -47,7 +47,7 @@ What a target can change decides how freely it is run:
 | `archive-dry` | archive-run | read | nothing | scratch run folder | seconds |
 | `archive` | archive-run | **acts** | copies new and repaired designs **into the shared archive**; backs up the reports it replaces; never deletes | `archive-dry` first, no job writing the run | minutes |
 | `archive-verify` | archive-run | read | nothing | scratch run folder | ~20 s (`ALL=1`: MD5 of every tarball, longer) |
-| `scratch-clean` | archive-run | plan / `APPLY=1` | **deletes the scratch run folder**, including `build/` (every Catapult attempt; the archive does not keep it) | passes `archive-verify` itself; refuses otherwise | seconds to refuse; minutes to measure a large run |
+| `scratch-clean` | archive-run | plan / `APPLY=1` | **deletes the scratch run folder**, including `build/` (every Catapult attempt; the archive does not keep it) | passes `archive-verify` itself; refuses otherwise | seconds to refuse; ~10 min to measure a run with 2M files in `build/` |
 | `archive-index` | archive-run | plan / `APPLY=1` | appends missing runs to the **shared archive README**, after a backup | | instant |
 | `dataset-summary` | dataset | read | its cache, `~/.cache/wa-hls4ml/run_counts.json` | | ~10 s with `FAST=1`; seconds from cache, tens of minutes without |
 | `provenance-diff` | dataset | read | its cache (same file) | | seconds from cache |

@@ -73,6 +73,8 @@ def main():
         print("Not removing: scratch-only backups exist (%s); copy them somewhere or pass --drop-backups."
               % ", ".join(os.path.relpath(p, run_dir) for p in stale))
         return 1
+    print("Measuring size of every file under the run (build/ can hold millions; ~10 min for 2M)...")
+    sys.stdout.flush()
     total, newest, files = size_and_newest(run_dir)
     age_min = (time.time() - newest) / 60.0
     print("Size     %.1f GB in %d files; newest change %.0f min ago" % (total / 1e9, files, age_min))

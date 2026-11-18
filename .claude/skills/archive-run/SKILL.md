@@ -54,7 +54,8 @@ being written could be copied half-done and would then show up as "kept, differs
   keep. It runs archive-verify itself and refuses unless it passes; refuses paths
   that are not `$SCRATCH/catapult_*/run_*`, runs changed in the last hour, and runs
   with scratch-only `*_stale_*` backups (unless `--drop-backups` by hand). Without
-  APPLY=1 it only reports size. Never run APPLY=1 without the user's explicit yes
+  APPLY=1 it only reports size. Measuring takes ~10 min for a run with 2M files in
+  `build/` (2-layer sz128 RF=1: 3.3 TB on scratch vs 163 GB archived). Never run APPLY=1 without the user's explicit yes
   for that run, and say what build/ data will be lost.
 - `make archive-index [APPLY=1]`: archive runs whose ID the archive `README.md` does
   not mention, with measured design and good counts, as a markdown table. APPLY=1
