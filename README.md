@@ -32,9 +32,18 @@ automatically with `--resume-failed`, and archives results flat to the shared CF
 | GF22nm 1-layer cartesian | `sbatch slurm/sweep.sh gf22_1l_base` |
 | GF22nm N-layer LHS | `sbatch slurm/sweep.sh gf22_lhs_3l` |
 | Rehearse without submitting | `DRY_RUN=1 bash slurm/sweep.sh 3l_sz64_l3` |
-| Archive a completed run | `bash slurm/examples/archive_run.sh <RUN_DIR>` |
-| Check synthesis failures | `bash slurm/examples/check_failures.sh <RUN_DIR>` |
-| Monitor jobs + resources | `bash check_progress_resources.sh` |
+| Check the tool chain | `make env-check` |
+| Check a sweep without submitting | `make sweep-check GROUP=3l_sz64_l3 RF=1` |
+| How complete a run is | `make check-run RUN=<RUN_DIR>` |
+| Check synthesis failures | `make check-failed RUN=<RUN_DIR>`, `make why-failed RUN=<RUN_DIR>` |
+| Archive a completed run | `make archive-dry RUN=<RUN_DIR>`, then `make archive RUN=<RUN_DIR>` |
+| Monitor jobs + resources | `make check-jobs`, `bash check_progress_resources.sh` |
+| Every target | `make help` |
+
+`make help` lists all targets. [`.claude/skills/README.md`](.claude/skills/README.md) maps
+each one to the agent skill that uses it and says what it changes (read-only, plan with a
+flag, or acts), which Python it needs and how long it takes. Do not use the old
+`slurm/examples/archive_run.sh`: with `--yes` it deletes the scratch run.
 
 > **RF=1 with 128-neuron layers** requires longer wall time than the default `express_amsc` (6h).
 > Override with: `sbatch slurm/sweep.sh 45nm_sz128_2l --rf 1 --qos regular --time 1-22:00:00`
