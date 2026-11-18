@@ -37,6 +37,14 @@ report without them is a failed synthesis; reports and good designs differ. On
 2026-11-05 the archive held 142 runs (116 nangate45, 26 gf22fdx) and about 549k
 reports; measure again rather than reuse these numbers.
 
+Not every archived run is training data. Runs that PROVENANCE.md names only in its
+prose notes (shown as `see PROVENANCE note` in the group column) are excluded:
+legacy fixed-weight runs `run_20260504_205339_a5d590d6`, `run_20260505_145920_de8c3504`,
+`run_20260506_074423_a88bd7d9` (1,101 designs, generating commands not recorded), the
+superseded partial `run_20260507_143427_1450d680`, and four empty gf22fdx "ghost"
+runs from 2026-06-06. Check the notes before counting a run as training data. A
+failed design in an excluded run needs no rerun.
+
 ## Tools
 
 - `make dataset-summary [TECH=] [FAST=1]`: per archive run its catalog group/RF, reports,
@@ -47,7 +55,8 @@ reports; measure again rather than reuse these numbers.
 - `make provenance-diff [FAST=1]`: runs where PROVENANCE.md's design count differs
   from the archive's report count, runs with designs lacking QoR or with tarball and
   report counts that differ, runs marked partial that are complete, and archive runs
-  PROVENANCE does not list.
+  PROVENANCE does not list. Runs named only in its notes have no count to compare and
+  are checked for missing QoR and tarballs only. FAST=1 skips the QoR check.
 - `make check-list`, `make check-run RUN=<run name>`: from the check-runs skill, for
   one run.
 - `make archive-index`: from the archive-run skill, runs the README does not mention.

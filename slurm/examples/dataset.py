@@ -160,6 +160,21 @@ def cmd_provenance_diff(args):
         if notes:
             print("  %-30s %-22s %s" % (run, groups.get(run, ""), "; ".join(notes)))
             issues += 1
+    # Runs named only in PROVENANCE's prose notes (legacy, ghost, partial) have
+    # no design count to compare, but can still lack QoR or tarballs.
+    noted = [(t, n) for t, n, _ in runs if n in groups and n not in prov]
+    if noted:
+        print("  only in PROVENANCE notes (no design count to compare): %d run(s)" % len(noted))
+        for t, n in noted:
+            d = data[n]
+            notes = []
+            if d["good"] is not None and d["good"] != d["reports"]:
+                notes.append("%d without valid QoR" % (d["reports"] - d["good"]))
+            if d["tarballs"] != d["reports"]:
+                notes.append("%d tarballs vs %d reports" % (d["tarballs"], d["reports"]))
+            if notes:
+                print("    %-30s %s" % (n, "; ".join(notes)))
+                issues += 1
     unlisted = [(t, n) for t, n, _ in runs if n not in groups]
     if unlisted:
         print("  in the archive, not in PROVENANCE: %d run(s)" % len(unlisted))
