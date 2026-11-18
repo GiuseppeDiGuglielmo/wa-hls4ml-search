@@ -50,7 +50,7 @@ need_run  = @test -n "$(RUN)" || { echo 'usage: make $@ RUN=<scratch run_dir>$(1
 
 .PHONY: help env-check license-check catapult-probe \
         design-show design-synth \
-        check-jobs check-list check-run check-failed why-failed reparse rerun-failed sweep-check sweep \
+        check-jobs check-list check-run check-failed why-failed reparse rebuild-archived rerun-failed sweep-check sweep \
         archive-dry archive archive-verify scratch-clean archive-index \
         dataset-summary provenance-diff sweep-estimate
 
@@ -62,7 +62,7 @@ help:
 	@echo '(PROBE=1, SUBMIT=1, APPLY=1). Only sweep and archive act every time.'
 	@awk -F' [|] ' '/^## [a-z-]+ [|]/ { sub(/^## /, "", $$1); \
 	    row[$$1] = sprintf("  %-16s %-22s %s", $$1, $$2, $$3) } \
-	  END { n = split("run-catapult:tool chain, sweeps, repairs:env-check license-check catapult-probe sweep-estimate sweep-check sweep reparse rerun-failed design-synth;" \
+	  END { n = split("run-catapult:tool chain, sweeps, repairs:env-check license-check catapult-probe sweep-estimate sweep-check sweep reparse rebuild-archived rerun-failed design-synth;" \
 	                  "check-runs:status and failures:check-jobs check-list check-run check-failed why-failed design-show;" \
 	                  "archive-run:archive and scratch:archive-dry archive archive-verify scratch-clean archive-index;" \
 	                  "dataset:the archived dataset:dataset-summary provenance-diff", grp, ";"); \
@@ -154,6 +154,13 @@ why-failed:
 reparse:
 	$(call need_run, [APPLY=1])
 	@set -o pipefail; $(NERSC_PY) slurm/examples/reparse.py $(RUN) $(if $(APPLY),--apply --workers $(WORKERS)) 2>&1 | { grep -v ' - INFO - ' || true; }
+
+## rebuild-archived | RUN= [APPLY=1] | Plans a scratch folder for an archive-only run's failed designs. APPLY=1 builds it
+rebuild-archived:
+	@test -n "$(RUN)" || { echo 'usage: make rebuild-archived RUN=<archive run name> [APPLY=1]'; exit 2; }
+	@source "$${WA_HLS4ML_VENV:-/global/common/software/amsc011/public/venv_hls4ml/bin/activate}" && \
+	  TF_CPP_MIN_LOG_LEVEL=3 python slurm/examples/rebuild_from_archive.py $(RUN) $(if $(APPLY),--apply) 2>&1 \
+	  | grep -v -E 'distutils|Instructions for updating|Lambda fuctions'
 
 ## rerun-failed | RUN= [SUBMIT=1] | Plans a rerun of designs with no QoR. SUBMIT=1 submits it
 rerun-failed:

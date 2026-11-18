@@ -7,7 +7,7 @@ add no commands of their own, so a person and an agent get the same answer.
 
 | Skill | Use it to | Targets | Tested |
 |---|---|---|---|
-| [`run-catapult`](run-catapult/SKILL.md) | check the tool chain, plan and submit a sweep, repair a run | 9 | 2026-11-17, plans only |
+| [`run-catapult`](run-catapult/SKILL.md) | check the tool chain, plan and submit a sweep, repair a run | 10 | 2026-11-17, plans only |
 | [`check-runs`](check-runs/SKILL.md) | see how jobs and runs are doing, what failed and why | 6 | 2026-11-17 |
 | [`archive-run`](archive-run/SKILL.md) | copy a run to the shared archive, verify it, free scratch | 5 | 2026-11-17 |
 | [`dataset`](dataset/SKILL.md) | count the archived dataset and check its docs | 2 | 2026-11-17 |
@@ -40,6 +40,7 @@ counts. Unless noted, the test run was `run_20260613_110449_079328c7`
 | `sweep-check` | the sweep plan plus `sbatch --test-only` | yes |
 | `sweep` | **submits** a sweep (nodes, up to 300 licenses) | no |
 | `reparse` | lists reports whose QoR is in a retry folder; `APPLY=1` rewrites them | plan only |
+| `rebuild-archived` | plans a scratch folder for an archive-only run's failed designs; `APPLY=1` builds it | yes |
 | `rerun-failed` | plans a rerun of designs with no QoR; `SUBMIT=1` submits it | plan only |
 | `design-synth` | plans a rerun of one design in a debug folder; `SUBMIT=1` submits it | plan only |
 

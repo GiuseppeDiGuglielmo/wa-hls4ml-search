@@ -61,6 +61,13 @@ for a yes, then rerun with the flag.
   moved to `*_stale_<tag>/` so they are not skipped). Up to 8 designs go to `shared`
   with 24G each, more to a whole `express_amsc` node with `--memfree`. Run reparse
   first; rerun-failed skips designs reparse can fix.
+- `make rebuild-archived RUN=<archive run name> [APPLY=1]`: for a run that exists only
+  in the archive, recreates its original scratch folder (path from `source_dir.txt`)
+  with just the designs without QoR: `keras_model.h5` from a scratch run of the same
+  group at any RF, else `model[_<i>].json` + weights from a tarball of another RF;
+  `dataflow_config.json` from the base flow config with the catalog's overrides for
+  the RF (identical to what the sweep wrote, checked 2026-11-17). Refuses if the
+  folder exists. Then `make rerun-failed RUN=<that folder>`, and archive as usual.
 - `make design-synth RUN=<run_dir> STEM=<stem> [SUBMIT=1] [QOS= MEM= TIME=]`: one design
   again in a fresh `$SCRATCH/catapult_debug/run_*` (original untouched), under
   `/usr/bin/time -v`. Then `make design-show RUN=<debug run> STEM=<stem>`.
