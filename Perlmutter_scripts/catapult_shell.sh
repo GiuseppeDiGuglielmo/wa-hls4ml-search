@@ -36,6 +36,10 @@ fi
 # CATAPULT_VER=... before invoking this script.
 export CATAPULT_VER="${CATAPULT_VER:-2026.1_1}"
 
+# Catapult product, i.e. which license it asks for: genesis (CatapultGenesis,
+# the default) or ultra (CatapultUltra). Override with CATAPULT_PRODUCT=...
+CATAPULT_PRODUCT="${CATAPULT_PRODUCT:-genesis}"
+
 # Catapult installs, one folder per version, shared by the amsc011 project and
 # outside $SCRATCH so the purge cannot reach them. Override with CATAPULT_ROOT=...
 # for another tree, or CATAPULT_PATH_OVERRIDE=... for one install anywhere.
@@ -198,7 +202,7 @@ cmd+=(
         export PATH=\"\${CATAPULT_PATH}/Mgc_home/bin:\${PATH}\" && \
         export LM_LICENSE_FILE=\"\${LM_LICENSE_FILE_OVERRIDE:-\${LM_LICENSE_FILE}}\" && \
         export SALT_LICENSE_SERVER=\"\${SALT_LICENSE_SERVER_OVERRIDE:-\${SALT_LICENSE_SERVER}}\" && \
-        catapult -product genesis -shell ${CATAPULT_OPTS}"
+        catapult -product ${CATAPULT_PRODUCT} -shell ${CATAPULT_OPTS}"
 )
 
 if (( DRY_RUN == 1 )); then

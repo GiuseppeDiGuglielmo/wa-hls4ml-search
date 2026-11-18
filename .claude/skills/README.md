@@ -46,6 +46,7 @@ counts. Unless noted, the test run was `run_20260613_110449_079328c7`
 `sweep-check`, `sweep`, `rerun-failed` and `design-synth` need the DSE venv
 (installed 2026-11-17). Nothing was submitted. `PROBE=1` on 2026.1_1 failed with
 errno 522 on both license servers: the Genesis licenses have expired (see the skill).
+With `CATAPULT_PRODUCT=ultra` and `fasic-135413` it passed.
 
 Fixed in this round: `license-check` now lists features with the install's own
 `lmutil` (the new installs have a working one), Catapult features only;

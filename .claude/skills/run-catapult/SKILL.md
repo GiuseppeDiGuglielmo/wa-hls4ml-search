@@ -108,6 +108,13 @@ has `CatAIhls4ml_c` x5 to 2027-05-31 and no Genesis feature. June runs used
 `fasic-admin1` while it was valid. Renewal is for FNAL/Siemens; no sweep can run
 until then.
 
+**Ultra instead of Genesis.** `CATAPULT_PRODUCT=ultra` makes the launcher run
+`catapult -product ultra` (CatapultUltra license; default `genesis`). On 2026-11-17,
+with `LICENSES=1717@fasic-135413.fnal.gov`, `make catapult-probe PROBE=1` passed and
+`flow package require /HLS4ML` loaded. `fasic-135413` has only 5 `CatapultUltra_c`
+(to 2027-05-31), so at most 5 designs can run at once, and a full synthesis under
+ultra had not been tried yet.
+
 **Two venvs.** The DSE venv (`WA_HLS4ML_VENV`) builds models and job lists outside
 the container. Catapult's own hls4ml flow uses `~/ccs_venv`, which Catapult creates
 and finds by itself; its Python comes from inside the 2026.1_1 install. One cannot
