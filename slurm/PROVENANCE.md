@@ -238,6 +238,18 @@ them from the archive first; jobs ran with `make rerun-failed` on `express_amsc`
 
 `N_LAYERS=3` was supported by the old script but never run; there is no 3-layer sz128 data.
 
+## Group 8 — Catapult Ultra sweeps
+
+Run by `make sweep` after the Genesis licenses expired: `-product ultra`, Catapult
+2026.1_1, license `fasic-135413` (5 seats). Archive root: `nangate45/`.
+
+| Catalog group | RF | Archived run directory | Designs | Status |
+|---|---|---|---|---|
+| `demo_1l_20` | 1 | `run_20261119_083102_e5f26068` | 20 | ✅ |
+
+`demo_1l_20` is a 20-design demo of the sweep path (2026-11-19): 1 node x 5 slots
+on `express_amsc`, 4-5 min per design, 1.6 GB peak, no retries.
+
 ## Group 7 — kept, not archived
 
 🔧 **BramFactor smoke tests** — `slurm/legacy/run_bram_test_{small,medium,large,xl,xxl}.sh`
