@@ -6,7 +6,7 @@ One line per run ID:
     RUN  TECH  WHERE  GROUP  SOURCE
 
   WHERE   scratch, archive, or both
-  GROUP   catalog group and RF from slurm/examples/PROVENANCE.md, if listed there
+  GROUP   catalog group and RF from slurm/PROVENANCE.md, if listed there
           ("see PROVENANCE note" for ghost, legacy and partial runs)
   SOURCE  scratch folder the run lives in, or came from (archive source_dir.txt)
 
@@ -20,11 +20,10 @@ import os
 import re
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "slurm"))
-import site_config as site  # noqa: E402
+from slurm import site_config as site
 ARCHIVE, TECH_DIRS = site.ARCHIVE, site.TECH_DIRS
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-PROVENANCE = os.path.join(REPO, "slurm", "examples", "PROVENANCE.md")
+PROVENANCE = os.path.join(REPO, "slurm", "PROVENANCE.md")
 RUN_RE = re.compile(r"run_\d{8}_\d{6}_[0-9a-f]{8}")
 
 

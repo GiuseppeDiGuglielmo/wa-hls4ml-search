@@ -1,5 +1,5 @@
 {
-  "_doc": "Starting points, not decisions. Every value here is overridable per run (a flag, or a make variable of the same name). Pick per run from the facts: make check-jobs (queues), sweep-estimate (p90 memory per design), design-show (peak memory of one design), license-check (seats). Read through slurm/site_config.py default SECTION KEY. Site facts live in site.json.",
+  "_doc": "Starting points, not decisions. Every value here is overridable per run (a flag, or a make variable of the same name). Pick per run from the facts: make check-jobs (queues), sweep-estimate (p90 memory per design), design-show (peak memory of one design), license-check (seats). Read through slurm/defaults_config.py SECTION KEY. Site facts live in site.json.",
   "sweep": {
     "_doc": "synthesis nodes of slurm/sweep.sh: --qos --time --mem --memfree --nodes; slots per node default to min(seats / nodes, slots_per_node_max)",
     "qos": "express_amsc",

@@ -33,9 +33,10 @@ import tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
-sys.path.insert(0, HERE)
-from run_status import is_good, site  # noqa: E402
-from design_show import has_qor_attempt  # noqa: E402
+from slurm import defaults_config as defaults  # noqa: E402
+from slurm import site_config as site  # noqa: E402
+from slurm.tools.run_status import is_good  # noqa: E402
+from slurm.tools.design_show import has_qor_attempt  # noqa: E402
 
 SCRIPT = """#!/bin/bash
 #SBATCH --job-name=retry_{name}
@@ -79,7 +80,7 @@ def seats():
 
 def product():
     """Catapult product the launcher asks a license for (CATAPULT_PRODUCT)."""
-    return site.catapult_product()
+    return defaults.catapult_product()
 
 
 def main():
@@ -87,7 +88,7 @@ def main():
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("run_dir")
     ap.add_argument("--submit", action="store_true")
-    d = lambda k: site.default("rerun_failed", k)  # noqa: E731
+    d = lambda k: defaults.get("rerun_failed", k)  # noqa: E731
     ap.add_argument("--qos", default=d("qos"))
     ap.add_argument("--time", default=d("time"))
     ap.add_argument("--parallelism", type=int,

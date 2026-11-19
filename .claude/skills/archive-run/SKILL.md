@@ -25,7 +25,7 @@ the check-runs skill.
 
 ## What the tools do
 
-`slurm/examples/archive_sync.py` (behind both targets) compares one scratch run with
+`slurm/tools/archive_sync.py` (behind both targets) compares one scratch run with
 `/global/cfs/cdirs/amsc011/shared/wa-hls4ml-catapult/<tech>/<run name>/`. The tech
 folder is where the run is already archived, else the catalog tech of the group in
 a `catapult_<group>_rf<N>` folder name (`slurm/site.json` maps `gf22` to

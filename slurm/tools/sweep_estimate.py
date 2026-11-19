@@ -25,14 +25,13 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
-sys.path.insert(0, HERE)
-sys.path.insert(0, os.path.join(REPO, "slurm", "sweeplib"))
-from list_runs import PROVENANCE, collect, provenance_groups  # noqa: E402
-from design_show import attempts, attempt_facts  # noqa: E402
+from slurm import defaults_config as defaults  # noqa: E402
+from slurm.tools.list_runs import PROVENANCE, collect, provenance_groups  # noqa: E402
+from slurm.tools.design_show import attempts, attempt_facts  # noqa: E402
 
-from run_status import site  # noqa: E402
+from slurm import site_config as site  # noqa: E402
 NODE_GB = site.NODE_USABLE_GB   # usable per CPU node (slurm/site.json)
-SLOTS_MAX = site.default("sweep", "slots_per_node_max")  # sweep.sh's default cap per node
+SLOTS_MAX = defaults.get("sweep", "slots_per_node_max")  # sweep.sh's default cap per node
 
 
 def license_seats():
@@ -41,7 +40,7 @@ def license_seats():
 
 
 def design_count(group):
-    from sweep_spec import load_catalog
+    from slurm.sweeplib.sweep_spec import load_catalog
     spec = load_catalog(os.path.join(REPO, "slurm", "sweeps.tsv"))[group]
     mode = getattr(spec, "mode", "cartesian")
     if mode == "cartesian":

@@ -17,8 +17,7 @@ import re
 import sys
 import time
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from run_status import ARCHIVE, find_archive_run, is_good  # noqa: E402
+from slurm.tools.run_status import ARCHIVE, find_archive_run, is_good
 
 STEP_RE = re.compile(rb"Completed transformation '([^']+)'")
 PEAK_RE = re.compile(rb"peak memory usage (\d+)kB")

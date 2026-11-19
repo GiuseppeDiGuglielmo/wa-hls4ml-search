@@ -4,11 +4,11 @@ Used by iter_manager_catapult.py to add --slurm and friends to its parser.
 Defaults come from slurm/defaults.json (job_array); every one is a flag.
 """
 
-from slurm import site_config
+from slurm import defaults_config, site_config
 
 
 def _d(key):
-    return site_config.default("job_array", key)
+    return defaults_config.get("job_array", key)
 
 
 def add_slurm_args(parser):

@@ -24,8 +24,8 @@ import os
 import shutil
 import sys
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from run_status import ARCHIVE, TECH_DIRS, is_good, site  # noqa: E402
+from slurm import site_config as site
+from slurm.tools.run_status import ARCHIVE, TECH_DIRS, is_good
 
 
 def listing(directory, suffix):

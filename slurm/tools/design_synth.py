@@ -28,8 +28,9 @@ import uuid
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
-sys.path.insert(0, HERE)
-from rerun_failed import licenses, product, site  # noqa: E402
+from slurm import defaults_config as defaults  # noqa: E402
+from slurm import site_config as site  # noqa: E402
+from slurm.tools.rerun_failed import licenses, product  # noqa: E402
 
 SCRIPT = """#!/bin/bash
 #SBATCH --job-name=debug_{stem}
@@ -59,9 +60,9 @@ def main():
     ap.add_argument("run_dir")
     ap.add_argument("stem")
     ap.add_argument("--submit", action="store_true")
-    ap.add_argument("--qos", default=site.default("design_synth", "qos"))
-    ap.add_argument("--mem", default=site.default("design_synth", "mem"))
-    ap.add_argument("--time", default=site.default("design_synth", "time"))
+    ap.add_argument("--qos", default=defaults.get("design_synth", "qos"))
+    ap.add_argument("--mem", default=defaults.get("design_synth", "mem"))
+    ap.add_argument("--time", default=defaults.get("design_synth", "time"))
     args = ap.parse_args()
 
     run = os.path.abspath(args.run_dir.rstrip("/"))

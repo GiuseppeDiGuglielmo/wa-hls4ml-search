@@ -33,15 +33,16 @@ if [[ -f "${ENV_FILE}" ]]; then
 fi
 
 SITE_CONFIG="${SCRIPT_DIR}/../slurm/site_config.py"
+DEFAULTS_CONFIG="${SCRIPT_DIR}/../slurm/defaults_config.py"
 
 # Catapult version: the install folder under catapult_root. The default is in
 # slurm/defaults.json (catapult version); override with CATAPULT_VER=...
-export CATAPULT_VER="${CATAPULT_VER:-$(python3 "${SITE_CONFIG}" catapult-ver)}"
+export CATAPULT_VER="${CATAPULT_VER:-$(python3 "${DEFAULTS_CONFIG}" catapult-ver)}"
 
 # Catapult product, i.e. which license it asks for: ultra (CatapultUltra) or
 # genesis (CatapultGenesis). The default is in slurm/defaults.json (catapult
 # product); override with CATAPULT_PRODUCT=...
-CATAPULT_PRODUCT="${CATAPULT_PRODUCT:-$(python3 "${SITE_CONFIG}" catapult-product)}"
+CATAPULT_PRODUCT="${CATAPULT_PRODUCT:-$(python3 "${DEFAULTS_CONFIG}" catapult-product)}"
 
 # Catapult installs, one folder per version, shared by the amsc011 project and
 # outside $SCRATCH so the purge cannot reach them; slurm/site.json names the

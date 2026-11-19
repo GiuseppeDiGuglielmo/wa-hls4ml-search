@@ -20,13 +20,15 @@ common orders on one printable page for people (plain text, 94 columns).
 
 ## How the pieces split
 
-- **Tools** (`slurm/examples/`, behind the targets) measure facts and enforce
+- **Tools** (the `slurm.tools` package, behind the targets; run as
+  `python3 -m slurm.tools.<name>` from the repo root) measure facts and enforce
   the safety gates below. They do not diagnose or choose.
 - **Site facts** are in `slurm/site.json`, read through `slurm/site_config.py`.
-- **Defaults** are in `slurm/defaults.json`: starting points, every one a flag or
-  make variable. Choose per run from what the tools report.
+- **Defaults** are in `slurm/defaults.json`, read through
+  `slurm/defaults_config.py`: starting points, every one a flag or make
+  variable. Choose per run from what the tools report.
 - **Skills** hold durable facts, gates and hints. Dated history lives in
-  `slurm/examples/PROVENANCE.md` (the data) and the git log (the tools).
+  `slurm/PROVENANCE.md` (the data) and the git log (the tools).
 - **Repairs** for runs made under old conditions are in `slurm/repairs/`, with why
   each exists; pre-catalog launchers are in `slurm/legacy/`.
 
@@ -88,7 +90,7 @@ log of each tool says when and what was fixed.
 
 ## Which Python
 
-- **System `python3`**: check-runs, archive-run, dataset and `site_config.py`. No venv needed.
+- **System `python3`**: check-runs, archive-run, dataset, `site_config.py` and `defaults_config.py`. No venv needed.
 - **NERSC Python**: `reparse`, `sweep-estimate`.
 - **DSE venv** (`venv` in `site.json`, `WA_HLS4ML_VENV` overrides; from
   `requirements.venv.txt`): `sweep`, `sweep-check`, `rerun-failed`, `design-synth`.
@@ -102,13 +104,13 @@ replace the DSE venv.
 `slurm/site.json`: account, archive path and tech folders, DSE venv, Catapult
 install tree, license file name, usable node memory, express QOS names, scratch
 purge age. `slurm/site_config.py` reads it (`get KEY`, `venv`, `licenses`,
-`seats`, `techs`, `archive-dir TECH`, `tech RUN_DIR`, `default SECTION KEY`,
-`catapult-ver`, `catapult-product`). It holds no policy.
+`seats`, `techs`, `archive-dir TECH`, `tech RUN_DIR`). It holds no policy.
 
 `slurm/defaults.json`: starting points for QOS, time, memory, slots and retry
 rounds (sweep, sweep driver, rerun-failed, design-synth, orchestrate, the
-legacy job array) and the Catapult version and product. No script
-picks a value from the situation; choose per run from `check-jobs`,
+legacy job array) and the Catapult version and product, read by
+`slurm/defaults_config.py` (`SECTION KEY`, `catapult-ver`, `catapult-product`).
+No script picks a value from the situation; choose per run from `check-jobs`,
 `sweep-estimate`, `design-show` and the seat count.
 
 ## Keeping this page right

@@ -7,11 +7,13 @@ This directory contains the SLURM-specific code for running Catapult HLS synthes
 | Path | Purpose |
 |---|---|
 | `__init__.py` | Package marker + public API doc |
-| `site.json`, `site_config.py` | Site facts (account, archive and tech folders, venv, Catapult tree, license file, node memory) and their one reader. `site_config.py get KEY` / `venv` / `licenses` / `seats` / `techs` / `archive-dir TECH` / `tech RUN_DIR` for shell and make. |
+| `site.json`, `site_config.py` | Site facts (account, archive and tech folders, venv, Catapult tree, license file, node memory, express QOS names, scratch purge age) and their reader. `site_config.py get KEY` / `venv` / `licenses` / `seats` / `techs` / `archive-dir TECH` / `tech RUN_DIR` for shell and make. |
+| `defaults.json`, `defaults_config.py` | Job defaults (QOS, time, memory, slots, retry rounds, Catapult version and product): starting points every run may override, and their reader. `defaults_config.py SECTION KEY` / `catapult-ver` / `catapult-product`. |
 | `cli.py` | `add_slurm_args(parser)` — argparse group for `--slurm`, `--slurm-account`, `--slurm-time`, `--slurm-qos`, `--slurm-constraint`, `--collect-slurm` |
 | `job_array.py` | `write_script(...)` and `submit(...)` — render `job_array.sh` SBATCH script, `sbatch` it, poll `squeue` until done, check `sacct` for failures |
-| `examples/` | The tools behind the `make` targets (facts, gates, sweep helpers) |
-| `repairs/` | One-off repairs (`reparse`, `rebuild-archived`), each with why it exists; see its README |
+| `tools/` | The tools behind the `make` targets (facts, gates, sweep helpers); a package, run as `python3 -m slurm.tools.<name>` from the repo root |
+| `PROVENANCE.md` | Which run is which catalog group and RF, and how each was made |
+| `repairs/` | One-off repairs (`reparse`, `rebuild-archived`), each with why it exists; a package like `tools/`; see its README |
 | `legacy/run_single.sh` | 1-task smoke test (1 real model) |
 | `legacy/run_pilot.sh` | 5-task pilot (toy models, ~5 min) |
 | `legacy/run_scale.sh` | 100-task production run (real models, ~45 min wall-clock with the 32-node QoS cap) |
@@ -37,7 +39,7 @@ the catalog:
 | `sweeplib/enumerate_space.py` | Enumerates a group's designs without building models; the oracle behind the design-space check. |
 | `tests/check_design_space.py` | Asserts the catalog still describes exactly the archived design space. Run after touching `sweeps.tsv`. |
 
-### Tools (`examples/`)
+### Tools (`tools/`)
 
 | Script | Purpose |
 |---|---|

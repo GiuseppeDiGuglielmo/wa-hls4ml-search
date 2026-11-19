@@ -1,20 +1,17 @@
 #!/usr/bin/env python3
-"""Site facts and policy defaults for the Catapult sweeps: one reader for
-slurm/site.json (facts: paths, account, seats, node memory, tech folders), the
-license server file it names, and slurm/defaults.json (starting points for QOS,
-time, memory and slots, which every caller lets a run override).
+"""Site facts for the Catapult sweeps: the reader of slurm/site.json (paths,
+account, queues, seats, node memory, tech folders) and of the license server
+file it names. Choices (QOS, time, memory, slots, Catapult version) are in
+slurm/defaults.json, read by slurm/defaults_config.py.
 
 Runs with the system python3 (3.6) and the standard library only.
 
 Python:
-    sys.path.insert(0, <repo>/slurm); import site_config as site
+    from slurm import site_config as site     (run as python3 -m from the repo root)
     site.ARCHIVE, site.TECH_DIRS, site.venv(), site.licenses(), site.seats()
 
 Shell and make:
     site_config.py get KEY          one value from site.json (account, archive, ...)
-    site_config.py default SEC KEY  one default from defaults.json (sweep qos, ...)
-    site_config.py catapult-ver     Catapult install (CATAPULT_VER overrides)
-    site_config.py catapult-product Catapult product (CATAPULT_PRODUCT overrides)
     site_config.py techs            archive tech folders, space-separated
     site_config.py venv             venv activate script (WA_HLS4ML_VENV overrides)
     site_config.py licenses         port@host[:...] (WA_LICENSES overrides)
@@ -36,9 +33,6 @@ REPO = os.path.dirname(HERE)
 with open(os.path.join(HERE, "site.json")) as _f:
     SITE = json.load(_f)
 
-with open(os.path.join(HERE, "defaults.json")) as _f:
-    DEFAULTS = json.load(_f)
-
 ARCHIVE = SITE["archive"]
 TECH_MAP = {k: v for k, v in SITE["archive_tech_dirs"].items() if not k.startswith("_")}
 TECH_DIRS = tuple(TECH_MAP.values())
@@ -47,21 +41,6 @@ CATAPULT_ROOT = SITE["catapult_root"]
 NODE_USABLE_GB = float(SITE["node_usable_gb"])
 LICENSE_FILE = os.path.join(REPO, SITE["license_file"])
 CATALOG = os.path.join(HERE, "sweeps.tsv")
-
-
-def default(section, key):
-    """A starting point from defaults.json; callers let each run override it."""
-    return DEFAULTS[section][key]
-
-
-def catapult_ver():
-    """Catapult install to use: CATAPULT_VER, else the default."""
-    return os.environ.get("CATAPULT_VER") or default("catapult", "version")
-
-
-def catapult_product():
-    """Catapult product (license) to ask for: CATAPULT_PRODUCT, else the default."""
-    return os.environ.get("CATAPULT_PRODUCT") or default("catapult", "product")
 
 
 def venv():
@@ -131,12 +110,6 @@ def main(argv):
     if cmd == "get" and len(args) == 1:
         v = SITE[args[0]]
         print(" ".join(v) if isinstance(v, list) else v)
-    elif cmd == "default" and len(args) == 2:
-        print(default(*args))
-    elif cmd == "catapult-ver":
-        print(catapult_ver())
-    elif cmd == "catapult-product":
-        print(catapult_product())
     elif cmd == "techs":
         print(" ".join(TECH_DIRS))
     elif cmd == "venv":

@@ -27,9 +27,8 @@ import signal
 import subprocess
 import sys
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from run_status import is_good  # noqa: E402
-from design_show import attempts, attempt_facts  # noqa: E402
+from slurm.tools.run_status import is_good
+from slurm.tools.design_show import attempts, attempt_facts
 
 EXIT_RE = re.compile(r"Catapult exited with code (-?\d+)")
 OOM_RE = re.compile(r"Detected (\d+) oom_kill events in StepId=(\d+)")

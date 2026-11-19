@@ -520,7 +520,7 @@ interoperability:
         AmSC project account amsc011; QoS express_amsc (6h) or regular (48h).
       notes: >-
         Python venv at $SCRATCH/venv_hls4ml (hls4ml, QKeras, tensorflow, scipy).
-        Orchestration scripts: wa-hls4ml-search/slurm/examples/ on branch
+        Orchestration scripts: wa-hls4ml-search/slurm/tools/ on branch
         Catapult-ASIC-dev. License server: 300 Catapult seats (fasic-admin1.fnal.gov).
 
   dates:

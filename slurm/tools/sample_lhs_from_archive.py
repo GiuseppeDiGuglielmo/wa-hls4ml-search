@@ -6,7 +6,7 @@ vector per design, then uses LHS to select N representative designs.
 Output: a candidates file of   run_name<TAB>stem   lines.
 
 Usage:
-    python3 slurm/examples/sample_lhs_from_archive.py \
+    python3 -m slurm.tools.sample_lhs_from_archive \
         --layers 2 --n 5000 \
         [--seed 42] [--dry-run] \
         [--archive /path/to/nangate45] \
@@ -22,8 +22,7 @@ import re
 import sys
 from pathlib import Path
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "slurm"))
-import site_config as site  # noqa: E402
+from slurm import site_config as site  # noqa: E402
 
 ARCHIVE_DEFAULT = os.path.join(site.ARCHIVE, site.TECH_MAP["nangate45"])
 OUT_TEMPLATE    = os.path.join(site.ARCHIVE, site.TECH_MAP["gf22"], "gf22_lhs_{layers}layer_{n}.txt")

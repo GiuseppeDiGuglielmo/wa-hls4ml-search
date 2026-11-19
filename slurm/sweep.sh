@@ -65,7 +65,7 @@ GROUP="${1:-}"
 }
 shift
 
-dflt() { $SITE default sweep "$1"; }
+dflt() { python3 "${REPO_DIR}/slurm/defaults_config.py" sweep "$1"; }
 RF_LIST=""; N_NODES=$(dflt nodes); PARALLELISM=""; MEM_PER_NODE=$(dflt mem); MEMFREE=$(dflt memfree)
 SLURM_QOS_SYNTH=$(dflt qos); SLURM_TIME=$(dflt time); SLOTS_MAX=$(dflt slots_per_node_max)
 N_LHS=""; EXCLUDE=""; CANDIDATES_OVERRIDE=""; LIST_ONLY=0; CHECK_ONLY=0
@@ -184,7 +184,7 @@ if [[ "$MODE" != "cartesian" ]]; then
         if [[ "$MODE" == "archive_lhs" ]]; then
             exclude_arg=()
             [[ -n "$EXCLUDE" ]] && exclude_arg=(--exclude "${ARCHIVE_BASE}/${EXCLUDE}")
-            python3 "${REPO_DIR}/slurm/examples/sample_lhs_from_archive.py" \
+            PYTHONPATH="${REPO_DIR}" python3 -m slurm.tools.sample_lhs_from_archive \
                 --layers "$(read_field n_layers)" --n "${N_LHS:-5000}" \
                 "${exclude_arg[@]}" --out "$CANDIDATES"
         else

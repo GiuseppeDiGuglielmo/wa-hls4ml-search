@@ -17,7 +17,7 @@ that fits inside the already-synthesised <=64 cartesian. They produce different
 sequences, so merging them would change the archived candidate lists.
 
 The fourth mode, `archive_lhs`, samples the 45nm archive for re-synthesis in
-GF22 and lives in slurm/examples/sample_lhs_from_archive.py, which emits
+GF22 and lives in slurm/tools/sample_lhs_from_archive.py, which emits
 (run_name, stem) pairs rather than architectures.
 
 Usage:
@@ -169,7 +169,7 @@ def generate(spec, n_lhs=None):
         return format_candidates(ordered, n_layers, "dense_%dl_sz128")
     if spec.mode == "archive_lhs":
         raise SystemExit(
-            "%s: archive_lhs candidates come from slurm/examples/sample_lhs_from_archive.py "
+            "%s: archive_lhs candidates come from slurm/tools/sample_lhs_from_archive.py "
             "(they are (run, stem) pairs, not architectures)" % spec.group)
     raise ValueError("%s: mode %r has no candidates generator" % (spec.group, spec.mode))
 

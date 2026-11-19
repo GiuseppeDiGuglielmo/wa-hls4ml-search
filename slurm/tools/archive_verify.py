@@ -19,9 +19,7 @@ import os
 import random
 import sys
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, HERE)
-from run_status import ARCHIVE, TECH_DIRS, is_good  # noqa: E402
+from slurm.tools.run_status import ARCHIVE, TECH_DIRS, is_good
 
 
 def md5(path, block=1 << 22):

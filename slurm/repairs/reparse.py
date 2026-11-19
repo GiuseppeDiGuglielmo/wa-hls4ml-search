@@ -27,11 +27,8 @@ import sys
 import types
 from multiprocessing import Pool
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-REPO = os.path.dirname(os.path.dirname(HERE))
-sys.path.insert(0, os.path.join(REPO, "slurm", "examples"))
-from run_status import is_good  # noqa: E402
-from design_show import has_qor_attempt  # noqa: E402
+from slurm.tools.run_status import is_good  # noqa: E402
+from slurm.tools.design_show import has_qor_attempt  # noqa: E402
 
 im = None  # iter_manager_catapult, imported lazily with stubs
 
@@ -42,7 +39,6 @@ def load_pipeline():
         sys.modules.setdefault(name, types.ModuleType(name))
     sys.modules["tensorflow.keras.models"].model_from_json = None
     sys.modules["qkeras.utils"]._add_supported_quantized_objects = None
-    sys.path.insert(0, REPO)
     import iter_manager_catapult  # noqa: E402
     im = iter_manager_catapult
 

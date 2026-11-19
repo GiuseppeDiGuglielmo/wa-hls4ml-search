@@ -135,7 +135,7 @@ run_group() {
     fi
 
     local tar_dir="${RUN_DIR}/tarballs"
-    local max_rounds="${MAX_ROUNDS:-$(python3 "${REPO_DIR}/slurm/site_config.py" default orchestrate max_rounds)}"
+    local max_rounds="${MAX_ROUNDS:-$(python3 "${REPO_DIR}/slurm/defaults_config.py" orchestrate max_rounds)}"
     local round=0 done_count prev jids=() all_jids=() stop=complete
 
     for script in "${scripts[@]}"; do jids+=("$(sbatch --parsable "$script")"); done
@@ -174,7 +174,7 @@ run_group() {
         return 1; }
     echo "  Archiving ${GROUP} rf${RF} to ${archive_tech} (copy only; scratch is kept) ..."
     local archive_rc=0
-    python3 "${REPO_DIR}/slurm/examples/archive_sync.py" "${RUN_DIR}" --tech "${archive_tech}" --apply \
+    PYTHONPATH="${REPO_DIR}" python3 -m slurm.tools.archive_sync "${RUN_DIR}" --tech "${archive_tech}" --apply \
         || archive_rc=$?
     write_summary "$total" "$done_count" "$round" "$max_rounds" "$stop" "$archive_rc" "${all_jids[@]}"
     echo "  Done: ${GROUP} rf${RF} (summary: ${RUN_DIR}/sweep_summary.tsv)."

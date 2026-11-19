@@ -46,7 +46,7 @@ first, then a plan the user approves, then the action.
 
 Groups and their design spaces are rows of `slurm/sweeps.tsv`
 (`bash slurm/sweep.sh <group> --list`). Never edit an existing row: stems are indices
-into it (see `slurm/examples/PROVENANCE.md`).
+into it (see `slurm/PROVENANCE.md`).
 
 ## Repairing a run
 
@@ -91,13 +91,14 @@ Each joblist line names `Perlmutter_scripts/catapult_shell.sh`. It runs
 `~/work/tool-containers/catapult_rocky.sif`, a Rocky Linux 8.10 image with the
 libraries Catapult needs. Catapult itself is not in the image: it is
 `/global/common/software/amsc011/public/Siemens/Catapult/$CATAPULT_VER`
-(2026.1_1 by default; 2026.3_1 also installed), bound read-only into the container.
+(default: `catapult version` in `slurm/defaults.json`; `make env-check` lists the
+installed versions), bound read-only into the container.
 `CATAPULT_PATH_OVERRIDE` points at another install; it wins over the path in the
 env script.
 Inside, the launcher sources `~/bin/cad_env_perlmutter.sh` (older name
 `~/bin/siemens.sh`; `CAD_ENV_SCRIPT=` overrides), then re-exports `CATAPULT_PATH`
-and the license variables and runs `catapult -product ultra -shell`
-(`CATAPULT_PRODUCT=genesis` for Genesis).
+and the license variables and runs `catapult -product <product> -shell` (default:
+`catapult product` in `slurm/defaults.json`; `CATAPULT_PRODUCT=` overrides).
 `Correlator4_scripts/` is the Fermilab variant, not used here.
 
 Licenses: sweeps and `catapult-probe PROBE=1` take `LM_LICENSE_FILE` from

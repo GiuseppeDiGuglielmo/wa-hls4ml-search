@@ -24,8 +24,7 @@ import json
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "slurm"))
-import site_config as site  # noqa: E402
+from slurm import site_config as site
 ARCHIVE, TECH_DIRS = site.ARCHIVE, site.TECH_DIRS
 REQUIRED_METRICS = ("total_area", "latency_cycles", "thruput_cycles")
 

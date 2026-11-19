@@ -26,7 +26,7 @@ Read-only. Measure; don't quote the documents.
 
 Stems are `dense_<N>l_<index>`, the index into the catalog row's design space, so a
 design is identified by (run, stem); the same stem in another run is another RF or
-tech. The catalog is `slurm/sweeps.tsv`; `slurm/examples/PROVENANCE.md` maps each
+tech. The catalog is `slurm/sweeps.tsv`; `slurm/PROVENANCE.md` maps each
 group and RF to its archived run and design count.
 
 ## What counts

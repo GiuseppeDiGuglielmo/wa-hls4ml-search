@@ -20,9 +20,7 @@ import shutil
 import sys
 import time
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, HERE)
-from archive_verify import verify  # noqa: E402
+from slurm.tools.archive_verify import verify  # noqa: E402
 
 import re  # noqa: E402
 

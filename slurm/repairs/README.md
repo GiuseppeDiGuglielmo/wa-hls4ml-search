@@ -9,7 +9,7 @@ does not need them. Each one plans by default and writes only with `--apply`.
 | `rebuild_from_archive.py` | `make rebuild-archived RUN=<name> [APPLY=1]` | The archive keeps reports and tarballs, not the model or flow config a rerun needs. For a run whose scratch folder was purged it rebuilds both for the failed designs, so `rerun-failed` works on it. | When no archived run has failed designs worth rerunning. |
 
 `rerun-failed` and `design-synth` are not repairs: they are part of normal
-operation and stay in `slurm/examples/`.
+operation and stay in `slurm/tools/`.
 
 Removed 2026-11-18: `run_rerun_from_archive.sh` (superseded by
 `rebuild-archived` + `rerun-failed`; it deleted the scratch run's files unless

@@ -34,7 +34,7 @@ counts by the dataset skill.
   `mlp-<N>layer/` folders hold symlinks grouping runs by depth; `README.md` there is the
   run inventory.
 - **In this repo:** `slurm/sweeps.tsv` is the catalog of sweep groups
-  (`bash slurm/sweep.sh <group> --list` prints one), and `slurm/examples/PROVENANCE.md`
+  (`bash slurm/sweep.sh <group> --list` prints one), and `slurm/PROVENANCE.md`
   maps each group and RF to its archived run directory and design count. Both are
   hand-maintained and can be stale: their counts are archived reports, which is not the
   same as good designs, and they don't reflect scratch. Measure; don't quote them.
@@ -80,7 +80,7 @@ Run from the repo root. All read-only; use whichever fit, in any order.
   directory; a `catapult_*` folder reports every `run_*` inside it; a bare run name or
   archive path reports the archive only. A rerun folder
   is measured against its `joblist_rerun*.txt`. It reads every JSON: seconds on scratch,
-  up to a few minutes for a large archive run on CFS. `python3 slurm/examples/run_status.py <run> --list-failed`
+  up to a few minutes for a large archive run on CFS. `python3 -m slurm.tools.run_status <run> --list-failed`
   prints failed stems.
 - `make check-run RUN=<run> DETAILS=1`: the same, then every design behind each
   count: no report, no valid QoR, no tarball (on scratch; tarballs only in the

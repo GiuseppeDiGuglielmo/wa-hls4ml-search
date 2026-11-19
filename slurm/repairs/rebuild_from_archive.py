@@ -32,15 +32,12 @@ import tarfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
-sys.path.insert(0, os.path.join(REPO, "slurm", "examples"))
-sys.path.insert(0, REPO)
-sys.path.insert(0, os.path.join(REPO, "slurm", "sweeplib"))
 
-from list_runs import provenance_groups, PROVENANCE, ARCHIVE  # noqa: E402
-from run_status import is_good  # noqa: E402
+from slurm.tools.list_runs import provenance_groups, PROVENANCE, ARCHIVE  # noqa: E402
+from slurm.tools.run_status import is_good  # noqa: E402
 
 FLOW_CFG = os.path.join(REPO, "configs", "catapult_flow", "config_catapult_flow.json")
-from run_status import TECH_DIRS  # noqa: E402
+from slurm.tools.run_status import TECH_DIRS  # noqa: E402
 
 
 def find_archive_run(name):
@@ -166,7 +163,7 @@ def main():
     if missing:
         sys.exit("rebuild_from_archive: no model for %s" % ", ".join(missing))
 
-    from sweep_spec import load_catalog
+    from slurm.sweeplib.sweep_spec import load_catalog
     from util.catapult_dataflow_config import CatapultDataflowConfig
     spec = load_catalog(os.path.join(REPO, "slurm", "sweeps.tsv"))[group]
     base = CatapultDataflowConfig.load_json(FLOW_CFG).override(**spec.flow_overrides(rf))

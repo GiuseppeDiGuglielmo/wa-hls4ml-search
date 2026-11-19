@@ -3,7 +3,7 @@
 
     dataset.py summary  [--tech T] [--fast]   reports and good designs per run, by
                                               tech and catalog group (read-only)
-    dataset.py provenance-diff [--fast]       runs where slurm/examples/PROVENANCE.md
+    dataset.py provenance-diff [--fast]       runs where slurm/PROVENANCE.md
                                               disagrees with the archive (read-only)
     dataset.py index [--apply]                archive runs missing from the archive
                                               README.md; --apply appends them there
@@ -26,10 +26,8 @@ import re
 import shutil
 import sys
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, HERE)
-from run_status import ARCHIVE, TECH_DIRS, is_good  # noqa: E402
-from list_runs import PROVENANCE, RUN_RE, provenance_groups  # noqa: E402
+from slurm.tools.run_status import ARCHIVE, TECH_DIRS, is_good
+from slurm.tools.list_runs import PROVENANCE, RUN_RE, provenance_groups
 
 CACHE = os.path.join(os.path.expanduser("~"), ".cache", "wa-hls4ml", "run_counts.json")
 README = os.path.join(ARCHIVE, "README.md")
