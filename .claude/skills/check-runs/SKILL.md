@@ -35,8 +35,9 @@ counts by the dataset skill.
   run inventory.
 - **In this repo:** `slurm/sweeps.tsv` is the catalog of sweep groups
   (`bash slurm/sweep.sh <group> --list` prints one), and `slurm/PROVENANCE.md`
-  maps each group and RF to its archived run directory and design count. Both are
-  hand-maintained and can be stale: their counts are archived reports, which is not the
+  maps each group and RF to its archived run directory and design count, and how each
+  was made. Both are hand-maintained and can be stale (`make provenance-diff` lists
+  archive runs PROVENANCE.md does not record yet): their counts are archived reports, which is not the
   same as good designs, and they don't reflect scratch. Measure; don't quote them.
 
 ## What "done" means
@@ -68,7 +69,8 @@ Run from the repo root. All read-only; use whichever fit, in any order.
 - `make check-list [TECH=nangate45|gf22fdx] [WHERE=scratch|archive|both] [GREP=text]`
   (GREP is case-insensitive):
   every run ID on scratch and in the archive, with its catalog group and RF (from
-  PROVENANCE.md) and the scratch folder it lives in or came from. `WHERE` filters on
+  PROVENANCE.md, else the `catapult_<group>_rf<N>` folder the sweep wrote, so a new
+  run is known before anyone records it) and the scratch folder it lives in or came from. `WHERE` filters on
   the WHERE column, so `scratch` means only on scratch (not archived) and `both` means
   on scratch and archived; leave it out to see every run. Use it to go from a
   group to run IDs, or from a run ID to its group.

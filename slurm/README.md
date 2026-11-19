@@ -12,7 +12,7 @@ This directory contains the SLURM-specific code for running Catapult HLS synthes
 | `cli.py` | `add_slurm_args(parser)` — argparse group for `--slurm`, `--slurm-account`, `--slurm-time`, `--slurm-qos`, `--slurm-constraint`, `--collect-slurm` |
 | `job_array.py` | `write_script(...)` and `submit(...)` — render `job_array.sh` SBATCH script, `sbatch` it, poll `squeue` until done, check `sacct` for failures |
 | `tools/` | The tools behind the `make` targets (facts, gates, sweep helpers); a package, run as `python3 -m slurm.tools.<name>` from the repo root |
-| `PROVENANCE.md` | Which run is which catalog group and RF, and how each was made |
+| `PROVENANCE.md` | Which run is which catalog group and RF, and how each was made. Tools take the group from it, else from the `catapult_<group>_rf<N>` folder a sweep writes (`site_config.py group`) |
 | `repairs/` | One-off repairs (`reparse`, `rebuild-archived`), each with why it exists; a package like `tools/`; see its README |
 | `legacy/run_single.sh` | 1-task smoke test (1 real model) |
 | `legacy/run_pilot.sh` | 5-task pilot (toy models, ~5 min) |

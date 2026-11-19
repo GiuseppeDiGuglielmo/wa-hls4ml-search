@@ -14,7 +14,7 @@ check-run, archive-dry and archive work on it unchanged.
   tarball in an archived run of the same group at another RF. The model does not
   depend on the RF.
 - flow config: configs/catapult_flow/config_catapult_flow.json with the catalog's
-  overrides for the run's group and RF (from PROVENANCE.md), as a sweep makes it.
+  overrides for the run's group and RF (PROVENANCE.md, else the source folder), as a sweep makes it.
 
 Without --apply it prints the plan and writes nothing. It refuses to write into a
 scratch folder that already exists. Needs the DSE venv (TensorFlow, QKeras).
@@ -33,7 +33,7 @@ import tarfile
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
 
-from slurm.tools.list_runs import provenance_groups, PROVENANCE, ARCHIVE  # noqa: E402
+from slurm.tools.list_runs import ARCHIVE, run_groups  # noqa: E402
 from slurm.tools.run_status import is_good  # noqa: E402
 
 FLOW_CFG = os.path.join(REPO, "configs", "catapult_flow", "config_catapult_flow.json")
@@ -135,10 +135,11 @@ def main():
     tech, arch = find_archive_run(name)
     source = open(os.path.join(arch, "source_dir.txt")).read().strip()
     prefix, rf = group_folder(source)
-    label = provenance_groups(PROVENANCE).get(name, "")
+    label = run_groups({name: os.path.basename(os.path.dirname(source.rstrip("/")))}).get(name, "")
     m = re.match(r"(\S+) rf(\d+)$", label)
     if not m or int(m.group(2)) != rf:
-        sys.exit("rebuild_from_archive: PROVENANCE.md group for %s is %r; need '<group> rf%d'" % (name, label, rf))
+        sys.exit("rebuild_from_archive: group for %s is %r (PROVENANCE.md or the source folder); "
+                 "need '<group> rf%d'" % (name, label, rf))
     group = m.group(1)
 
     if args.stems:

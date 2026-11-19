@@ -27,7 +27,7 @@ import shutil
 import sys
 
 from slurm.tools.run_status import ARCHIVE, TECH_DIRS, is_good
-from slurm.tools.list_runs import PROVENANCE, RUN_RE, provenance_groups
+from slurm.tools.list_runs import PROVENANCE, RUN_RE, provenance_groups, read_source, run_groups
 
 CACHE = os.path.join(os.path.expanduser("~"), ".cache", "wa-hls4ml", "run_counts.json")
 README = os.path.join(ARCHIVE, "README.md")
@@ -59,6 +59,11 @@ def archive_runs(tech=None):
             if RUN_RE.fullmatch(n) and os.path.isdir(os.path.join(base, n)):
                 out.append((t, n, os.path.join(base, n)))
     return out
+
+
+def groups_of(runs):
+    """{run: 'group rfN'} for archive_runs() entries (see list_runs.run_groups)."""
+    return run_groups({n: read_source(p) for _, n, p in runs})
 
 
 def measure(runs, fast):
@@ -114,9 +119,9 @@ def provenance_counts(path):
 def cmd_summary(args):
     runs = archive_runs(args.tech)
     data = measure(runs, args.fast)
-    groups = provenance_groups(PROVENANCE)
+    groups = groups_of(runs)
     fmt = "%-10s %-30s %-24s %8s %8s %8s"
-    print(fmt % ("TECH", "RUN", "GROUP (PROVENANCE)", "REPORTS", "GOOD", "TARBALLS"))
+    print(fmt % ("TECH", "RUN", "GROUP", "REPORTS", "GOOD", "TARBALLS"))
     tot = collections.defaultdict(lambda: [0, 0, 0])
     for tech, name, _ in runs:
         d = data[name]
@@ -192,10 +197,10 @@ def cmd_index(args):
         print("Every archive run is mentioned.")
         return 0
     data = measure(runs, False)
-    groups = provenance_groups(PROVENANCE)
+    groups = groups_of(runs)
     lines = ["", "## Runs not yet described (listed by make archive-index, %s)" % datetime.date.today(),
              "", "Counts measured from the run folders; good = positive QoR in the report.", "",
-             "| Tech | Run directory | Catalog group (PROVENANCE.md) | Designs | Good |",
+             "| Tech | Run directory | Catalog group | Designs | Good |",
              "|---|---|---|---|---|"]
     for t, n, _ in runs:
         d = data[n]

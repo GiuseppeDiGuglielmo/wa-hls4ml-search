@@ -18,6 +18,7 @@ Shell and make:
     site_config.py seats            license seats listed in the license file
     site_config.py archive-dir TECH archive folder for a catalog tech (gf22 -> gf22fdx)
     site_config.py tech RUN_DIR     archive folder for a run, or exit 1 with the reason
+    site_config.py group FOLDER     catalog group and RF of a catapult_<group>_rf<N> folder
 
 Named site_config, not site, so it never shadows Python's own site module.
 """
@@ -82,6 +83,16 @@ def catalog_techs():
     return out
 
 
+def group_of_folder(folder):
+    """(catalog group, RF) for a sweep folder named catapult_<group>_rf<N>, or
+    (None, None) when the name does not follow that pattern or the group is not
+    in the catalog. Every sweep writes its runs under such a folder."""
+    m = re.match(r"catapult_(.+)_rf(\d+)$", os.path.basename(folder.rstrip("/")))
+    if m and m.group(1) in catalog_techs():
+        return m.group(1), int(m.group(2))
+    return None, None
+
+
 def tech_of_run(run_dir):
     """(archive folder, None) for a run, or (None, reason) when the facts do not say.
 
@@ -96,8 +107,8 @@ def tech_of_run(run_dir):
     if len(found) > 1:
         return None, "%s is archived under %s" % (name, " and ".join(found))
     folder = os.path.basename(os.path.dirname(run_dir))
-    m = re.match(r"catapult_(.+)_rf\d+$", folder)
-    tech = catalog_techs().get(m.group(1)) if m else None
+    group, _ = group_of_folder(folder)
+    tech = catalog_techs().get(group)
     if tech in TECH_MAP:
         return TECH_MAP[tech], None
     return None, "%s is not archived and %s is not a catalog group folder" % (name, folder)
@@ -122,6 +133,11 @@ def main(argv):
         if args[0] not in TECH_MAP:
             sys.exit("site_config: unknown tech %r (known: %s)" % (args[0], ", ".join(TECH_MAP)))
         print(TECH_MAP[args[0]])
+    elif cmd == "group" and len(args) == 1:
+        group, rf = group_of_folder(args[0])
+        if not group:
+            sys.exit("site_config: %s is not catapult_<catalog group>_rf<N>" % args[0])
+        print(group, rf)
     elif cmd == "tech" and len(args) == 1:
         tech, why = tech_of_run(os.path.abspath(args[0]))
         if not tech:

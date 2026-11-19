@@ -6,8 +6,9 @@ One line per run ID:
     RUN  TECH  WHERE  GROUP  SOURCE
 
   WHERE   scratch, archive, or both
-  GROUP   catalog group and RF from slurm/PROVENANCE.md, if listed there
-          ("see PROVENANCE note" for ghost, legacy and partial runs)
+  GROUP   catalog group and RF: from slurm/PROVENANCE.md, else from the
+          catapult_<group>_rf<N> folder the sweep wrote ("see PROVENANCE note"
+          for ghost, legacy and partial runs)
   SOURCE  scratch folder the run lives in, or came from (archive source_dir.txt)
 
 Usage:
@@ -60,6 +61,22 @@ def provenance_groups(path):
     return groups
 
 
+def run_groups(sources):
+    """{run: 'group rfN'} for {run: source folder name or None}.
+
+    PROVENANCE.md first (it also covers old runs whose folder names predate the
+    catalog), then the folder name a sweep writes, catapult_<group>_rf<N>, when
+    the group is in the catalog. A new sweep run is known without a doc edit."""
+    groups = provenance_groups(PROVENANCE)
+    for run, folder in sources.items():
+        if run in groups or not folder:
+            continue
+        group, rf = site.group_of_folder(folder)
+        if group:
+            groups[run] = "%s rf%d" % (group, rf)
+    return groups
+
+
 def read_source(run_dir):
     try:
         with open(os.path.join(run_dir, "source_dir.txt")) as f:
@@ -104,9 +121,10 @@ def main():
     ap.add_argument("--grep", help="keep lines containing this text (case-insensitive)")
     args = ap.parse_args()
 
-    groups = provenance_groups(PROVENANCE)
+    runs = collect()
+    groups = run_groups({n: e["source"] for n, e in runs.items()})
     rows = []
-    for name, e in sorted(collect().items()):
+    for name, e in sorted(runs.items()):
         where = "both" if e["scratch"] and e["archive"] else ("scratch" if e["scratch"] else "archive")
         if args.tech and e["tech"] != args.tech:
             continue
@@ -120,7 +138,7 @@ def main():
     if not os.environ.get("SCRATCH"):
         print("note: $SCRATCH is not set; scratch runs are not listed", file=sys.stderr)
     fmt = "%-30s %-10s %-8s %-22s %s"
-    print(fmt % ("RUN", "TECH", "WHERE", "GROUP (PROVENANCE)", "SOURCE"))
+    print(fmt % ("RUN", "TECH", "WHERE", "GROUP", "SOURCE"))
     for row in rows:
         print(fmt % row)
     print("\n%d run(s). Details: make check-run RUN=<run name, or scratch dir for scratch counts>"
