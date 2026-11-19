@@ -209,8 +209,8 @@ The 4-layer group loses 7 designs per RF to hard synthesis failures (2,493 of 2,
 
 The four `45nm_sz128_2l` runs were missing from the shared archive's `README.md` until
 2026-09-02, when they were found by diffing the archive's run directories against it and added.
-⚠️ As of 2026-11-05 its RF=1 row still reads "incomplete — 3,444 of 4,914 missing"; the run is
-now complete (see below). `make archive-index` lists runs the README does not mention.
+Its RF=1 row read "incomplete — 3,444 of 4,914 missing" until a hand edit on 2026-11-17.
+`make archive-index` lists runs the README does not mention.
 
 **`45nm_sz128_2l` RF=1 was completed on 2026-11-05 without new synthesis.** The archive
 held 1,470 of 4,914 designs, and 1,650 scratch reports had no QoR. Designs with input=128
@@ -218,10 +218,23 @@ and a 128-neuron layer exceed the 6 h `express_amsc` limit, and each `--resume-f
 retry wrote a new `Catapult_N/` project folder that the report parser did not read. So
 1,649 designs had finished on a retry but still looked failed. After the parser fix in
 `catapult_report.py`, their reports and tarballs were rewritten from the build folders and
-the run was archived: 4,913 good, 1 hard failure (`dense_2l_sz128_541`, no good attempt).
+the run was archived: 4,913 good, 1 hard failure (`dense_2l_sz128_541`, no good attempt;
+recovered on 2026-11-18, see below).
 The 27 archive reports this replaced are kept in `reports_stale_20261105/` next to
 `reports/`, and the scratch run keeps its old files in `data/reports/raw_stale_20261105/`
 and `tarballs_stale_20261105/`, plus a per-design log, `recovered_from_retries_20261105.tsv`.
+
+**14 sz128 designs without QoR were resynthesized on 2026-11-17/18**, so every
+`45nm_sz128_*` run is now fully good: `dense_2l_sz128_541` (RF=1), nine designs of RF=4
+(`dense_2l_sz128_4895`, `4904`, `4906`, `4908` to `4913`) and four of `45nm_sz128_1l`
+RF=1 (`dense_1l_sz128_182`, `185`, `188`, `191`). ⚠️ They ran as **Catapult Ultra**
+(`-product ultra`, 2026.1_1, license `fasic-135413`) because the Genesis licenses had
+expired; every other design in the archive ran as Genesis. A full synthesis of
+`dense_2l_sz128_2970` under both gave the same area (195,491 vs 195,490). The scratch
+folders of the RF=4 and `1l` runs had been purged, so `make rebuild-archived` recreated
+them from the archive first; jobs ran with `make rerun-failed` on `express_amsc`. The
+14 archive reports and tarballs they replaced are in `reports_stale_20261118/` and
+`tarballs_stale_20261118/` of each run.
 
 `N_LAYERS=3` was supported by the old script but never run; there is no 3-layer sz128 data.
 
@@ -238,7 +251,8 @@ generator schema, which the catalog does not model, so they keep their own confi
 
 ⚠️ `run_dense_1to3layers.sh` did produce one archived legacy run,
 `run_20260506_074423_a88bd7d9` (1 design). It is part of the 1,101 legacy fixed-weight designs
-excluded from training, along with `run_20260504_205339_a5d590d6` (1,000) and
+excluded from training, along with `run_20260504_205339_a5d590d6` (1,000; 999 with valid
+QoR, which `make provenance-diff` reports) and
 `run_20260505_145920_de8c3504` (100), whose generating invocations are not recorded.
 
 🔧 **Tools** — `archive_run.sh`, `check_failures.sh`, `clean_runs.sh`,
