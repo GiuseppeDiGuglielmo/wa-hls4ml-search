@@ -15,6 +15,10 @@ PYTHON ?= python3
 # NERSC's Python (3.7+), for tools that import the sweep catalog or the pipeline.
 NERSC_PY ?= /global/common/software/nersc/pe/conda-envs/latest/python-3.13/nersc-python/bin/python
 RUN      ?=
+RUNS     ?=
+OUT      ?=
+STEMS    ?=
+FIRST_ONLY ?=
 STEM     ?=
 EXPECTED ?=
 TECH     ?=
@@ -63,7 +67,7 @@ need_run  = @test -n "$(RUN)" || { echo 'usage: make $@ RUN=<scratch run_dir>$(1
         design-show design-synth \
         check-jobs check-list check-run sweep-watch why-failed reparse rebuild-archived rerun-failed sweep-check sweep \
         archive-dry archive archive-verify scratch-clean archive-index \
-        dataset-summary provenance-diff sweep-estimate
+        dataset-summary provenance-diff design-cost sweep-estimate
 
 # help: each target's '## target | args | description' line,
 # grouped by the agent skill that uses it (.claude/skills/README.md).
@@ -76,7 +80,7 @@ help:
 	  END { n = split("run-catapult:tool chain, sweeps, repairs:env-check license-check catapult-probe sweep-estimate sweep-check sweep reparse rebuild-archived rerun-failed design-synth;" \
 	                  "check-runs:status and failures:check-jobs check-list check-run sweep-watch why-failed design-show;" \
 	                  "archive-run:archive and scratch:archive-dry archive archive-verify scratch-clean archive-index;" \
-	                  "dataset:the archived dataset:dataset-summary provenance-diff", grp, ";"); \
+	                  "dataset:the archived dataset:dataset-summary provenance-diff design-cost", grp, ";"); \
 	    for (i = 1; i <= n; i++) { split(grp[i], f, ":"); printf "\n%s: %s\n", f[1], f[2]; \
 	      m = split(f[3], t, " "); for (k = 1; k <= m; k++) print (t[k] in row ? row[t[k]] : "  " t[k] "  (no help line)") } }' $(MAKEFILE_LIST)
 	@echo
@@ -226,6 +230,11 @@ dataset-summary:
 ## provenance-diff | [FAST=1] | Where PROVENANCE.md disagrees with the archive
 provenance-diff:
 	@$(PYTHON) -m slurm.tools.dataset provenance-diff $(if $(FAST),--fast)
+
+## design-cost | RUNS= [OUT= TECH= STEMS= FIRST_ONLY=1] | Catapult time and peak memory per design, from archived tarballs
+design-cost:
+	@test -n "$(RUNS)" || { echo 'usage: make design-cost RUNS="<run name|run dir|mlp-<N>layer dir> ..." [OUT=file.tsv] [WORKERS=8]'; exit 2; }
+	@$(PYTHON) -m slurm.tools.design_cost $(RUNS) --workers $(WORKERS) $(if $(TECH),--tech $(TECH)) $(if $(OUT),--out $(OUT)) $(if $(STEMS),--stems $(STEMS)) $(if $(FIRST_ONLY),--first-only)
 
 # --- Planning ---
 
