@@ -74,9 +74,16 @@ def licenses():
         return ":".join("%s@%s" % (s["port"], s["host"]) for s in json.load(f)["servers"])
 
 
+def seats():
+    """License seats listed in license_servers_perlmutter.json. Each slot holds one."""
+    import json
+    with open(os.path.join(REPO, "license_servers_perlmutter.json")) as f:
+        return sum(int(s.get("licenses", 0)) for s in json.load(f)["servers"])
+
+
 def product():
     """Catapult product the launcher asks a license for (CATAPULT_PRODUCT)."""
-    return os.environ.get("CATAPULT_PRODUCT", "genesis")
+    return os.environ.get("CATAPULT_PRODUCT", "ultra")
 
 
 def main():
@@ -141,7 +148,10 @@ def main():
     n = len(lines)
     small = n <= 8
     qos = args.qos or ("shared" if small else "express_amsc")
-    jobs = args.parallelism or (n if small else min(n, 100))
+    jobs = args.parallelism or min(n, seats(), 100)
+    if jobs > seats():
+        sys.exit("rerun_failed: %d slots need more than the %d license seats in "
+                 "license_servers_perlmutter.json" % (jobs, seats()))
     mem = args.mem or ("%dG" % (24 * jobs) if qos == "shared" else "0")
     if qos == "shared" and mem == "0":
         sys.exit("rerun_failed: --qos shared needs --mem")

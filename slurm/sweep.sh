@@ -25,8 +25,10 @@
 #
 # Options:
 #   --rf LIST       reuse factors to run (default: the row's rf column)
-#   --nodes N       synthesis nodes per group (default 3, i.e. 300 license slots)
-#   --parallelism N synthesis slots per node (default 100)
+#   --nodes N       synthesis nodes per group (default 1)
+#   --parallelism N synthesis slots per node (default: the license seats in
+#                   license_servers_perlmutter.json, at most 100). nodes x slots
+#                   may not exceed the seats: each slot holds one Catapult license.
 #   --mem SIZE      memory per node (default 0 = all of it, ~488G on a CPU node;
 #                   older runs used 200G, the sz64 groups 400G). Required with
 #                   --qos shared, which does not give a whole node.
@@ -60,7 +62,7 @@ GROUP="${1:-}"
 }
 shift
 
-RF_LIST=""; N_NODES=3; PARALLELISM=100; MEM_PER_NODE=0; MEMFREE=64G
+RF_LIST=""; N_NODES=1; PARALLELISM=""; MEM_PER_NODE=0; MEMFREE=64G
 SLURM_QOS_SYNTH=express_amsc; SLURM_TIME=05:30:00
 N_LHS=""; EXCLUDE=""; CANDIDATES_OVERRIDE=""; LIST_ONLY=0; CHECK_ONLY=0
 while [[ $# -gt 0 ]]; do
@@ -137,6 +139,20 @@ with open('${REPO_DIR}/license_servers_perlmutter.json') as f:
 print(':'.join(f\"{s['port']}@{s['host']}\" for s in cfg['servers']))
 ")
 export LM_LICENSE_FILE
+
+# Each slot runs one Catapult and holds one license, so nodes x slots may not
+# exceed the seats the license file lists (5 CatapultUltra on fasic-135413).
+LICENSE_SEATS=$(python3 -c "
+import json
+with open('${REPO_DIR}/license_servers_perlmutter.json') as f:
+    cfg = json.load(f)
+print(sum(int(s.get('licenses', 0)) for s in cfg['servers']))
+")
+[[ -n "$PARALLELISM" ]] || PARALLELISM=$(( LICENSE_SEATS / N_NODES < 100 ? LICENSE_SEATS / N_NODES : 100 ))
+if (( PARALLELISM < 1 || N_NODES * PARALLELISM > LICENSE_SEATS )); then
+    echo "error: ${N_NODES} nodes x ${PARALLELISM} slots needs more than the ${LICENSE_SEATS} license seats in license_servers_perlmutter.json" >&2
+    exit 2
+fi
 
 SLURM_ACCOUNT=amsc011
 SLURM_CONSTRAINT=cpu

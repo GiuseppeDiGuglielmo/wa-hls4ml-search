@@ -36,9 +36,10 @@ fi
 # CATAPULT_VER=... before invoking this script.
 export CATAPULT_VER="${CATAPULT_VER:-2026.1_1}"
 
-# Catapult product, i.e. which license it asks for: genesis (CatapultGenesis,
-# the default) or ultra (CatapultUltra). Override with CATAPULT_PRODUCT=...
-CATAPULT_PRODUCT="${CATAPULT_PRODUCT:-genesis}"
+# Catapult product, i.e. which license it asks for: ultra (CatapultUltra, the
+# default since the Genesis licenses expired in 2026) or genesis (CatapultGenesis).
+# Override with CATAPULT_PRODUCT=...
+CATAPULT_PRODUCT="${CATAPULT_PRODUCT:-ultra}"
 
 # Catapult installs, one folder per version, shared by the amsc011 project and
 # outside $SCRATCH so the purge cannot reach them. Override with CATAPULT_ROOT=...

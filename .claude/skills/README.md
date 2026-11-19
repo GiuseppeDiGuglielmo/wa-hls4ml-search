@@ -38,7 +38,7 @@ after `archive-verify` passes.
 | `catapult-probe` | launcher dry run; `PROBE=1` starts Catapult once (one license) | yes, fixed: fails, licenses expired |
 | `sweep-estimate` | designs, runtime, memory and node-hours from past runs | yes |
 | `sweep-check` | the sweep plan plus `sbatch --test-only` | yes |
-| `sweep` | **submits** a sweep (nodes, up to 300 licenses) | no |
+| `sweep` | **submits** a sweep (nodes, one license per slot; 5 ultra seats) | no |
 | `reparse` | lists reports whose QoR is in a retry folder; `APPLY=1` rewrites them | plan only |
 | `rebuild-archived` | plans a scratch folder for an archive-only run's failed designs; `APPLY=1` builds it | yes, `APPLY=1`, fixed |
 | `rerun-failed` | plans a rerun of designs with no QoR; `SUBMIT=1` submits it | yes, `SUBMIT=1`, fixed |

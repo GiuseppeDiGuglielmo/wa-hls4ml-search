@@ -90,7 +90,8 @@ libraries Catapult needs. Catapult itself is not in the image: it is
 env script.
 Inside, the launcher sources `~/bin/cad_env_perlmutter.sh` (older name
 `~/bin/siemens.sh`; `CAD_ENV_SCRIPT=` overrides), then re-exports `CATAPULT_PATH`
-and the license variables and runs `catapult -product genesis -shell`.
+and the license variables and runs `catapult -product ultra -shell`
+(`CATAPULT_PRODUCT=genesis` for Genesis).
 `Correlator4_scripts/` is the Fermilab variant, not used here.
 
 Licenses: sweeps and `catapult-probe PROBE=1` take `LM_LICENSE_FILE` from
@@ -115,15 +116,18 @@ has `CatAIhls4ml_c` x5 to 2027-05-31 and no Genesis feature. June runs used
 `fasic-admin1` while it was valid. Renewal is for FNAL/Siemens; no sweep can run
 until then.
 
-**Ultra instead of Genesis.** `CATAPULT_PRODUCT=ultra` makes the launcher run
-`catapult -product ultra` (CatapultUltra license; default `genesis`). On 2026-11-17,
-with `LICENSES=1717@fasic-135413.fnal.gov`, `make catapult-probe PROBE=1` passed and
-`flow package require /HLS4ML` loaded. `fasic-135413` has only 5 `CatapultUltra_c`
-(to 2027-05-31), so at most 5 designs can run at once, and a full synthesis under
-ultra had not been tried yet. `rerun-failed` and `design-synth` jobs take
-`CATAPULT_PRODUCT` and, from `WA_LICENSES=port@host`, the license server (else the
-license file), e.g. `CATAPULT_PRODUCT=ultra WA_LICENSES=1717@fasic-135413.fnal.gov
-make design-synth ... QOS=express_amsc`.
+**Ultra by default.** Since 2026-11-18 the launcher runs `catapult -product ultra`
+(CatapultUltra license) unless `CATAPULT_PRODUCT=genesis`, and
+`license_servers_perlmutter.json` (gitignored; template in the `.example` file)
+lists `fasic-135413` with 5 seats. `fasic-135413` has only 5 `CatapultUltra_c` (to
+2027-05-31), so at most 5 designs run at once: `sweep` and `rerun-failed` default to
+as many slots as the file lists seats and refuse more (`sweep`: nodes x slots). A
+full group (4,914 designs at ~2.5 h each for 2-layer sz128) is out of reach until
+Genesis is renewed; then set the file back to `fasic-admin1` with its seat count and
+pass `CATAPULT_PRODUCT=genesis`. Ultra results matched Genesis (June's
+`dense_2l_sz128_2970`: area 195491 vs 195490), and the 14 reruns of 2026-11-17/18
+ran as ultra. `rerun-failed` and `design-synth` also take `WA_LICENSES=port@host`
+to override the file.
 
 **Two venvs.** The DSE venv (`WA_HLS4ML_VENV`) builds models and job lists outside
 the container. Catapult's own hls4ml flow uses `~/ccs_venv`, which Catapult creates
@@ -134,8 +138,8 @@ replace the other (`~/ccs_venv` has no ray and TensorFlow 2.15).
 
 `slurm/sweep.sh` (the sbatch'd driver, `--qos shared`, 2 days) builds the models and
 joblist under `$SCRATCH/catapult_<group>_rf<RF>/run_*/`, then
-`slurm/sweeplib/orchestrate.sh` submits one job per node (default 3 nodes x 100
-slots, `express_amsc`, 05:30:00, whole-node memory, GNU parallel `--memfree 64G`),
+`slurm/sweeplib/orchestrate.sh` submits one job per node (default 1 node x the
+license seats, at most 100 slots, `express_amsc`, 05:30:00, whole-node memory, GNU parallel `--memfree 64G`),
 waits, resubmits rounds until the tarball count stops rising (`MAX_ROUNDS`, default
 20), and finally copies the run into the archive with `archive_sync.py --apply`
 (never deletes scratch). A design already holding a tarball is never rerun.
