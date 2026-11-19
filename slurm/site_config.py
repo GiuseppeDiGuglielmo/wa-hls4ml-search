@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Site facts for the Catapult sweeps: one reader for slurm/site.json and the
-license server file it names. Facts only (paths, account, seats, node memory,
-tech folders); policy such as QOS, time or memory stays with the caller.
+"""Site facts and policy defaults for the Catapult sweeps: one reader for
+slurm/site.json (facts: paths, account, seats, node memory, tech folders), the
+license server file it names, and slurm/defaults.json (starting points for QOS,
+time, memory and slots, which every caller lets a run override).
 
 Runs with the system python3 (3.6) and the standard library only.
 
@@ -11,6 +12,7 @@ Python:
 
 Shell and make:
     site_config.py get KEY          one value from site.json (account, archive, ...)
+    site_config.py default SEC KEY  one default from defaults.json (sweep qos, ...)
     site_config.py techs            archive tech folders, space-separated
     site_config.py venv             venv activate script (WA_HLS4ML_VENV overrides)
     site_config.py licenses         port@host[:...] (WA_LICENSES overrides)
@@ -32,6 +34,9 @@ REPO = os.path.dirname(HERE)
 with open(os.path.join(HERE, "site.json")) as _f:
     SITE = json.load(_f)
 
+with open(os.path.join(HERE, "defaults.json")) as _f:
+    DEFAULTS = json.load(_f)
+
 ARCHIVE = SITE["archive"]
 TECH_MAP = {k: v for k, v in SITE["archive_tech_dirs"].items() if not k.startswith("_")}
 TECH_DIRS = tuple(TECH_MAP.values())
@@ -40,6 +45,11 @@ CATAPULT_ROOT = SITE["catapult_root"]
 NODE_USABLE_GB = float(SITE["node_usable_gb"])
 LICENSE_FILE = os.path.join(REPO, SITE["license_file"])
 CATALOG = os.path.join(HERE, "sweeps.tsv")
+
+
+def default(section, key):
+    """A starting point from defaults.json; callers let each run override it."""
+    return DEFAULTS[section][key]
 
 
 def venv():
@@ -108,6 +118,8 @@ def main(argv):
     cmd, args = argv[0], argv[1:]
     if cmd == "get" and len(args) == 1:
         print(SITE[args[0]])
+    elif cmd == "default" and len(args) == 2:
+        print(default(*args))
     elif cmd == "techs":
         print(" ".join(TECH_DIRS))
     elif cmd == "venv":

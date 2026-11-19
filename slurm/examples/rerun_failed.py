@@ -16,10 +16,12 @@ in the run, moves each target's old report and tarball to
 data/reports/raw_stale_<tag>/ and tarballs_stale_<tag>/ (a design with a tarball
 is never rerun), and submits one job. Afterwards: make check-run, then archive.
 
-Small sets (8 designs or fewer) go to the shared QOS with 24G per design, larger
-ones to a whole express_amsc node gated by GNU parallel --memfree. sbatch
---test-only start estimates for the shared QOS can be months off (seen
-2026-11-05); past shared jobs started within hours.
+The job settings are defaults from slurm/defaults.json (rerun_failed), not
+decisions: choose --qos, --time, --mem and --parallelism per run from the facts
+the plan prints and from make check-jobs (queues) and design-show (peak memory).
+On a whole node (mem 0) GNU parallel --memfree gates each start; on the shared
+QOS --mem defaults to mem_per_design x slots and --memfree is not used, because
+/proc/meminfo there counts other users' jobs.
 """
 
 import argparse
@@ -85,11 +87,13 @@ def main():
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("run_dir")
     ap.add_argument("--submit", action="store_true")
-    ap.add_argument("--qos")
-    ap.add_argument("--time", default="05:30:00")
-    ap.add_argument("--parallelism", type=int)
-    ap.add_argument("--mem")
-    ap.add_argument("--memfree", default="64G")
+    d = lambda k: site.default("rerun_failed", k)  # noqa: E731
+    ap.add_argument("--qos", default=d("qos"))
+    ap.add_argument("--time", default=d("time"))
+    ap.add_argument("--parallelism", type=int,
+                    help="slots (default: min(designs, seats, %d))" % d("slots_max"))
+    ap.add_argument("--mem", help="default: 0 (whole node), or %s per slot on shared" % d("mem_per_design"))
+    ap.add_argument("--memfree", default=d("memfree"))
     ap.add_argument("--stems", help="only these stems (file, one per line)")
     ap.add_argument("--tag", default=datetime.datetime.now().strftime("%Y%m%d_%H%M"))
     args = ap.parse_args()
@@ -140,13 +144,14 @@ def main():
         return 1 if no_inputs else 0
 
     n = len(lines)
-    small = n <= 8
-    qos = args.qos or ("shared" if small else "express_amsc")
-    jobs = args.parallelism or min(n, seats(), 100)
+    print("Facts    %d design(s), %d license seat(s); queues: make check-jobs" % (n, seats()))
+    qos = args.qos
+    jobs = args.parallelism or min(n, seats(), d("slots_max"))
     if jobs > seats():
         sys.exit("rerun_failed: %d slots need more than the %d license seats in "
                  "license_servers_perlmutter.json" % (jobs, seats()))
-    mem = args.mem or ("%dG" % (24 * jobs) if qos == "shared" else "0")
+    per = d("mem_per_design")
+    mem = args.mem or ("%d%s" % (int(per[:-1]) * jobs, per[-1]) if qos == "shared" else "0")
     if qos == "shared" and mem == "0":
         sys.exit("rerun_failed: --qos shared needs --mem")
     # On a shared node /proc/meminfo counts other users' jobs, so --memfree only makes

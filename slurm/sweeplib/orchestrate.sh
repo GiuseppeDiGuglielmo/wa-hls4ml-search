@@ -12,7 +12,7 @@
 #   N_NODES PARALLELISM MEM_PER_NODE (0 = whole node)
 #   MEMFREE      GNU parallel --memfree per node, e.g. 64G (empty or 0: off)
 #   SLURM_ACCOUNT SLURM_QOS SLURM_TIME SLURM_CONSTRAINT
-#   MAX_ROUNDS   retry rounds before giving up (default 20)
+#   MAX_ROUNDS   retry rounds before giving up (default: slurm/defaults.json)
 #
 # DRY_RUN=1 builds the joblist, the node split and the sbatch scripts but
 # submits nothing and archives nothing.
@@ -130,7 +130,7 @@ run_group() {
     fi
 
     local tar_dir="${RUN_DIR}/tarballs"
-    local max_rounds="${MAX_ROUNDS:-20}"
+    local max_rounds="${MAX_ROUNDS:-$(python3 "${REPO_DIR}/slurm/site_config.py" default orchestrate max_rounds)}"
     local round=0 done_count prev jids=()
 
     for script in "${scripts[@]}"; do jids+=("$(sbatch --parsable "$script")"); done

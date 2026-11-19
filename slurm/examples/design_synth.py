@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Synthesise one design again, in a fresh copy, to debug it.
 
-    design_synth.py <scratch run_dir> <stem> [--submit] [--qos shared] [--mem 24G]
-                    [--time 04:00:00]
+    design_synth.py <scratch run_dir> <stem> [--submit] [--qos Q] [--mem M] [--time T]
+
+--qos, --mem and --time default to slurm/defaults.json (design_synth); pick them
+per design, e.g. from its peak memory in make design-show.
 
 The original run is not touched. With --submit a new run folder
 $SCRATCH/catapult_debug/run_<now>_<id>/ gets build/<stem>/ with the design's
@@ -57,9 +59,9 @@ def main():
     ap.add_argument("run_dir")
     ap.add_argument("stem")
     ap.add_argument("--submit", action="store_true")
-    ap.add_argument("--qos", default="shared")
-    ap.add_argument("--mem", default="24G")
-    ap.add_argument("--time", default="04:00:00")
+    ap.add_argument("--qos", default=site.default("design_synth", "qos"))
+    ap.add_argument("--mem", default=site.default("design_synth", "mem"))
+    ap.add_argument("--time", default=site.default("design_synth", "time"))
     args = ap.parse_args()
 
     run = os.path.abspath(args.run_dir.rstrip("/"))

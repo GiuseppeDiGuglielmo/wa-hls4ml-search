@@ -74,7 +74,7 @@ seats (it still assumed 3 nodes x 100); `why-failed` says its counts include ear
 rounds; `reparse` and `rebuild-archived` say what their count means; `scratch-clean`
 takes `DROP_BACKUPS=1` instead of a script flag; `make help` lists every setting.
 Open: `sbatch --test-only` put the `shared` QOS jobs (the sweep driver,
-`design-synth`, `rerun-failed` with up to 8 designs) at a start 2-3 weeks out, while
+`design-synth`, `rerun-failed` with `QOS=shared`) at a start 2-3 weeks out, while
 `express_amsc` started at once; pass `QOS=express_amsc` for those until it clears.
 
 ### check-runs
@@ -135,7 +135,14 @@ replace the DSE venv.
 tech folders, DSE venv, Catapult install tree, license file name, usable node
 memory. Tools read it through `slurm/site_config.py` (`get KEY`, `venv`,
 `licenses`, `seats`, `techs`, `archive-dir TECH`, `tech RUN_DIR`). It holds no
-policy: QOS, time, memory and slot counts are not site facts.
+policy.
+
+`slurm/defaults.json` holds the starting points for QOS, time, memory, slots and
+retry rounds (sweep, sweep driver, rerun-failed, design-synth, orchestrate). They
+are defaults, not decisions: every one is a flag or make variable, to be chosen
+per run from `check-jobs`, `sweep-estimate`, `design-show` and the seat count.
+No script picks a value from the situation (rerun-failed no longer sends small
+sets to `shared` by itself).
 
 ## A typical run
 

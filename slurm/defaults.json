@@ -1,0 +1,36 @@
+{
+  "_doc": "Starting points, not decisions. Every value here is overridable per run (a flag, or a make variable of the same name). Pick per run from the facts: make check-jobs (queues), sweep-estimate (p90 memory per design), design-show (peak memory of one design), license-check (seats). Read through slurm/site_config.py default SECTION KEY. Site facts live in site.json.",
+  "sweep": {
+    "_doc": "synthesis nodes of slurm/sweep.sh: --qos --time --mem --memfree --nodes; slots per node default to min(seats / nodes, slots_per_node_max)",
+    "qos": "express_amsc",
+    "time": "05:30:00",
+    "mem": "0",
+    "memfree": "64G",
+    "nodes": 1,
+    "slots_per_node_max": 100
+  },
+  "sweep_driver": {
+    "_doc": "the sweep.sh driver job itself (make DRIVER_QOS= DRIVER_TIME= DRIVER_MEM=); the #SBATCH header in sweep.sh is only the fallback for a bare sbatch",
+    "qos": "shared",
+    "time": "2-00:00:00",
+    "mem": "16G"
+  },
+  "rerun_failed": {
+    "_doc": "rerun_failed.py: --qos --time --memfree --parallelism; on shared, --mem defaults to mem_per_design x slots",
+    "qos": "express_amsc",
+    "time": "05:30:00",
+    "memfree": "64G",
+    "mem_per_design": "24G",
+    "slots_max": 100
+  },
+  "design_synth": {
+    "_doc": "design_synth.py: --qos --mem --time",
+    "qos": "shared",
+    "mem": "24G",
+    "time": "04:00:00"
+  },
+  "orchestrate": {
+    "_doc": "orchestrate.sh retry rounds per sweep (MAX_ROUNDS=)",
+    "max_rounds": 20
+  }
+}

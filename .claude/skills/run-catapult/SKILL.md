@@ -63,9 +63,12 @@ for a yes, then rerun with the flag.
   of designs it prints an sbatch line to run it on a compute node instead.
 - `make rerun-failed RUN=<run_dir> [SUBMIT=1] [QOS= TIME= MEM= PARALLELISM=]`: designs
   with no QoR in any attempt are synthesised again in one job (old report/tarball
-  moved to `*_stale_<tag>/` so they are not skipped). Up to 8 designs go to `shared`
-  with 24G each, more to a whole `express_amsc` node with `--memfree`. Run reparse
-  first; rerun-failed skips designs reparse can fix.
+  moved to `*_stale_<tag>/` so they are not skipped). QOS, TIME, MEM and
+  PARALLELISM default to `slurm/defaults.json` and are yours to choose per run:
+  the plan prints the design count and seats, `check-jobs` shows the queues,
+  `design-show` a design's peak memory. On `shared` MEM defaults to 24G per slot;
+  on a whole node GNU parallel `--memfree` gates each start. Run reparse first;
+  rerun-failed skips designs reparse can fix.
 - `make rebuild-archived RUN=<archive run name> [APPLY=1]` (`Designs 0 ...; nothing
   to rebuild` when every archived design has QoR): for a run that exists only
   in the archive, recreates its original scratch folder (path from `source_dir.txt`)
@@ -142,12 +145,13 @@ replace the other (`~/ccs_venv` has no ray and TensorFlow 2.15).
 
 ## What a sweep does
 
-`slurm/sweep.sh` (the sbatch'd driver, `--qos shared`, 2 days) builds the models and
-joblist under `$SCRATCH/catapult_<group>_rf<RF>/run_*/`, then
-`slurm/sweeplib/orchestrate.sh` submits one job per node (default 1 node x the
-license seats, at most 100 slots, `express_amsc`, 05:30:00, whole-node memory, GNU parallel `--memfree 64G`),
-waits, resubmits rounds until the tarball count stops rising (`MAX_ROUNDS`, default
-20), and finally copies the run into the archive with `archive_sync.py --apply`
+`slurm/sweep.sh` (the sbatch'd driver; `DRIVER_QOS= DRIVER_TIME= DRIVER_MEM=`)
+builds the models and joblist under `$SCRATCH/catapult_<group>_rf<RF>/run_*/`, then
+`slurm/sweeplib/orchestrate.sh` submits one job per node (nodes, slots, QOS, time,
+memory and `--memfree` as given, else the `sweep` defaults in `slurm/defaults.json`;
+slots never exceed the license seats), waits, resubmits rounds until the tarball
+count stops rising (`MAX_ROUNDS`, default in the same file), and finally copies
+the run into the archive with `archive_sync.py --apply`
 (never deletes scratch). A design already holding a tarball is never rerun.
 
 Catapult peak memory per design is <2 GB to ~19 GB (largest for 128-wide layers);

@@ -22,6 +22,10 @@ WHERE    ?=
 GREP     ?=
 SITE     := python3 slurm/site_config.py
 ACCOUNT  ?= $(shell $(SITE) get account)
+# The sweep driver job; defaults in slurm/defaults.json (sweep_driver).
+DRIVER_QOS  ?= $(shell $(SITE) default sweep_driver qos)
+DRIVER_TIME ?= $(shell $(SITE) default sweep_driver time)
+DRIVER_MEM  ?= $(shell $(SITE) default sweep_driver mem)
 EXPRESS_QOS := express_amsc express_amsc_g
 GROUP    ?=
 RF       ?=
@@ -72,7 +76,8 @@ help:
 	    for (i = 1; i <= n; i++) { split(grp[i], f, ":"); printf "\n%s: %s\n", f[1], f[2]; \
 	      m = split(f[3], t, " "); for (k = 1; k <= m; k++) print (t[k] in row ? row[t[k]] : "  " t[k] "  (no help line)") } }' $(MAKEFILE_LIST)
 	@echo
-	@echo 'sweep opts: RF= QOS= TIME= NODES= PARALLELISM= MEM= MEMFREE='
+	@echo 'sweep opts: RF= QOS= TIME= NODES= PARALLELISM= MEM= MEMFREE=; driver job: DRIVER_QOS= DRIVER_TIME= DRIVER_MEM='
+	@echo 'Unset QOS/TIME/MEM/... use slurm/defaults.json: starting points to choose per run, not decisions.'
 	@echo 'rerun-failed and design-synth also take QOS= TIME= MEM=; rerun-failed also PARALLELISM= MEMFREE='
 	@echo 'archive-dry, archive, archive-verify, scratch-clean take TECH=nangate45|gf22fdx (default: where the run is archived, else its catalog group)'
 	@echo 'scratch-clean takes DROP_BACKUPS=1 (with APPLY=1, also deletes scratch-only *_stale_* backups)'
@@ -176,12 +181,12 @@ rerun-failed:
 sweep-check:
 	@test -n "$(GROUP)" || { echo 'usage: make sweep-check GROUP=<group from slurm/sweeps.tsv> [RF=1,4 ...]'; exit 2; }
 	@bash slurm/sweep.sh $(GROUP) $(SWEEP_OPTS) --check 2>&1 | grep -v $(VENV_NOISE)
-	@mkdir -p logs; echo "Sweep driver job:"; sbatch --test-only --account=$(ACCOUNT) slurm/sweep.sh $(GROUP) $(SWEEP_OPTS) 2>&1 | sed 's/^/  /'
+	@mkdir -p logs; echo "Sweep driver job:"; sbatch --test-only --account=$(ACCOUNT) --qos=$(DRIVER_QOS) --time=$(DRIVER_TIME) --mem=$(DRIVER_MEM) slurm/sweep.sh $(GROUP) $(SWEEP_OPTS) 2>&1 | sed 's/^/  /'
 
 ## sweep | GROUP= [sweep opts] | SUBMITS a sweep (nodes, licenses). Run sweep-check first
 sweep:
 	@test -n "$(GROUP)" || { echo 'usage: make sweep GROUP=<group> [RF=...]  (run make sweep-check first)'; exit 2; }
-	@mkdir -p logs; sbatch --account=$(ACCOUNT) slurm/sweep.sh $(GROUP) $(SWEEP_OPTS)
+	@mkdir -p logs; sbatch --account=$(ACCOUNT) --qos=$(DRIVER_QOS) --time=$(DRIVER_TIME) --mem=$(DRIVER_MEM) slurm/sweep.sh $(GROUP) $(SWEEP_OPTS)
 
 # --- Archive ---
 

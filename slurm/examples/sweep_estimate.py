@@ -32,7 +32,7 @@ from design_show import attempts, attempt_facts  # noqa: E402
 
 from run_status import site  # noqa: E402
 NODE_GB = site.NODE_USABLE_GB   # usable per CPU node (slurm/site.json)
-SLOTS_MAX = 100     # sweep.sh's cap per node; each slot also holds one license
+SLOTS_MAX = site.default("sweep", "slots_per_node_max")  # sweep.sh's default cap per node
 
 
 def license_seats():

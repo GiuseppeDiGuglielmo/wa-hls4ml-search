@@ -48,15 +48,16 @@ SETTINGS
   STEM=          one design, e.g. dense_1l_sz128_188
   GROUP= / RF=   a row of slurm/sweeps.tsv / reuse factors, e.g. 1,4,8,16
   TECH=          nangate45 | gf22fdx (default: archive or catalog)
-  QOS= TIME= MEM=                express_amsc, 05:30:00, 0 (= whole node)
-  NODES= PARALLELISM= MEMFREE=   1, license seats (5), 64G free to start a design
+  QOS= TIME= MEM=                defaults: slurm/defaults.json; choose per run
+  NODES= PARALLELISM= MEMFREE=   (slots never exceed the license seats)
+  DRIVER_QOS= DRIVER_TIME= DRIVER_MEM=   the sweep driver job
   EXPECTED=N     design count when the run has no joblist.txt
   DROP_BACKUPS=1 scratch-clean also deletes scratch-only *_stale_* backups
   env            CATAPULT_PRODUCT=ultra|genesis   WA_LICENSES=1717@fasic-135413.fnal.gov
 
 RECIPES
   new sweep  env-check > sweep-estimate > sweep-check > sweep > check-run > archive-verify
-  repair     why-failed > reparse [APPLY=1] > rerun-failed QOS=express_amsc [SUBMIT=1]
+  repair     why-failed > reparse [APPLY=1] > rerun-failed [SUBMIT=1]
              > check-run > archive-dry > archive > archive-verify
   free disk  check-jobs > archive-verify (VERIFIED) > scratch-clean > scratch-clean APPLY=1
 

@@ -25,10 +25,12 @@
 #
 # Options:
 #   --rf LIST       reuse factors to run (default: the row's rf column)
+# Defaults below come from slurm/defaults.json (sweep); they are starting points,
+# so pick per run from make check-jobs and sweep-estimate.
 #   --nodes N       synthesis nodes per group (default 1)
 #   --parallelism N synthesis slots per node (default: the license seats in
-#                   license_servers_perlmutter.json, at most 100). nodes x slots
-#                   may not exceed the seats: each slot holds one Catapult license.
+#                   license_servers_perlmutter.json / nodes, at most 100). nodes x
+#                   slots may not exceed the seats: each slot holds one license.
 #   --mem SIZE      memory per node (default 0 = all of it, ~488G on a CPU node;
 #                   older runs used 200G, the sz64 groups 400G). Required with
 #                   --qos shared, which does not give a whole node.
@@ -63,8 +65,9 @@ GROUP="${1:-}"
 }
 shift
 
-RF_LIST=""; N_NODES=1; PARALLELISM=""; MEM_PER_NODE=0; MEMFREE=64G
-SLURM_QOS_SYNTH=express_amsc; SLURM_TIME=05:30:00
+dflt() { $SITE default sweep "$1"; }
+RF_LIST=""; N_NODES=$(dflt nodes); PARALLELISM=""; MEM_PER_NODE=$(dflt mem); MEMFREE=$(dflt memfree)
+SLURM_QOS_SYNTH=$(dflt qos); SLURM_TIME=$(dflt time); SLOTS_MAX=$(dflt slots_per_node_max)
 N_LHS=""; EXCLUDE=""; CANDIDATES_OVERRIDE=""; LIST_ONLY=0; CHECK_ONLY=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -139,7 +142,7 @@ export LM_LICENSE_FILE
 # Each slot runs one Catapult and holds one license, so nodes x slots may not
 # exceed the seats the license file lists (5 CatapultUltra on fasic-135413).
 LICENSE_SEATS=$($SITE seats)
-[[ -n "$PARALLELISM" ]] || PARALLELISM=$(( LICENSE_SEATS / N_NODES < 100 ? LICENSE_SEATS / N_NODES : 100 ))
+[[ -n "$PARALLELISM" ]] || PARALLELISM=$(( LICENSE_SEATS / N_NODES < SLOTS_MAX ? LICENSE_SEATS / N_NODES : SLOTS_MAX ))
 if (( PARALLELISM < 1 || N_NODES * PARALLELISM > LICENSE_SEATS )); then
     echo "error: ${N_NODES} nodes x ${PARALLELISM} slots needs more than the ${LICENSE_SEATS} license seats in license_servers_perlmutter.json" >&2
     exit 2
