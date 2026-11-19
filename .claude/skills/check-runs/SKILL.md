@@ -87,7 +87,9 @@ Run from the repo root. All read-only; use whichever fit, in any order.
   Tarballs gone from scratch (e.g. purged) but present in the archive are only
   counted, not listed. Scratch run directories only; ~30 s for 5k designs. Writes nothing.
 - `make why-failed RUN=<run_dir> [FAST=1]`: Catapult exit codes, oom_kill events,
-  time-limit cancels, license errors and sacct states from `slurm_logs/`, then
+  time-limit cancels, license errors and sacct states from `slurm_logs/` (every job of
+  the run, earlier rounds included, so a timeout can show although its designs later
+  finished; the `No QoR` line is the state now), then
   attempts and peak memory per design, and the designs still without QoR with the
   flow step they stopped at. Reads every `messages.txt`: ~3 min for 5k designs;
   FAST=1 skips the memory part.

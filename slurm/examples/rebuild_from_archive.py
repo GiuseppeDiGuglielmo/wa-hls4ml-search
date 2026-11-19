@@ -154,7 +154,7 @@ def main():
 
     print("Run      %s (%s, group %s, RF=%d)" % (name, tech, group, rf))
     print("Scratch  %s%s" % (source, "  (EXISTS: refusing to write)" if os.path.exists(source) else ""))
-    print("Designs  %d" % len(plan))
+    print("Designs  %d without valid QoR in the archive%s" % (len(plan), "" if plan else "; nothing to rebuild"))
     for stem, kind, src in plan:
         print("  %-24s model %s" % (stem, "%s %s" % (kind, src) if kind else "NOT FOUND"))
     missing = [s for s, k, _ in plan if not k]

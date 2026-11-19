@@ -90,6 +90,7 @@ def main():
 
     exits, oom, timeouts, lic, jobs = scan_logs(run_dir)
     print("Run      %s" % os.path.basename(run_dir))
+    print("Scope    every job in slurm_logs/, earlier rounds included; No QoR (last line) is the state now")
     total = sum(exits.values())
     print("Catapult exits (non-zero, from slurm_logs): %d" % total)
     for code, n in exits.most_common():
@@ -152,7 +153,7 @@ def main():
         print("  %-28s %-9s attempts %-3d last step %s" % (s, "report" if has_report else "no report",
                                                          len(tries), step))
     if len(failed) > 15:
-        print("  ... (%d more; run_status.py --list-failed lists them)" % (len(failed) - 15))
+        print("  ... (%d more; make check-failed lists them)" % (len(failed) - 15))
     return 0
 
 

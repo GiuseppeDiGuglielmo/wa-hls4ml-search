@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Rough cost of a sweep group before running it, read-only.
 
-    sweep_estimate.py <group> [--rf 1,4] [--nodes 3] [--licenses 300] [--sample 300]
+    sweep_estimate.py <group> [--rf 1,4] [--nodes 1] [--licenses N] [--sample 300]
 
 Design count comes from the catalog (slurm/sweeps.tsv): enumerated for cartesian
 groups, the candidates file or generator for the sampled ones. Runtime and peak
@@ -9,7 +9,9 @@ Catapult memory come from past runs of the same group that are still on
 scratch (GNU parallel joblogs, messages.txt of up to --sample designs per run).
 
 Prints per RF: designs, past p50/p90 runtime and p90/max peak memory, the slots
-per node that fit the p90 memory in a node's ~460 GB, and node-hours. With no
+per node that fit both the p90 memory in a node's ~460 GB and the license seats
+(default: the seats in license_servers_perlmutter.json, as sweep.sh uses), and
+node-hours. With no
 past run on scratch it says so; numbers from another RF of the group are used
 when the same RF has none (marked). These are estimates, not promises.
 """
@@ -29,7 +31,14 @@ from list_runs import PROVENANCE, collect, provenance_groups  # noqa: E402
 from design_show import attempts, attempt_facts  # noqa: E402
 
 NODE_GB = 460.0     # usable per CPU node after SLURM's reserve, minus headroom
-SLOTS_MAX = 100     # one license per slot; 3 nodes x 100 = the 300-seat pool
+SLOTS_MAX = 100     # sweep.sh's cap per node; each slot also holds one license
+
+
+def license_seats():
+    """Seats in license_servers_perlmutter.json, the same count sweep.sh caps at."""
+    import json
+    with open(os.path.join(REPO, "license_servers_perlmutter.json")) as f:
+        return sum(int(s.get("licenses", 0)) for s in json.load(f)["servers"])
 
 
 def design_count(group):
@@ -83,10 +92,13 @@ def main():
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("group")
     ap.add_argument("--rf", help="comma list (default: the row's rf)")
-    ap.add_argument("--nodes", type=int, default=3)
-    ap.add_argument("--licenses", type=int, default=300)
+    ap.add_argument("--nodes", type=int, default=1)
+    ap.add_argument("--licenses", type=int, default=None,
+                    help="license seats (default: license_servers_perlmutter.json)")
     ap.add_argument("--sample", type=int, default=300, help="designs per past run read for peak memory")
     args = ap.parse_args()
+    if args.licenses is None:
+        args.licenses = license_seats()
 
     try:
         n, mode, rfs = design_count(args.group)
@@ -129,7 +141,8 @@ def main():
         rt, pk, _ = stats[src]
         p50, p90 = pct(rt, 50), pct(rt, 90)
         m90, mmax = pct(pk, 90), (max(pk) if pk else None)
-        slots = int(min(SLOTS_MAX, args.licenses // args.nodes, NODE_GB // m90)) if m90 else SLOTS_MAX
+        cap = min(SLOTS_MAX, args.licenses // args.nodes)
+        slots = int(min(cap, NODE_GB // m90)) if m90 else cap
         mean = sum(rt) / len(rt) if rt else None
         node_h = (n * mean / 60.0 / slots) if (n and mean) else None
         print("%-4s %-9s %-19s %-19s %-11s %-11s %s" % (

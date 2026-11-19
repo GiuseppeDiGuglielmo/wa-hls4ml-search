@@ -33,10 +33,10 @@ after `archive-verify` passes.
 
 | Target | What it does | Tested |
 |---|---|---|
-| `env-check` | checks venv, container, every Catapult install, licenses | yes |
-| `license-check` | checks each license server answers and lists its Catapult features | yes, fixed |
+| `env-check` | checks venv, container, every Catapult install, product, licenses | yes, fixed |
+| `license-check` | checks each license server answers, lists its Catapult features and the one the product needs | yes, fixed |
 | `catapult-probe` | launcher dry run; `PROBE=1` starts Catapult once (one license) | yes, fixed: fails, licenses expired |
-| `sweep-estimate` | designs, runtime, memory and node-hours from past runs | yes |
+| `sweep-estimate` | designs, runtime, memory and node-hours from past runs | yes, fixed |
 | `sweep-check` | the sweep plan plus `sbatch --test-only` | yes |
 | `sweep` | **submits** a sweep (nodes, one license per slot; 5 ultra seats) | no |
 | `reparse` | lists reports whose QoR is in a retry folder; `APPLY=1` rewrites them | plan only |
@@ -64,6 +64,16 @@ job ran its 4 designs on 1 slot and hit the 5:30 limit after 2; the rest finishe
 `rebuild-archived`. Fixed in `efe1f941`: `rerun-failed` now skips designs whose
 inputs the scratch purge removed instead of submitting them to fail.
 
+Review of every target on 2026-11-18 (read-only forms only). Fixed: `env-check` and
+`license-check` show the product and the license feature it needs; `catapult-probe`
+takes `WA_LICENSES` like the job targets; `sweep-estimate` caps slots at the license
+seats (it still assumed 3 nodes x 100); `why-failed` says its counts include earlier
+rounds; `reparse` and `rebuild-archived` say what their count means; `scratch-clean`
+takes `DROP_BACKUPS=1` instead of a script flag; `make help` lists every setting.
+Open: `sbatch --test-only` put the `shared` QOS jobs (the sweep driver,
+`design-synth`, `rerun-failed` with up to 8 designs) at a start 2-3 weeks out, while
+`express_amsc` started at once; pass `QOS=express_amsc` for those until it clears.
+
 ### check-runs
 
 | Target | What it does | Tested |
@@ -72,7 +82,7 @@ inputs the scratch purge removed instead of submitting them to fail.
 | `check-list` | every run on scratch and in the archive | yes |
 | `check-run` | expected, good, failed and missing designs of one run | yes |
 | `check-failed` | missing reports and tarballs, reports without QoR | yes, fixed |
-| `why-failed` | causes: exit codes, out-of-memory kills, time limits | yes |
+| `why-failed` | causes: exit codes, out-of-memory kills, time limits | yes, fixed |
 | `design-show` | one design's report and every Catapult attempt | yes, fixed |
 
 Fixed in `f0946393`: `check-failed` reported tarballs removed by the scratch purge

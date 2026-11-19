@@ -6,7 +6,7 @@
 # Read-only unless marked. Marked targets do nothing without their flag:
 #   PROBE=1   catapult-probe takes one license for a few seconds
 #   SUBMIT=1  design-synth, rerun-failed submit jobs (sweep always submits)
-#   APPLY=1   reparse, archive-index, scratch-clean write or delete
+#   APPLY=1   reparse, rebuild-archived, archive-index write; scratch-clean deletes
 # archive copies into the shared archive; run archive-dry first.
 # scratch-clean is the only target that deletes, and only after archive-verify.
 
@@ -35,6 +35,7 @@ SUBMIT   ?=
 APPLY    ?=
 FAST     ?=
 ALL      ?=
+DROP_BACKUPS ?=
 WORKERS  ?= 8
 LMUTIL   ?=
 PROBE_DIR = $(SCRATCH)/catapult_probe
@@ -43,7 +44,8 @@ SWEEP_OPTS = $(if $(RF),--rf $(RF)) $(if $(QOS),--qos $(QOS)) $(if $(TIME),--tim
              $(if $(MEM),--mem $(MEM)) $(if $(MEMFREE),--memfree $(MEMFREE))
 JOB_OPTS = $(if $(QOS),--qos $(QOS)) $(if $(TIME),--time $(TIME)) $(if $(MEM),--mem $(MEM))
 # Same license string sweep.sh builds from license_servers_perlmutter.json.
-LICENSES = $$(python3 -c "import json; c=json.load(open('license_servers_perlmutter.json')); print(':'.join('%s@%s' % (s['port'], s['host']) for s in c['servers']))")
+# WA_LICENSES=port@host overrides it, as for rerun-failed and design-synth.
+LICENSES = $${WA_LICENSES:-$$(python3 -c "import json; c=json.load(open('license_servers_perlmutter.json')); print(':'.join('%s@%s' % (s['port'], s['host']) for s in c['servers']))")}
 # The venv prints a harmless distutils-precedence.pth traceback on each python3 call.
 VENV_NOISE = -e distutils -e add_shim -e 'site.py' -e 'exec(line)' -e 'File "<string>"' -e '^ *Traceback' -e 'Remainder of file' -e '^ *$$'
 need_run  = @test -n "$(RUN)" || { echo 'usage: make $@ RUN=<scratch run_dir>$(1)'; exit 2; }
@@ -70,8 +72,10 @@ help:
 	      m = split(f[3], t, " "); for (k = 1; k <= m; k++) print (t[k] in row ? row[t[k]] : "  " t[k] "  (no help line)") } }' $(MAKEFILE_LIST)
 	@echo
 	@echo 'sweep opts: RF= QOS= TIME= NODES= PARALLELISM= MEM= MEMFREE='
-	@echo 'rerun-failed and design-synth also take QOS= TIME= MEM=.  TECH=nangate45|gf22fdx'
-	@echo 'RUN= is a scratch run folder; check-run and design-show also take a run name.'
+	@echo 'rerun-failed and design-synth also take QOS= TIME= MEM=; rerun-failed also PARALLELISM= MEMFREE='
+	@echo 'archive-dry, archive, archive-verify, scratch-clean take TECH=nangate45|gf22fdx (default: from the path)'
+	@echo 'scratch-clean takes DROP_BACKUPS=1 (with APPLY=1, also deletes scratch-only *_stale_* backups)'
+	@echo 'RUN= is a scratch run folder; check-run and design-show also take a run name, rebuild-archived only a name.'
 	@echo 'More: .claude/skills/README.md'
 
 # --- Tool chain: does Catapult work here? ---
@@ -145,7 +149,7 @@ check-failed:
 	@test -d "$(RUN)/build" || { echo 'check-failed: $(RUN) is not a scratch run directory (needs build/); for archive-only runs use make check-run'; exit 2; }
 	@bash slurm/examples/check_failures.sh $(RUN)
 
-## why-failed | RUN= [FAST=1] | Why designs failed: exit codes, OOM kills, time limits
+## why-failed | RUN= [FAST=1] | Why designs failed: exit codes, OOM kills, time limits. FAST=1 skips memory
 why-failed:
 	$(call need_run,)
 	@$(PYTHON) slurm/examples/why_failed.py $(RUN) $(if $(FAST),--no-memory)
@@ -155,7 +159,7 @@ reparse:
 	$(call need_run, [APPLY=1])
 	@set -o pipefail; $(NERSC_PY) slurm/examples/reparse.py $(RUN) $(if $(APPLY),--apply --workers $(WORKERS)) 2>&1 | { grep -v ' - INFO - ' || true; }
 
-## rebuild-archived | RUN= [APPLY=1] | Plans a scratch folder for an archive-only run's failed designs. APPLY=1 builds it
+## rebuild-archived | RUN=<name> [APPLY=1] | Plans a scratch folder for an archive-only run's failed designs. APPLY=1 builds it
 rebuild-archived:
 	@test -n "$(RUN)" || { echo 'usage: make rebuild-archived RUN=<archive run name> [APPLY=1]'; exit 2; }
 	@source "$${WA_HLS4ML_VENV:-/global/common/software/amsc011/public/venv_hls4ml/bin/activate}" && \
@@ -198,7 +202,7 @@ archive-verify:
 ## scratch-clean | RUN= [APPLY=1] | Checks a scratch run can be deleted. APPLY=1 deletes it
 scratch-clean:
 	$(call need_run, [APPLY=1])
-	@$(PYTHON) slurm/examples/scratch_clean.py $(RUN) $(if $(TECH),--tech $(TECH)) $(if $(APPLY),--apply)
+	@$(PYTHON) slurm/examples/scratch_clean.py $(RUN) $(if $(TECH),--tech $(TECH)) $(if $(APPLY),--apply) $(if $(DROP_BACKUPS),--drop-backups)
 
 ## archive-index | [APPLY=1] | Lists runs missing from the archive README. APPLY=1 adds them
 archive-index:
@@ -216,7 +220,7 @@ provenance-diff:
 
 # --- Planning ---
 
-## sweep-estimate | GROUP= [RF=] | Designs, runtime, memory and node-hours from past runs
+## sweep-estimate | GROUP= [RF= NODES=] | Designs, runtime, memory and node-hours from past runs
 sweep-estimate:
 	@test -n "$(GROUP)" || { echo 'usage: make sweep-estimate GROUP=<group from slurm/sweeps.tsv> [RF=1,4]'; exit 2; }
 	@$(NERSC_PY) slurm/examples/sweep_estimate.py $(GROUP) $(if $(RF),--rf $(RF)) $(if $(NODES),--nodes $(NODES))

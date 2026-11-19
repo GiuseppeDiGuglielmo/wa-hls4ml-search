@@ -70,7 +70,7 @@ def main():
         return 1
     stale = glob.glob(os.path.join(run_dir, "*_stale_*")) + glob.glob(os.path.join(run_dir, "data", "reports", "*_stale_*"))
     if stale and not args.drop_backups:
-        print("Not removing: scratch-only backups exist (%s); copy them somewhere or pass --drop-backups."
+        print("Not removing: scratch-only backups exist (%s); copy them somewhere, or add DROP_BACKUPS=1 to delete them too."
               % ", ".join(os.path.relpath(p, run_dir) for p in stale))
         return 1
     print("Measuring size of every file under the run (build/ can hold millions; ~10 min for 2M)...")

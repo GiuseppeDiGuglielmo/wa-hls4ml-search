@@ -111,7 +111,7 @@ def main():
     only = open(args.stems).read().split() if args.stems else None
     todo = candidates(run_dir, only)
     print("Run      %s" % os.path.basename(run_dir))
-    print("Candidates %d (no valid QoR in the report, QoR in a Catapult* attempt)" % len(todo))
+    print("To fix   %d report(s) without QoR whose design has QoR in a retry folder (Catapult_N/)" % len(todo))
     for s in todo[:10]:
         print("  %s" % s)
     if len(todo) > 10:

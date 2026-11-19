@@ -18,24 +18,29 @@ first, then a plan the user approves, then the action.
 ## Before anything runs
 
 1. `make env-check`: venv imports, container, Apptainer, Catapult install, env
-   script, license file, GNU parallel, launcher dry run. Every line must be OK.
+   script, license file, product and license seats, GNU parallel, launcher dry run.
+   Every line must be OK.
    It also detects purge damage (see below). Read-only, ~20 s.
 2. `make license-check [LMUTIL=<path>]`: each license server answers on its port,
    and its Catapult features, using the selected install's `lmutil`. On
    2026-11-17 `fasic-admin1` (the sweep server) listed 200 `CatAIhls4ml_c` and 200
    `CatUltrGenesis_c` as "unsupported by licensed server" (FlexLM cannot count
    SALT features; only `catapult-probe PROBE=1` proves a checkout);
-   `fasic-135413` (the env script's server) has 5 `CatAIhls4ml_c` and no Genesis
-   feature.
+   `fasic-135413` (the env script's server) has 5 `CatAIhls4ml_c`, 5
+   `CatapultUltra_c` and no Genesis feature. After the features, a `product` line
+   says which feature `CATAPULT_PRODUCT` needs and how many are issued and in use
+   (WARN when the server lacks it).
 3. `make catapult-probe`: launcher dry run. `make catapult-probe PROBE=1` starts
    Catapult once (one license, seconds) and must print `catapult-probe: OK`. Ask
-   before PROBE=1.
+   before PROBE=1. `WA_LICENSES=port@host` overrides the license file here too.
 
 ## A sweep
 
-1. `make sweep-estimate GROUP=<group> [RF=]`: designs per RF from the catalog, and
-   runtime, peak memory, slots per node and node-hours from past runs still on
-   scratch. Rough; says when there is no past data.
+1. `make sweep-estimate GROUP=<group> [RF= NODES=]`: designs per RF from the catalog,
+   and runtime, peak memory, slots per node and node-hours from past runs still on
+   scratch. Slots per node fit both the p90 memory and the license seats (same
+   defaults as `sweep`: 1 node, seats from the license file, so 5 with ultra).
+   Rough; says when there is no past data.
 2. `make sweep-check GROUP=<group> [RF= QOS= TIME= NODES= PARALLELISM= MEM= MEMFREE=]`:
    the plan, plus `sbatch --test-only` of a synthesis job and of the sweep driver.
    Builds no models, submits nothing. Show it to the user.
@@ -61,7 +66,8 @@ for a yes, then rerun with the flag.
   moved to `*_stale_<tag>/` so they are not skipped). Up to 8 designs go to `shared`
   with 24G each, more to a whole `express_amsc` node with `--memfree`. Run reparse
   first; rerun-failed skips designs reparse can fix.
-- `make rebuild-archived RUN=<archive run name> [APPLY=1]`: for a run that exists only
+- `make rebuild-archived RUN=<archive run name> [APPLY=1]` (`Designs 0 ...; nothing
+  to rebuild` when every archived design has QoR): for a run that exists only
   in the archive, recreates its original scratch folder (path from `source_dir.txt`)
   with just the designs without QoR: `keras_model.h5` from a scratch run of the same
   group at any RF, else `model[_<i>].json` + weights from a tarball of another RF;

@@ -115,6 +115,18 @@ def check_install(inst, used):
     report("OK", tag, detail)
 
 
+def json_seats():
+    """License seats listed in the license file; sweeps run at most this many designs at once."""
+    try:
+        with open(LICENSE_JSON) as f:
+            return sum(int(s.get("licenses", 0)) for s in json.load(f)["servers"])
+    except (OSError, ValueError, KeyError):
+        return 0
+
+
+PRODUCT_FEATURE = {"ultra": "CatapultUltra_c", "genesis": "Genesis"}
+
+
 def check_env():
     venv = os.environ.get("WA_HLS4ML_VENV", "/global/common/software/amsc011/public/venv_hls4ml/bin/activate")
     py = os.path.join(os.path.dirname(venv), "python")
@@ -171,6 +183,8 @@ def check_env():
     servers = json_servers()
     report("OK" if servers else "FAIL", "license file",
            "%s: %s" % (LICENSE_JSON, ", ".join(servers) or "missing or no servers"))
+    report("OK", "product", "%s (CATAPULT_PRODUCT=ultra|genesis), %d license seat(s) in the file"
+           % (os.environ.get("CATAPULT_PRODUCT", "ultra"), json_seats()))
 
     rc, out = run(["parallel", "--version"])
     if rc != 0:
@@ -213,10 +227,18 @@ def check_license(lmutil):
                 report("WARN", "  lmstat", ((out or "").strip().splitlines() or ["no output"])[-1][:120])
             for l in users:
                 print("      %s" % l)
+            prod = os.environ.get("CATAPULT_PRODUCT", "ultra")
+            need = PRODUCT_FEATURE.get(prod, prod)
+            hit = [l for l in users if need.lower() in l.lower()]
+            m = re.search(r"Total of (\d+) licenses? issued;\s*Total of (\d+)", hit[0]) if hit else None
+            if m:
+                report("OK", "  product", "%s needs %s: %s issued, %s in use" % (prod, need, m.group(1), m.group(2)))
+            else:
+                report("WARN" if not hit else "OK", "  product",
+                       "%s needs %s: %s" % (prod, need, "not on this server" if not hit else hit[0][:80]))
     if lmutil:
-        print("note: features listed by %s (Catapult features only). 'unsupported by licensed"
-              " server' means FlexLM cannot count them; 'make catapult-probe PROBE=1' tests a"
-              " checkout." % lmutil)
+        print("note: features from %s lmstat. 'unsupported by licensed server' means FlexLM cannot"
+              " count a feature; make catapult-probe PROBE=1 tests a real checkout." % os.path.basename(lmutil))
     else:
         print("note: no lmutil found; pass LMUTIL=<path> to list features.")
 
