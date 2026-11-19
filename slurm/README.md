@@ -59,7 +59,7 @@ The SLURM driver lives here, but it depends on a few sibling files. For a comple
 | `Perlmutter_scripts/perlmutter_slurm/` (submodule) | Reference SLURM tutorials (08_array_parallel_catapult is the same-design-N-times pattern; 07_array_parallel shows outer-array + inner-GNU-parallel for true 100-concurrent on the 32-node QoS cap) |
 | `~/bin/cad_env_perlmutter.sh` (per-user, NOT in repo; template `Perlmutter_scripts/cad_env_perlmutter.sh.example`) | Catapult environment setup (CATAPULT_VER, MGC_HOME, etc.) — sourced inside the container by catapult_shell.sh |
 | `license_servers_perlmutter.json` (gitignored, copy from .example) | Per-user license server config: `{"servers": [{"host": "fasic-135413.fnal.gov", "port": 1717, "licenses": 100}]}`. Drives both `LM_LICENSE_FILE` env var and the SLURM array `%total_licenses` throttle. |
-| `/global/common/software/amsc011/public/Siemens/Catapult/<version>/` (shared, amsc011; `catapult_root` in `site.json`) | The Catapult installs. `CATAPULT_VER` picks one (default: `catapult version` in `defaults.json`); `CATAPULT_PATH_OVERRIDE` points at another. See QUICKSTART.md. |
+| `/global/common/software/amsc011/public/Siemens/Catapult/<version>/` (shared, amsc011; `catapult_root` in `site.json`) | The Catapult installs. `CATAPULT_VER` picks one (default: `catapult version` in `defaults.json`); `CATAPULT_PATH_OVERRIDE` points at another. See SETUP.md. |
 | `/global/common/software/amsc011/public/venv_hls4ml/` (shared, `venv` in `site.json`, override with `WA_HLS4ML_VENV`) | DSE Python venv activated by each SLURM task before invoking iter_manager_catapult.py |
 
 ## How a single SLURM task flows
@@ -106,13 +106,9 @@ job_array.submit(args, run_dir, joblist_path, job_lines, total_licenses,
 
 ## Quick start
 
-See **`QUICKSTART.md` at the repo root** for the full new-user setup (shared installs, license file, container, smoke test).
-
-To run quickly once setup is done:
-```bash
-bash slurm/legacy/run_pilot.sh   # 5 toy tasks, ~5 min
-bash slurm/legacy/run_single.sh  # 1 real model, ~10-30 min
-```
+See **`SETUP.md` at the repo root** for the one-time setup (shared installs, license
+file, container) and **`SWEEP_GUIDE.md`** for running a sweep. The job-array smoke
+tests are in `slurm/legacy/README.md`.
 
 ## Notes
 

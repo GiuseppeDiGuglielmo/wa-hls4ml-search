@@ -1,7 +1,7 @@
-# QUICKSTART — Run Catapult HLS at scale on Perlmutter (NERSC)
+# Setup: Catapult HLS on Perlmutter (NERSC)
 
-This guide gets a new AmSC team member from zero to running 100-task SLURM
-synthesis arrays on Perlmutter.
+Do this once per person. It gets a new AmSC team member from zero to a tool chain
+that `make env-check` passes; [SWEEP_GUIDE.md](SWEEP_GUIDE.md) then runs a sweep.
 
 > **Audience**: AmSC project members (`amsc011` group) with NERSC + FNAL
 > Kerberos accounts. If you're outside AmSC, you'll need parallel access to
@@ -47,7 +47,7 @@ Nothing to install. Catapult and the Python environment are shared by the
 
 | What | Where | Chosen by |
 |---|---|---|
-| Catapult 2026.1_1 and 2026.3_1 | `Siemens/Catapult/<version>/` | `CATAPULT_VER` (default `2026.1_1`) |
+| Catapult, one folder per version (`make env-check` lists them) | `Siemens/Catapult/<version>/` | `CATAPULT_VER` (default: `catapult version` in `slurm/defaults.json`) |
 | DSE venv: TensorFlow 2.11, QKeras, hls4ml 0.8.1, ray | `venv_hls4ml/` | `WA_HLS4ML_VENV` (default: this one) |
 
 Catapult's own hls4ml flow uses a second venv, `~/ccs_venv`, in your home
@@ -92,94 +92,32 @@ ls -lh ~/work/tool-containers/catapult_rocky.sif
 # Override with `--sif /path/to/catapult_rocky.sif` if your copy lives elsewhere.
 ```
 
-## Run a smoke test (1 task, ~10-30 min)
+## Check it works
 
 ```bash
-cd $HOME/work/wa-hls4ml-search    # repo root — important for relative paths
-bash slurm/legacy/run_single.sh
+make env-check              # every line OK: venv, container, Catapult install, env script, license file, launcher
+make license-check          # each server answers; the product line shows seats issued and in use
+make catapult-probe PROBE=1 # starts Catapult once (one license, seconds); must print catapult-probe: OK
 ```
 
-You should see:
+Then run a sweep: [SWEEP_GUIDE.md](SWEEP_GUIDE.md).
 
-1. Local model generation (~30 sec)
-2. `Submitted SLURM job array: <jobid>`
-3. Polling output every 30 sec showing the task state
-4. Eventually: `All SLURM tasks completed successfully` + report-collection
-
-Outputs land in `$SCRATCH/catapult_runs/run_<timestamp>_<uuid>/`.
-
-## Run the pilot (5 toy tasks, ~5 min)
-
-```bash
-bash slurm/legacy/run_pilot.sh
-```
-
-5 tiny models synthesized in parallel (express_amsc QoS allows up to 32
-concurrent tasks; 5 fits comfortably).
-
-## Run at scale (100 toy tasks, ~12 min)
-
-```bash
-bash slurm/legacy/run_scale_toy.sh
-```
-
-100 toy models. **Note**: `express_amsc` QoS is capped at 32 concurrent
-nodes (group-wide), so the 100 tasks run in waves of 32. License pool
-(105 seats) is NOT the bottleneck — the QoS cap is.
-
-For 100 *real* models (not toy), use:
-```bash
-bash slurm/legacy/run_scale.sh
-```
-(Real models take ~20-40 min each; total wall-clock with the 32-node cap
-is ~1-2 hours.)
-
-## Where outputs go
-
-Each run creates a timestamped directory under `$SCRATCH/catapult_*/`:
-
-```
-run_<YYYYMMDD>_<HHMMSS>_<uuid>/
-├── data/reports/raw/dense_*.json     ← parsed synthesis reports (USE THESE)
-├── tarballs/dense_*.tar.gz           ← full bundled output per model
-├── build/dense_*/catapult_native/    ← raw Catapult work dirs (debug)
-├── slurm_logs/task_*.{out,err}       ← per-task SLURM logs
-├── joblist.txt                        ← inputs to each task
-└── job_array.sh                       ← the SBATCH script that ran
-```
-
-## Recover from a crashed orchestrator
-
-If your shell session dies (laptop closed, ssh disconnected, etc.) while
-the polling loop is running, the SLURM tasks keep going independently —
-you just lose the report-collection. To re-collect after the array finishes:
-
-```bash
-cd $HOME/work/wa-hls4ml-search
-source /global/common/software/amsc011/public/venv_hls4ml/bin/activate
-python iter_manager_catapult.py -o $SCRATCH/anywhere \
-  --collect-slurm $SCRATCH/catapult_*/run_<timestamp>_<uuid>
-```
-
-(The `-o` is required by argparse but ignored when `--collect-slurm` is set;
-any path works.)
-
-## Common errors + fixes
+## Common setup errors
 
 | Error | Cause | Fix |
 |---|---|---|
-| `mgls_errno = 515` | License server unreachable | Verify `nc -zv fasic-135413.fnal.gov 1717` works; check `license_servers_perlmutter.json` points there |
-| `command not found: catapult` | Wrong `CATAPULT_VER` or `CATAPULT_PATH_OVERRIDE` | Run `make env-check`; it lists every install it finds |
-| `QOSGrpNodeLimit` (PENDING reason) | `express_amsc` is capped at 32 nodes group-wide | Wait for in-flight tasks (yours or other AmSC users') to finish |
-| `apptainer: chdir ...: no such file or directory` | Path symlink mismatch | `Perlmutter_scripts/catapult_shell.sh` already binds both `$HOME` and `$_HOME_REAL`; if it still fails check `readlink -f $HOME` |
-| `catapult: invalid argument: -shell` | Using Catapult 2025.4_1 with `-product genesis` | Use a 2026 version (`CATAPULT_VER=2026.1_1`); the `-product genesis` flag only works in 2026 |
+| `mgls_errno = 515` | License server unreachable | Verify `nc -zv <host> 1717`; check `license_servers_perlmutter.json` |
+| `mgls_errno = 522` | No valid license for the product (e.g. expired) | `make license-check`; `CATAPULT_PRODUCT=` picks ultra or genesis |
+| `command not found: catapult`, dangling links | Wrong `CATAPULT_VER`, or a purged install | `make env-check` lists every install it finds and spots purge damage |
+| `import tensorflow` fails | venv damaged (e.g. by the scratch purge) | `make env-check`; see "Rebuilding the shared installs" |
+| `apptainer: chdir ...: no such file or directory` | Path symlink mismatch | `Perlmutter_scripts/catapult_shell.sh` binds both `$HOME` and `$_HOME_REAL`; check `readlink -f $HOME` |
 
 ## Going further
 
-- **[SWEEP_GUIDE.md](SWEEP_GUIDE.md)** — add, run, archive and record a design-space sweep (the production path; the job-array runs above are smoke tests)
-
-- **`slurm/README.md`** — internal docs for the SLURM module + an index of every file the SLURM workflow touches
-- **`Perlmutter_scripts/perlmutter_slurm/README.md`** — reference SLURM tutorials (the submodule), great for learning SLURM patterns beyond this project
+- [SWEEP_GUIDE.md](SWEEP_GUIDE.md): add, run, archive and record a sweep
+- [`slurm/README.md`](slurm/README.md): the code behind the make targets
+- [`slurm/legacy/README.md`](slurm/legacy/README.md): the older job-array smoke tests
+- `Perlmutter_scripts/perlmutter_slurm/README.md`: reference SLURM tutorials (submodule)
 
 ## Rebuilding the shared installs
 

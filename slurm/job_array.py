@@ -6,7 +6,7 @@ Two functions:
 
 Each array task runs one synthesis via `iter_manager_catapult.py --run-single-job`.
 The license server is configured directly (no SSH tunneling) — see
-QUICKSTART.md for the prerequisite Perlmutter setup.
+SETUP.md for the prerequisite Perlmutter setup.
 """
 
 import logging

@@ -114,7 +114,7 @@ own server, which the launcher overrides.
 venv's `.py` sources (Python reads only the `.pyc`) and parts of a Catapult install.
 Symptom: `import tensorflow` fails or Catapult links dangle; `make env-check`
 reports it. So the installs live outside `$SCRATCH` (`catapult_root` and `venv` in
-`slurm/site.json`; the DSE venv's TensorFlow 2.11 needs Python 3.10). QUICKSTART's
+`slurm/site.json`; the DSE venv's TensorFlow 2.11 needs Python 3.10). SETUP.md's
 "Rebuilding the shared installs" has the commands; rebuilding is the user's call.
 
 **errno 522 is the license, not the install.** `mgls_errno = 522` "License server

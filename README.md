@@ -10,54 +10,18 @@ Two backends are supported:
 
 ## Catapult/Perlmutter ASIC flow
 
-Every sweep runs through `make sweep`, which submits the single entry point
-`slurm/sweep.sh`; it reads the group's parameters from the catalog `slurm/sweeps.tsv`,
-runs one Catapult per license seat with GNU parallel, retries failures automatically,
-and copies the results into the shared CFS archive.
+Design-space sweeps synthesised with Catapult HLS on Perlmutter (Nangate 45nm, GF22FDX),
+run through `make` targets and archived to
+`/global/cfs/cdirs/amsc011/shared/wa-hls4ml-catapult/` (see `README.md` there).
 
-**[SWEEP_GUIDE.md](SWEEP_GUIDE.md) walks through adding, running, archiving and
-recording a new sweep, step by step.** One-time setup is in [QUICKSTART.md](QUICKSTART.md).
-
-### Prerequisites
-- Catapult, shared under `/global/common/software/amsc011/public/Siemens/Catapult/<version>/`
-  (2026.1_1 and 2026.3_1; `CATAPULT_VER` picks one, default 2026.1_1)
-- The DSE Python venv, shared at `/global/common/software/amsc011/public/venv_hls4ml/` (or set `WA_HLS4ML_VENV`)
-- `license_servers_perlmutter.json` at repo root (copy from `.example`)
-
-### Quick reference
-
-| What | Command |
+| Read | For |
 |---|---|
-| List the sweep groups | `awk -F'\t' '!/^#/ && NF' slurm/sweeps.tsv` |
-| Show one group's parameters | `bash slurm/sweep.sh 3l_sz64_l3 --list` |
-| Check the tool chain | `make env-check`, `make license-check` |
-| Estimate a sweep from past runs | `make sweep-estimate GROUP=3l_sz64_l3 RF=1` |
-| Check a sweep without submitting | `make sweep-check GROUP=3l_sz64_l3 RF=1` |
-| Submit a sweep | `make sweep GROUP=3l_sz64_l3 RF=1` |
-| Rehearse, building models but submitting nothing | `DRY_RUN=1 bash slurm/sweep.sh 3l_sz64_l3` |
-| How complete a run is | `make check-run RUN=<RUN_DIR>` |
-| Check synthesis failures | `make check-run RUN=<RUN_DIR> DETAILS=1`, `make why-failed RUN=<RUN_DIR>` |
-| Archive a completed run | `make archive-dry RUN=<RUN_DIR>`, then `make archive RUN=<RUN_DIR>` |
-| Monitor jobs + resources | `make check-jobs`, `bash check_progress_resources.sh` |
-| Every target | `make help` |
-
-`make help` lists all targets. [`.claude/skills/README.md`](.claude/skills/README.md) groups
-them by agent skill and says which ones change anything and which have been tested.
-
-> **RF=1 with 128-neuron layers** requires longer wall time than the default `express_amsc` (6h).
-> Override with: `make sweep GROUP=45nm_sz128_2l RF=1 QOS=regular TIME=1-22:00:00`
-
-### Adding a sweep
-
-Add a row to `slurm/sweeps.tsv` — never edit an existing one. A design's stem is
-`dense_{N}l_{idx}`, its position in the cartesian product of that row's columns, so changing a
-row renumbers every design it already produced and breaks the archive's `(run, stem)` join
-keys. `python slurm/tests/check_design_space.py` enforces this against a frozen contract.
-[SWEEP_GUIDE.md](SWEEP_GUIDE.md) has the columns and a worked example.
-
-Results are archived to `/global/cfs/cdirs/amsc011/shared/wa-hls4ml-catapult/` (see `README.md` there).
-
-See `slurm/README.md` for the full script inventory and how a synthesis task flows.
+| [SETUP.md](SETUP.md) | one-time setup per person |
+| [SWEEP_GUIDE.md](SWEEP_GUIDE.md) | adding, running, archiving and recording a sweep |
+| [.claude/skills/cheatsheet.txt](.claude/skills/cheatsheet.txt) | every make target on one page (`make help` lists them too) |
+| [.claude/skills/README.md](.claude/skills/README.md) | targets by task, what each changes, how agents use them |
+| [slurm/README.md](slurm/README.md) | the code behind the targets |
+| [slurm/PROVENANCE.md](slurm/PROVENANCE.md) | what each archived run is |
 
 ---
 

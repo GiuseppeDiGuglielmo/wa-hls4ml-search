@@ -2,7 +2,7 @@
 
 How to take a new design space from a catalog row to archived, recorded results
 on Perlmutter. One-time setup (accounts, license file, container, env script) is in
-[QUICKSTART.md](QUICKSTART.md); do that first.
+[SETUP.md](SETUP.md); do that first.
 
 Every command runs from the repo root. `make help` lists all targets; targets only
 read or print a plan unless you add the flag their description names (`SUBMIT=1`,
@@ -63,6 +63,10 @@ Append with `printf`, which writes real tabs (some editors turn tabs into spaces
 printf 'demo_1l_20\tnangate45\t4-8\t4-8\t4,6,8,10,12\trelu\t1\tcartesian\t-\t-\t20-design demo sweep\n' >> slurm/sweeps.tsv
 bash slurm/sweep.sh demo_1l_20 --list     # prints the parsed row; "unknown group" = not saved or not tab-separated
 ```
+
+`python slurm/tests/check_design_space.py` (in the DSE venv) checks that the
+catalog still describes exactly the archived design space; run it after touching
+`slurm/sweeps.tsv`. It must print `design space unchanged`.
 
 ## 2. Estimate
 

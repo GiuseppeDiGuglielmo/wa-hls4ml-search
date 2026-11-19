@@ -3,7 +3,7 @@
 # Copy this template to ~/bin/cad_env_perlmutter.sh (catapult_shell.sh sources
 # it inside the container; the older name ~/bin/siemens.sh is still accepted):
 #   cp Perlmutter_scripts/cad_env_perlmutter.sh.example ~/bin/cad_env_perlmutter.sh
-# The defaults below use the amsc011 shared installs (see QUICKSTART.md step 3):
+# The defaults below use the amsc011 shared installs (see SETUP.md step 3):
 #   /global/common/software/amsc011/public/Siemens/Catapult/<CATAPULT_VER>/
 # For sweeps the launcher sets the install path itself, overriding CATAPULT_PATH.
 
