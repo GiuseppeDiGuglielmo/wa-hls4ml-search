@@ -134,9 +134,9 @@ check-jobs:
 check-list:
 	@$(PYTHON) slurm/examples/list_runs.py $(if $(TECH),--tech $(TECH)) $(if $(WHERE),--where $(WHERE)) $(if $(GREP),--grep "$(GREP)")
 
-## check-run | RUN= | Expected, good, failed and missing designs of a run
+## check-run | RUN= [EXPECTED=] | Expected, good, failed and missing designs of a run
 check-run:
-	@test -n "$(RUN)" || { echo 'usage: make check-run RUN=<run_dir, catapult_* folder, or run name>'; exit 2; }
+	@test -n "$(RUN)" || { echo 'usage: make check-run RUN=<run_dir, catapult_* folder, or run name> [EXPECTED=N]'; exit 2; }
 	@$(PYTHON) slurm/examples/run_status.py $(RUN) $(if $(EXPECTED),--expected $(EXPECTED))
 
 ## check-failed | RUN= | Missing reports and tarballs, reports without QoR

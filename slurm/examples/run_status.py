@@ -161,7 +161,7 @@ def report(args, run_arg):
     elif expected:
         print("Expected %d (joblist.txt)" % expected)
     else:
-        print("Expected unknown (no joblist.txt; pass --expected)")
+        print("Expected unknown (no joblist.txt; add EXPECTED=N, the Designs count in PROVENANCE.md)")
     if len(lists) > 1:
         shown = ["%s %d" % (n, len(t)) for n, t in lists.items()]
         more = " ... (%d files)" % len(shown) if len(shown) > 4 else ""
