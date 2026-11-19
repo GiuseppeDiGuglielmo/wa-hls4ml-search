@@ -1,0 +1,66 @@
+wa-hls4ml Catapult  make cheat sheet                                                2026-11-18
+cd ~/research/projects/genesis/wa-hls4ml-paper/wa-hls4ml-search ; make help
+
+Everything reads or plans, unless:  PROBE=1 (1 license)  SUBMIT=1 (jobs)
+  APPLY=1 (writes; scratch-clean: DELETES)   sweep, archive: ALWAYS act
+
+AREA / target      args                    does                                          skill
+----------------------------------------------------------------------------------------------
+SETUP
+  env-check                                venv, container, Catapult installs, product,     R
+                                           license file, GNU parallel
+  license-check    [LMUTIL=]               servers answer; features; the one product needs  R
+  catapult-probe   [PROBE=1]               launcher dry run; PROBE=1 starts Catapult once   R
+MONITOR
+  check-jobs       [ACCOUNT=amsc011]       my pending/running jobs; express pool nodes      C
+  check-list       [TECH= WHERE= GREP=]    every run, on scratch, archive or both           C
+  check-run        RUN= [EXPECTED=]        expected/good/failed/missing, scratch+archive    C
+DIAGNOSE
+  check-failed     RUN=                    missing reports and tarballs, reports w/o QoR    C
+  why-failed       RUN= [FAST=1]           exit codes, OOM kills, timeouts, peak memory     C
+  design-show      RUN= STEM=              one design: report, QoR, every attempt           C
+SWEEP
+  sweep-estimate   GROUP= [RF= NODES=]     designs, runtime, memory, node-hours (past)      R
+  sweep-check      GROUP= [sweep opts]     the sweep plan + sbatch --test-only              R
+! sweep            GROUP= [sweep opts]     SUBMITS the sweep (archives itself at the end)   R
+REPAIR
+  reparse          RUN= [APPLY=1]          reports whose QoR sits in a Catapult_N/ retry    R
+  rebuild-archived RUN=<name> [APPLY=1]    rebuild a purged run's failed designs            R
+  rerun-failed     RUN= [SUBMIT=1]         rerun every design without QoR in one job        R
+  design-synth     RUN= STEM= [SUBMIT=1]   rerun one design in a debug folder               R
+ARCHIVE
+  archive-dry      RUN=                    what archive would copy or replace               A
+! archive          RUN=                    COPIES into the shared archive, never deletes    A
+  archive-verify   RUN= [ALL=1]            archive holds everything: VERIFIED or NOT        A
+  scratch-clean    RUN= [APPLY=1]          checks a run can go; APPLY=1 DELETES it          A
+DATASET
+  dataset-summary  [TECH= FAST=1]          reports and good designs per run and tech        D
+  provenance-diff  [FAST=1]                where PROVENANCE.md disagrees with the archive   D
+  archive-index    [APPLY=1]               runs missing in archive README; APPLY=1 adds     A
+----------------------------------------------------------------------------------------------
+
+SKILLS    R run-catapult   C check-runs   A archive-run   D dataset
+          .claude/skills/<skill>/SKILL.md      overview: .claude/skills/README.md
+          general: perlmutter, slurm  (~/.claude/skills/)
+
+SETTINGS
+  RUN=           scratch run dir (check-run, design-show: also a run name)
+  STEM=          one design, e.g. dense_1l_sz128_188
+  GROUP= / RF=   a row of slurm/sweeps.tsv / reuse factors, e.g. 1,4,8,16
+  TECH=          nangate45 | gf22fdx (default: from the path)
+  QOS= TIME= MEM=                express_amsc, 05:30:00, 0 (= whole node)
+  NODES= PARALLELISM= MEMFREE=   1, license seats (5), 64G free to start a design
+  EXPECTED=N     design count when the run has no joblist.txt
+  DROP_BACKUPS=1 scratch-clean also deletes scratch-only *_stale_* backups
+  env            CATAPULT_PRODUCT=ultra|genesis   WA_LICENSES=1717@fasic-135413.fnal.gov
+
+RECIPES
+  new sweep  env-check > sweep-estimate > sweep-check > sweep > check-run > archive-verify
+  repair     why-failed > reparse [APPLY=1] > rerun-failed QOS=express_amsc [SUBMIT=1]
+             > check-run > archive-dry > archive > archive-verify
+  free disk  check-jobs > archive-verify (VERIFIED) > scratch-clean > scratch-clean APPLY=1
+
+NOTES
+  ! 5 CatapultUltra seats (fasic-135413, to 2027-05-31): at most 5 designs at once
+  ! shared QOS queue is slow: pass QOS=express_amsc to rerun-failed and design-synth
+  ! never use slurm/examples/archive_run.sh (with --yes it deletes the scratch run)

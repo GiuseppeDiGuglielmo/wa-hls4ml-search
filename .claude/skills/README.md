@@ -15,6 +15,9 @@ add no commands of their own, so a person and an agent get the same answer.
 Two general skills, `perlmutter` and `slurm`, come from the genesis-skills
 repository and are installed in `~/.claude/skills/`.
 
+[`cheatsheet.txt`](cheatsheet.txt) lists every target, its settings and the
+common recipes on one printable page (plain text, 94 columns).
+
 ## Safety
 
 Targets only read or show a plan, unless you add the setting their description
@@ -141,4 +144,5 @@ Do not use `slurm/examples/archive_run.sh`: with `--yes` it deletes the scratch 
 
 ## Keeping this page right
 
-When a target changes or a skill is tested, update its row here in the same commit.
+When a target changes or a skill is tested, update its row here, and its line in
+`cheatsheet.txt`, in the same commit.

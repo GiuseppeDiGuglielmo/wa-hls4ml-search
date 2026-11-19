@@ -76,7 +76,7 @@ help:
 	@echo 'archive-dry, archive, archive-verify, scratch-clean take TECH=nangate45|gf22fdx (default: from the path)'
 	@echo 'scratch-clean takes DROP_BACKUPS=1 (with APPLY=1, also deletes scratch-only *_stale_* backups)'
 	@echo 'RUN= is a scratch run folder; check-run and design-show also take a run name, rebuild-archived only a name.'
-	@echo 'More: .claude/skills/README.md'
+	@echo 'More: .claude/skills/README.md; one printable page: .claude/skills/cheatsheet.txt'
 
 # --- Tool chain: does Catapult work here? ---
 
