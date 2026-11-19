@@ -118,6 +118,10 @@ def main():
         sys.exit("why_failed: %s is not a scratch run directory (needs build/)%s" % (run_dir, hint))
 
     exits, oom, timeouts, lic, jobs = scan_logs(run_dir)
+    try:  # job-array runs (slurm/legacy) record their job id here
+        jobs.update(open(os.path.join(run_dir, "slurm_job_id.txt")).read().split())
+    except (IOError, OSError):
+        pass
     print("Run      %s" % os.path.basename(run_dir))
     print("Scope    every job in slurm_logs/, earlier rounds included; No QoR (last line) is the state now")
     total = sum(exits.values())
@@ -183,7 +187,7 @@ def main():
         print("  %-28s %-9s attempts %-3d last step %s" % (s, "report" if has_report else "no report",
                                                          len(tries), step))
     if len(failed) > 15:
-        print("  ... (%d more; make check-failed lists them)" % (len(failed) - 15))
+        print("  ... (%d more; make check-run DETAILS=1 lists them)" % (len(failed) - 15))
     return 0
 
 

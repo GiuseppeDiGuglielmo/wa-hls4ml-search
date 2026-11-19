@@ -255,7 +255,8 @@ excluded from training, along with `run_20260504_205339_a5d590d6` (1,000; 999 wi
 QoR, which `make provenance-diff` reports) and
 `run_20260505_145920_de8c3504` (100), whose generating invocations are not recorded.
 
-🔧 **Tools** — `archive_run.sh` (removed 2026-11-18), `check_failures.sh`,
+🔧 **Tools** — `archive_run.sh` (removed 2026-11-18), `check_failures.sh` (folded into
+`make check-run DETAILS=1`, 2026-11-18),
 `clean_runs.sh` (removed 2026-11-18),
 `populate_failed_designs.py` (removed 2026-11-18), `sample_lhs_from_archive.py`,
 `run_rerun_from_archive.sh` (removed 2026-11-18; see `slurm/repairs/README.md`).

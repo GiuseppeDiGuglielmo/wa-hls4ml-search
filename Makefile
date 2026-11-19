@@ -40,6 +40,7 @@ SUBMIT   ?=
 APPLY    ?=
 FAST     ?=
 ALL      ?=
+DETAILS  ?=
 DROP_BACKUPS ?=
 WORKERS  ?= 8
 LMUTIL   ?=
@@ -57,7 +58,7 @@ need_run  = @test -n "$(RUN)" || { echo 'usage: make $@ RUN=<scratch run_dir>$(1
 
 .PHONY: help env-check license-check catapult-probe \
         design-show design-synth \
-        check-jobs check-list check-run check-failed why-failed reparse rebuild-archived rerun-failed sweep-check sweep \
+        check-jobs check-list check-run why-failed reparse rebuild-archived rerun-failed sweep-check sweep \
         archive-dry archive archive-verify scratch-clean archive-index \
         dataset-summary provenance-diff sweep-estimate
 
@@ -70,7 +71,7 @@ help:
 	@awk -F' [|] ' '/^## [a-z-]+ [|]/ { sub(/^## /, "", $$1); \
 	    row[$$1] = sprintf("  %-16s %-22s %s", $$1, $$2, $$3) } \
 	  END { n = split("run-catapult:tool chain, sweeps, repairs:env-check license-check catapult-probe sweep-estimate sweep-check sweep reparse rebuild-archived rerun-failed design-synth;" \
-	                  "check-runs:status and failures:check-jobs check-list check-run check-failed why-failed design-show;" \
+	                  "check-runs:status and failures:check-jobs check-list check-run why-failed design-show;" \
 	                  "archive-run:archive and scratch:archive-dry archive archive-verify scratch-clean archive-index;" \
 	                  "dataset:the archived dataset:dataset-summary provenance-diff", grp, ";"); \
 	    for (i = 1; i <= n; i++) { split(grp[i], f, ":"); printf "\n%s: %s\n", f[1], f[2]; \
@@ -144,16 +145,10 @@ check-jobs:
 check-list:
 	@$(PYTHON) slurm/examples/list_runs.py $(if $(TECH),--tech $(TECH)) $(if $(WHERE),--where $(WHERE)) $(if $(GREP),--grep "$(GREP)")
 
-## check-run | RUN= [EXPECTED=] | Expected, good, failed and missing designs of a run
+## check-run | RUN= [EXPECTED= DETAILS=1] | Expected, good, failed and missing designs of a run. DETAILS=1 lists them
 check-run:
-	@test -n "$(RUN)" || { echo 'usage: make check-run RUN=<run_dir, catapult_* folder, or run name> [EXPECTED=N]'; exit 2; }
-	@$(PYTHON) slurm/examples/run_status.py $(RUN) $(if $(EXPECTED),--expected $(EXPECTED))
-
-## check-failed | RUN= | Missing reports and tarballs, reports without QoR
-check-failed:
-	@test -n "$(RUN)" || { echo 'usage: make check-failed RUN=<run_dir>'; exit 2; }
-	@test -d "$(RUN)/build" || { echo 'check-failed: $(RUN) is not a scratch run directory (needs build/); for archive-only runs use make check-run'; exit 2; }
-	@bash slurm/examples/check_failures.sh $(RUN)
+	@test -n "$(RUN)" || { echo 'usage: make check-run RUN=<run_dir, catapult_* folder, or run name> [EXPECTED=N] [DETAILS=1]'; exit 2; }
+	@$(PYTHON) slurm/examples/run_status.py $(RUN) $(if $(EXPECTED),--expected $(EXPECTED)) $(if $(DETAILS),--details)
 
 ## why-failed | RUN= [FAST=1] | Why designs failed: exit codes, OOM kills, time limits. FAST=1 skips memory
 why-failed:

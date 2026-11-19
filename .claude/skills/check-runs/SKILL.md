@@ -3,7 +3,7 @@ name: check-runs
 description: >-
   Facts for inspecting wa-hls4ml Catapult sweep runs on Perlmutter: where scratch
   run folders and the shared CFS archive live, what counts as a finished design,
-  and which read-only tools (make check-jobs, check-list, check-run, check-failed,
+  and which read-only tools (make check-jobs, check-list, check-run,
   why-failed, design-show) report progress, failures and their causes. Use when
   asked how runs or jobs are doing, how complete a sweep group or reuse factor is,
   what failed and why, what one design did, or what is missing from the archive.
@@ -82,10 +82,10 @@ Run from the repo root. All read-only; use whichever fit, in any order.
   is measured against its `joblist_rerun*.txt`. It reads every JSON: seconds on scratch,
   up to a few minutes for a large archive run on CFS. `python3 slurm/examples/run_status.py <run> --list-failed`
   prints failed stems.
-- `make check-failed RUN=<run_dir>`: missing reports, reports without valid QoR,
-  missing tarballs and failed SLURM tasks, with the tail of their `.err` logs.
-  Tarballs gone from scratch (e.g. purged) but present in the archive are only
-  counted, not listed. Scratch run directories only; ~30 s for 5k designs. Writes nothing.
+- `make check-run RUN=<run> DETAILS=1`: the same, then every design behind each
+  count: no report, no valid QoR, no tarball (on scratch; tarballs only in the
+  archive, e.g. after a purge, are counted, not listed) and, for the archive, no
+  valid QoR or no report. Failed SLURM jobs and their logs are why-failed's part.
 - `make why-failed RUN=<run_dir> [FAST=1]`: Catapult exit codes, oom_kill events,
   time-limit cancels, license errors and sacct states from `slurm_logs/` (every job of
   the run, earlier rounds included, so a timeout can show although its designs later

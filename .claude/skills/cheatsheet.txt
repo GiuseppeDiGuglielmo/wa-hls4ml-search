@@ -12,11 +12,11 @@ SETUP
   license-check    [LMUTIL=]               servers answer; features; the one product needs  R
   catapult-probe   [PROBE=1]               launcher dry run; PROBE=1 starts Catapult once   R
 MONITOR
-  check-jobs       [ACCOUNT=amsc011]       my pending/running jobs; express pool nodes      C
+  check-jobs       [ACCOUNT=]              my pending/running jobs; express pool nodes      C
   check-list       [TECH= WHERE= GREP=]    every run, on scratch, archive or both           C
   check-run        RUN= [EXPECTED=]        expected/good/failed/missing, scratch+archive    C
 DIAGNOSE
-  check-failed     RUN=                    missing reports and tarballs, reports w/o QoR    C
+  check-run        RUN= DETAILS=1          lists the designs behind each count              C
   why-failed       RUN= [FAST=1]           exit codes, OOM kills, timeouts, peak memory     C
   design-show      RUN= STEM=              one design: report, QoR, every attempt           C
 SWEEP

@@ -36,7 +36,7 @@ automatically with `--resume-failed`, and archives results flat to the shared CF
 | Check the tool chain | `make env-check` |
 | Check a sweep without submitting | `make sweep-check GROUP=3l_sz64_l3 RF=1` |
 | How complete a run is | `make check-run RUN=<RUN_DIR>` |
-| Check synthesis failures | `make check-failed RUN=<RUN_DIR>`, `make why-failed RUN=<RUN_DIR>` |
+| Check synthesis failures | `make check-run RUN=<RUN_DIR> DETAILS=1`, `make why-failed RUN=<RUN_DIR>` |
 | Archive a completed run | `make archive-dry RUN=<RUN_DIR>`, then `make archive RUN=<RUN_DIR>` |
 | Monitor jobs + resources | `make check-jobs`, `bash check_progress_resources.sh` |
 | Every target | `make help` |

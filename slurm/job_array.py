@@ -211,7 +211,7 @@ def submit(args, run_dir, joblist_path, job_lines, total_licenses,
     logger.info(f"Submitted SLURM job array: {job_id}")
     logger.info(f"SLURM logs: {slurm_logs_dir}")
 
-    # Persist job ID so check_failures.sh can query sacct without knowing it
+    # Persist job ID so why_failed.py can query sacct without knowing it
     jobid_path = os.path.join(run_dir, "slurm_job_id.txt")
     with open(jobid_path, "w") as f:
         f.write(job_id + "\n")

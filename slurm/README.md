@@ -42,7 +42,6 @@ the catalog:
 | Script | Purpose |
 |---|---|
 | `archive_sync.py` | Copy a run into the archive; dry run by default, `--apply` to copy. Replaces stale archive reports (backed up first), never deletes. Called by `orchestrate.sh`; `make archive-dry` / `make archive`. |
-| `check_failures.sh` | Scan a run dir for missing tarballs; write `failed_designs.txt`. |
 | `sample_lhs_from_archive.py` | KD-tree LHS sampling from the 45nm archive → candidates file for GF22 runs. |
 
 ## Index of files the SLURM workflow touches (across the whole repo)

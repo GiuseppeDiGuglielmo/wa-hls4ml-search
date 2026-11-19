@@ -8,7 +8,7 @@ add no commands of their own, so a person and an agent get the same answer.
 | Skill | Use it to | Targets |
 |---|---|---|
 | [`run-catapult`](run-catapult/SKILL.md) | check the tool chain, plan and submit a sweep, repair a run | 10 |
-| [`check-runs`](check-runs/SKILL.md) | see how jobs and runs are doing, what failed and why | 6 |
+| [`check-runs`](check-runs/SKILL.md) | see how jobs and runs are doing, what failed and why | 5 |
 | [`archive-run`](archive-run/SKILL.md) | copy a run to the shared archive, verify it, free scratch | 5 |
 | [`dataset`](dataset/SKILL.md) | count the archived dataset and check its docs | 2 |
 
@@ -65,8 +65,7 @@ log of each tool says when and what was fixed.
 |---|---|---|
 | `check-jobs` | your jobs and the express node pools, nodes per account | yes |
 | `check-list` | every run on scratch and in the archive | yes |
-| `check-run` | expected, good, failed and missing designs of one run | yes |
-| `check-failed` | missing reports and tarballs, reports without QoR | yes |
+| `check-run` | expected, good, failed and missing designs of one run; `DETAILS=1` lists them | yes |
 | `why-failed` | counts: exit codes, out-of-memory kills, time limits, job memory | yes |
 | `design-show` | one design's report and every Catapult attempt | yes |
 

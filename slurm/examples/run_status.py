@@ -73,7 +73,7 @@ def find_archive_run(name):
 def joblist_tags(path):
     """Design tags in a joblist: the basename of each line's first field (the build dir)."""
     with open(path) as f:
-        return {os.path.basename(l.split("\t", 1)[0].rstrip("/")) for l in f if l.strip()}
+        return {os.path.basename(l.strip().split("\t", 1)[0].rstrip("/")) for l in f if l.strip()}
 
 
 def joblists(run_dir):
@@ -101,6 +101,9 @@ def main():
                     help="expected design count (default: lines in joblist.txt)")
     ap.add_argument("--list-failed", action="store_true",
                     help="print stems with a report but no valid QoR, one per line")
+    ap.add_argument("--details", action="store_true",
+                    help="also list the designs behind each count (no report, no valid QoR, "
+                         "no tarball on scratch or in the archive)")
     args = ap.parse_args()
 
     if args.expected is not None and args.expected <= 0:
@@ -196,7 +199,36 @@ def report(args, run_arg):
         line("tarballs", len(archive["tarballs"]), expected)
     if scratch is not None and archive is not None:
         line("good on scratch, not archived", len(scratch["good"] - archive["good"]))
+    if getattr(args, "details", False):
+        details(run_dir, target, scratch, archive)
     return 0
+
+
+def details(run_dir, target, scratch, archive):
+    """List the designs behind the counts: one section per kind, every stem."""
+    designs = set(target or ())
+    if not designs and run_dir:
+        designs = {os.path.basename(os.path.dirname(p))
+                   for p in glob.glob(os.path.join(run_dir, "build", "*", "catapult_native"))}
+
+    def section(title, names, note=""):
+        print("%s %d%s" % (title, len(names), note))
+        for n in sorted(names):
+            print("  " + n)
+
+    print()
+    print("Details  (designs: joblist, else build/*/catapult_native)")
+    if scratch is not None:
+        section("Scratch: no report      ", designs - scratch["reports"])
+        section("Scratch: no valid QoR   ", scratch["reports"] - scratch["good"])
+        in_archive = archive["tarballs"] if archive is not None else set()
+        missing = designs - scratch["tarballs"]
+        section("Scratch: no tarball     ", missing - in_archive,
+                "  (%d more only in the archive)" % len(missing & in_archive) if missing & in_archive else "")
+    if archive is not None:
+        section("Archive: no valid QoR   ", archive["reports"] - archive["good"])
+        if designs:
+            section("Archive: no report      ", designs - archive["reports"])
 
 
 if __name__ == "__main__":
