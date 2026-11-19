@@ -17,6 +17,8 @@ repository and are installed in `~/.claude/skills/`.
 
 [`cheatsheet.txt`](cheatsheet.txt) lists every target, its settings and the
 common orders on one printable page for people (plain text, 94 columns).
+[`SWEEP_GUIDE.md`](../../SWEEP_GUIDE.md) walks a person through one new sweep, from
+catalog row to archived and recorded run.
 
 ## How the pieces split
 

@@ -62,8 +62,8 @@ To use another install, set `CATAPULT_PATH_OVERRIDE=/path/to/<version>` or
 
 ```bash
 cp license_servers_perlmutter.example.json license_servers_perlmutter.json
-# The default points at fasic-135413.fnal.gov:1717 with 100 license seats
-# (CatAIhls4ml_c feature). Edit if you need different config.
+# List each license server and its seat count; every job's slots are capped at
+# the total. make license-check shows what each server offers and has in use.
 ```
 
 ### 5. Check `~/bin/cad_env_perlmutter.sh`
@@ -175,6 +175,8 @@ any path works.)
 | `catapult: invalid argument: -shell` | Using Catapult 2025.4_1 with `-product genesis` | Use a 2026 version (`CATAPULT_VER=2026.1_1`); the `-product genesis` flag only works in 2026 |
 
 ## Going further
+
+- **[SWEEP_GUIDE.md](SWEEP_GUIDE.md)** — add, run, archive and record a design-space sweep (the production path; the job-array runs above are smoke tests)
 
 - **`slurm/README.md`** — internal docs for the SLURM module + an index of every file the SLURM workflow touches
 - **`Perlmutter_scripts/perlmutter_slurm/README.md`** — reference SLURM tutorials (the submodule), great for learning SLURM patterns beyond this project
