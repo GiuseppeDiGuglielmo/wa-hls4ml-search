@@ -1,10 +1,14 @@
 """Argparse group for the SLURM job array submission flags.
 
 Used by iter_manager_catapult.py to add --slurm and friends to its parser.
-Defaults match the recommended Perlmutter setup for AmSC users.
+Defaults come from slurm/defaults.json (job_array); every one is a flag.
 """
 
 from slurm import site_config
+
+
+def _d(key):
+    return site_config.default("job_array", key)
 
 
 def add_slurm_args(parser):
@@ -22,31 +26,31 @@ def add_slurm_args(parser):
         help='NERSC project account (default: %s, from slurm/site.json)' % site_config.ACCOUNT,
     )
     parser.add_argument(
-        '--slurm-time', type=str, default='02:00:00',
-        help='Walltime per task (default: 02:00:00)',
+        '--slurm-time', type=str, default=_d('time'),
+        help='Walltime per task (default: %(default)s)',
     )
     parser.add_argument(
-        '--slurm-qos', type=str, default='express_amsc',
-        help='SLURM QOS (default: express_amsc; '
+        '--slurm-qos', type=str, default=_d('qos'),
+        help='SLURM QOS (default: %(default)s; '
              'options: debug, regular, shared, premium, express_amsc)',
     )
     parser.add_argument(
-        '--slurm-constraint', type=str, default='cpu',
-        help='Node constraint (default: cpu)',
+        '--slurm-constraint', type=str, default=_d('constraint'),
+        help='Node constraint (default: %(default)s)',
     )
     parser.add_argument(
         '--collect-slurm', type=str, default=None, metavar='RUN_DIR',
         help='Skip synthesis, collect reports from a completed SLURM run',
     )
     parser.add_argument(
-        '--slurm-parallelism', type=int, default=1,
-        help='Syntheses to run in parallel per node (default: 1)',
+        '--slurm-parallelism', type=int, default=_d('parallelism'),
+        help='Syntheses to run in parallel per node (default: %(default)s)',
     )
     parser.add_argument(
-        '--slurm-mem-per-job', type=str, default='32G',
-        help='RAM to reserve per synthesis (default: 32G)',
+        '--slurm-mem-per-job', type=str, default=_d('mem_per_job'),
+        help='RAM to reserve per synthesis (default: %(default)s)',
     )
     parser.add_argument(
-        '--slurm-cpus-per-job', type=int, default=2,
-        help='CPUs to reserve per synthesis (default: 2)',
+        '--slurm-cpus-per-job', type=int, default=_d('cpus_per_job'),
+        help='CPUs to reserve per synthesis (default: %(default)s)',
     )

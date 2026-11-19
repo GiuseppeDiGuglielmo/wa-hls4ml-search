@@ -10,5 +10,10 @@
   "venv": "/global/common/software/amsc011/public/venv_hls4ml/bin/activate",
   "catapult_root": "/global/common/software/amsc011/public/Siemens/Catapult",
   "license_file": "license_servers_perlmutter.json",
-  "node_usable_gb": 460
+  "node_usable_gb": 460,
+  "express_qos": [
+    "express_amsc",
+    "express_amsc_g"
+  ],
+  "scratch_purge_days": 56
 }

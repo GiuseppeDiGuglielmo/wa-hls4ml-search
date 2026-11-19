@@ -13,6 +13,8 @@ Python:
 Shell and make:
     site_config.py get KEY          one value from site.json (account, archive, ...)
     site_config.py default SEC KEY  one default from defaults.json (sweep qos, ...)
+    site_config.py catapult-ver     Catapult install (CATAPULT_VER overrides)
+    site_config.py catapult-product Catapult product (CATAPULT_PRODUCT overrides)
     site_config.py techs            archive tech folders, space-separated
     site_config.py venv             venv activate script (WA_HLS4ML_VENV overrides)
     site_config.py licenses         port@host[:...] (WA_LICENSES overrides)
@@ -50,6 +52,16 @@ CATALOG = os.path.join(HERE, "sweeps.tsv")
 def default(section, key):
     """A starting point from defaults.json; callers let each run override it."""
     return DEFAULTS[section][key]
+
+
+def catapult_ver():
+    """Catapult install to use: CATAPULT_VER, else the default."""
+    return os.environ.get("CATAPULT_VER") or default("catapult", "version")
+
+
+def catapult_product():
+    """Catapult product (license) to ask for: CATAPULT_PRODUCT, else the default."""
+    return os.environ.get("CATAPULT_PRODUCT") or default("catapult", "product")
 
 
 def venv():
@@ -117,9 +129,14 @@ def main(argv):
         sys.exit(__doc__)
     cmd, args = argv[0], argv[1:]
     if cmd == "get" and len(args) == 1:
-        print(SITE[args[0]])
+        v = SITE[args[0]]
+        print(" ".join(v) if isinstance(v, list) else v)
     elif cmd == "default" and len(args) == 2:
         print(default(*args))
+    elif cmd == "catapult-ver":
+        print(catapult_ver())
+    elif cmd == "catapult-product":
+        print(catapult_product())
     elif cmd == "techs":
         print(" ".join(TECH_DIRS))
     elif cmd == "venv":

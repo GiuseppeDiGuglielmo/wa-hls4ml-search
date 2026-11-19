@@ -32,5 +32,19 @@
   "orchestrate": {
     "_doc": "orchestrate.sh retry rounds per sweep (MAX_ROUNDS=)",
     "max_rounds": 20
+  },
+  "catapult": {
+    "_doc": "the launcher Perlmutter_scripts/catapult_shell.sh: CATAPULT_VER picks the install under catapult_root, CATAPULT_PRODUCT the license (ultra|genesis); both env vars override",
+    "version": "2026.1_1",
+    "product": "ultra"
+  },
+  "job_array": {
+    "_doc": "legacy job-array path (slurm/cli.py --slurm-*, used by iter_manager_catapult.py --slurm)",
+    "time": "02:00:00",
+    "qos": "express_amsc",
+    "constraint": "cpu",
+    "parallelism": 1,
+    "mem_per_job": "32G",
+    "cpus_per_job": 2
   }
 }

@@ -26,7 +26,7 @@ ACCOUNT  ?= $(shell $(SITE) get account)
 DRIVER_QOS  ?= $(shell $(SITE) default sweep_driver qos)
 DRIVER_TIME ?= $(shell $(SITE) default sweep_driver time)
 DRIVER_MEM  ?= $(shell $(SITE) default sweep_driver mem)
-EXPRESS_QOS := express_amsc express_amsc_g
+EXPRESS_QOS := $(shell $(SITE) get express_qos)
 GROUP    ?=
 RF       ?=
 QOS      ?=
@@ -107,7 +107,7 @@ catapult-probe:
 	    | tr ' ' '\n' | sed -n -e 's|.*/apptainer$$|apptainer   &|p' -e 's|.*\.sif$$|container   &|p' \
 	      -e 's|^CATAPULT_PATH_OVERRIDE=|catapult    |p' -e 's|^LM_LICENSE_FILE=\([0-9][^"\\]*\)$$|license     \1|p' \
 	      -e 's#^\(/[^ ]*/\(cad_env_perlmutter\|siemens\)\.sh\).*#env script  \1#p'; \
-	  echo "product     $${CATAPULT_PRODUCT:-ultra} (CATAPULT_PRODUCT=ultra|genesis)"; \
+	  echo "product     $$($(SITE) catapult-product) (CATAPULT_PRODUCT=ultra|genesis)"; \
 	  echo "(dry run; PROBE=1 starts Catapult once to check the license)"; \
 	fi
 

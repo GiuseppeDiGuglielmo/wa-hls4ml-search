@@ -28,7 +28,7 @@ import site_config as site  # noqa: E402
 HOME = os.path.expanduser("~")
 SCRATCH = os.environ.get("SCRATCH", "")
 CATAPULT_ROOT = site.CATAPULT_ROOT
-PURGE_DAYS = 56          # Perlmutter scratch: files unread for 8 weeks may be purged
+PURGE_DAYS = int(site.SITE["scratch_purge_days"])   # files unread this long may be purged
 LICENSE_JSON = site.LICENSE_FILE
 SERVER_RE = re.compile(r"\b(\d+)@([A-Za-z0-9.\-]+)")
 
@@ -166,7 +166,7 @@ def check_env():
             break
     report("OK" if app else "FAIL", "apptainer", app or "not on PATH or CVMFS (try module load apptainer)")
 
-    ver = os.environ.get("CATAPULT_VER", "2026.1_1")
+    ver = site.catapult_ver()
     if os.environ.get("CATAPULT_PATH_OVERRIDE"):
         installs = [os.environ["CATAPULT_PATH_OVERRIDE"]]
     else:
@@ -186,7 +186,7 @@ def check_env():
     report("OK" if servers else "FAIL", "license file",
            "%s: %s" % (LICENSE_JSON, ", ".join(servers) or "missing or no servers"))
     report("OK", "product", "%s (CATAPULT_PRODUCT=ultra|genesis), %d license seat(s) in the file"
-           % (os.environ.get("CATAPULT_PRODUCT", "ultra"), json_seats()))
+           % (site.catapult_product(), json_seats()))
 
     rc, out = run(["parallel", "--version"])
     if rc != 0:
@@ -229,7 +229,7 @@ def check_license(lmutil):
                 report("WARN", "  lmstat", ((out or "").strip().splitlines() or ["no output"])[-1][:120])
             for l in users:
                 print("      %s" % l)
-            prod = os.environ.get("CATAPULT_PRODUCT", "ultra")
+            prod = site.catapult_product()
             need = PRODUCT_FEATURE.get(prod, prod)
             hit = [l for l in users if need.lower() in l.lower()]
             m = re.search(r"Total of (\d+) licenses? issued;\s*Total of (\d+)", hit[0]) if hit else None
@@ -260,7 +260,7 @@ def main():
         lmutil = args.lmutil
         if not lmutil:   # the lmutil of the install the launcher would use
             inst = os.environ.get("CATAPULT_PATH_OVERRIDE") or os.path.join(
-                os.environ.get("CATAPULT_ROOT", CATAPULT_ROOT), os.environ.get("CATAPULT_VER", "2026.1_1"))
+                os.environ.get("CATAPULT_ROOT", CATAPULT_ROOT), site.catapult_ver())
             cand = os.path.join(inst, "Mgc_home", "bin", "lmutil")
             lmutil = cand if os.access(cand, os.X_OK) else None
         check_license(lmutil)

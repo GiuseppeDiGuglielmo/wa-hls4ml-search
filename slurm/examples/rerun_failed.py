@@ -79,7 +79,7 @@ def seats():
 
 def product():
     """Catapult product the launcher asks a license for (CATAPULT_PRODUCT)."""
-    return os.environ.get("CATAPULT_PRODUCT", "ultra")
+    return site.catapult_product()
 
 
 def main():

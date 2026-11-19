@@ -32,21 +32,23 @@ if [[ -f "${ENV_FILE}" ]]; then
     set +o allexport
 fi
 
-# Catapult version. Override with
-# CATAPULT_VER=... before invoking this script.
-export CATAPULT_VER="${CATAPULT_VER:-2026.1_1}"
+SITE_CONFIG="${SCRIPT_DIR}/../slurm/site_config.py"
 
-# Catapult product, i.e. which license it asks for: ultra (CatapultUltra, the
-# default since the Genesis licenses expired in 2026) or genesis (CatapultGenesis).
-# Override with CATAPULT_PRODUCT=...
-CATAPULT_PRODUCT="${CATAPULT_PRODUCT:-ultra}"
+# Catapult version: the install folder under catapult_root. The default is in
+# slurm/defaults.json (catapult version); override with CATAPULT_VER=...
+export CATAPULT_VER="${CATAPULT_VER:-$(python3 "${SITE_CONFIG}" catapult-ver)}"
+
+# Catapult product, i.e. which license it asks for: ultra (CatapultUltra) or
+# genesis (CatapultGenesis). The default is in slurm/defaults.json (catapult
+# product); override with CATAPULT_PRODUCT=...
+CATAPULT_PRODUCT="${CATAPULT_PRODUCT:-$(python3 "${SITE_CONFIG}" catapult-product)}"
 
 # Catapult installs, one folder per version, shared by the amsc011 project and
 # outside $SCRATCH so the purge cannot reach them; slurm/site.json names the
 # tree. Override with CATAPULT_ROOT=...
 # for another tree, or CATAPULT_PATH_OVERRIDE=... for one install anywhere.
 # This path wins over CATAPULT_PATH from the env script.
-CATAPULT_ROOT="${CATAPULT_ROOT:-$(python3 "${SCRIPT_DIR}/../slurm/site_config.py" get catapult_root)}"
+CATAPULT_ROOT="${CATAPULT_ROOT:-$(python3 "${SITE_CONFIG}" get catapult_root)}"
 export CATAPULT_PATH_OVERRIDE="${CATAPULT_PATH_OVERRIDE:-${CATAPULT_ROOT}/${CATAPULT_VER}}"
 
 # --env-setup picks which env script to source inside the container:

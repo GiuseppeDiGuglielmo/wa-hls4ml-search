@@ -100,9 +100,9 @@ def write_script(run_dir, joblist_path, total_licenses, lm_license_file,
     from slurm import site_config
     venv_activate = site_config.venv()
 
-    parallelism = getattr(args, 'slurm_parallelism', 1)
-    cpus_per_job = getattr(args, 'slurm_cpus_per_job', 2)
-    mem_per_job = getattr(args, 'slurm_mem_per_job', '32G')
+    parallelism = args.slurm_parallelism
+    cpus_per_job = args.slurm_cpus_per_job
+    mem_per_job = args.slurm_mem_per_job
     mem_per_job_gb = int(mem_per_job.rstrip('Gg'))
 
     if servers is None:

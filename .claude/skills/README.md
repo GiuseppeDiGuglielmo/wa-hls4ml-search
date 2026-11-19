@@ -100,12 +100,14 @@ replace the DSE venv.
 ## Site facts and defaults
 
 `slurm/site.json`: account, archive path and tech folders, DSE venv, Catapult
-install tree, license file name, usable node memory. `slurm/site_config.py`
-reads it (`get KEY`, `venv`, `licenses`, `seats`, `techs`, `archive-dir TECH`,
-`tech RUN_DIR`, `default SECTION KEY`). It holds no policy.
+install tree, license file name, usable node memory, express QOS names, scratch
+purge age. `slurm/site_config.py` reads it (`get KEY`, `venv`, `licenses`,
+`seats`, `techs`, `archive-dir TECH`, `tech RUN_DIR`, `default SECTION KEY`,
+`catapult-ver`, `catapult-product`). It holds no policy.
 
 `slurm/defaults.json`: starting points for QOS, time, memory, slots and retry
-rounds (sweep, sweep driver, rerun-failed, design-synth, orchestrate). No script
+rounds (sweep, sweep driver, rerun-failed, design-synth, orchestrate, the
+legacy job array) and the Catapult version and product. No script
 picks a value from the situation; choose per run from `check-jobs`,
 `sweep-estimate`, `design-show` and the seat count.
 
