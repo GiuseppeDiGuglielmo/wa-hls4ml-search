@@ -106,15 +106,23 @@ def main():
         rfs = [int(x) for x in args.rf.split(",")]
     print("Group    %s  mode %s  designs per RF: %s" % (args.group, mode, n if n is not None else "unknown"))
 
+    # Past runs of the group: a sweep writes $SCRATCH/catapult_<group>_rf<N>/run_*,
+    # so the folder name says group and RF; PROVENANCE.md covers older runs
+    # whose folders do not follow that pattern.
+    past = {}
+    folder_re = re.compile(r"catapult_%s_rf(\d+)$" % re.escape(args.group))
+    for d in sorted(glob.glob(os.path.join(os.environ.get("SCRATCH", ""), "catapult_*", "run_*"))):
+        m = folder_re.match(os.path.basename(os.path.dirname(d)))
+        if m:
+            past.setdefault(int(m.group(1)), []).append(d)
     groups = provenance_groups(PROVENANCE)
     scratch = collect()
-    past = {}
     for run, e in scratch.items():
         g = groups.get(run, "")
         m = re.match(r"(\S+) rf(\d+)$", g)
         if e.get("scratch") and m and m.group(1) == args.group:
             dirs = glob.glob(os.path.join(os.environ.get("SCRATCH", ""), "catapult_*", run))
-            if dirs:
+            if dirs and dirs[0] not in past.get(int(m.group(2)), []):
                 past.setdefault(int(m.group(2)), []).append(dirs[0])
     if not past:
         print("Past     no run of this group on scratch; runtime and memory unknown"
