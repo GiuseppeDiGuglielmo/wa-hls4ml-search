@@ -62,10 +62,11 @@ counts can differ: the archive holds only what was copied.
 
 Run from the repo root. All read-only; use whichever fit, in any order.
 
-- `make check-jobs [ACCOUNT=<acct>]`: your SLURM jobs, then for each express QOS
+- `make check-jobs [ACCOUNT=amsc011]`: your SLURM jobs, then for each express QOS
   (`express_amsc`, `express_amsc_g`: two separate 32-node pools shared by all
-  AmSC and Genesis users) the nodes in use and a breakdown by account and user,
-  marking `ACCOUNT` (default `amsc011`).
+  AmSC and Genesis users) the nodes in use and a breakdown by account and user.
+  `ACCOUNT` (default `amsc011`) always gets a line, even at 0 nodes. An empty job
+  table (header only) means nothing of yours is queued or running.
 - `make check-list [TECH=nangate45|gf22fdx] [WHERE=scratch|archive|both] [GREP=text]`
   (GREP is case-insensitive):
   every run ID on scratch and in the archive, with its catalog group and RF (from

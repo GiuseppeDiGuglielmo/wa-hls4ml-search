@@ -114,7 +114,7 @@ design-synth:
 
 # --- One run (a group at one RF) ---
 
-## check-jobs | [ACCOUNT=] | Your jobs and the express node pools
+## check-jobs | [ACCOUNT=amsc011] | Your jobs and the express node pools
 check-jobs:
 	@squeue -u $$USER -o '%.10i %.12P %.14q %.24j %.2t %.10M %.6D %R'
 	@for q in $(EXPRESS_QOS); do \
@@ -126,7 +126,7 @@ check-jobs:
 	    | awk -v me='$(ACCOUNT)' ' \
 	        { n[$$1] += $$3; if (index("," u[$$1] ",", "," $$2 ",") == 0) u[$$1] = u[$$1] (u[$$1] == "" ? "" : ",") $$2 } \
 	        END { if (!(me in n)) n[me] = 0; \
-	              for (a in n) printf "  %-12s %3d nodes  %s%s\n", a, n[a], (u[a] == "" ? "-" : "(" u[a] ")"), (a == me ? "  <- your account" : "") }' \
+	              for (a in n) printf "  %-12s %3d nodes  %s\n", a, n[a], (u[a] == "" ? "-" : "(" u[a] ")") }' \
 	    | sort -k2,2nr -k1,1; \
 	done
 

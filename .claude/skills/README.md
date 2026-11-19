@@ -68,7 +68,7 @@ inputs the scratch purge removed instead of submitting them to fail.
 
 | Target | What it does | Tested |
 |---|---|---|
-| `check-jobs` | your jobs and the express node pools | yes |
+| `check-jobs` | your jobs and the express node pools, nodes per account | yes |
 | `check-list` | every run on scratch and in the archive | yes |
 | `check-run` | expected, good, failed and missing designs of one run | yes |
 | `check-failed` | missing reports and tarballs, reports without QoR | yes, fixed |
