@@ -61,7 +61,9 @@ being written could be copied half-done and would then show up as "kept, differs
   for that run, and say what build/ data will be lost.
 - `make archive-index [APPLY=1]`: archive runs whose ID the archive `README.md` does
   not mention, with measured design and good counts, as a markdown table. APPLY=1
-  copies the README to `README.md.bak_<YYYYMMDD_HHMM>` and appends the table. It
+  copies the README to `README.md.bak_<YYYYMMDD_HHMM>` and appends the table as a
+  dated section, or adds the rows to that day's section when it is the README's
+  last one. It
   does not fix stale numbers in rows that exist; those need a hand edit, with the
   user's OK, after copying the README to `README.md.bak_<YYYYMMDD_HHMM>`. Update the
   subtotals and the disk table with the row, and check them against

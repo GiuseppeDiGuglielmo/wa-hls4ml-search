@@ -198,24 +198,32 @@ def cmd_index(args):
         return 0
     data = measure(runs, False)
     groups = groups_of(runs)
-    lines = ["", "## Runs not yet described (listed by make archive-index, %s)" % datetime.date.today(),
-             "", "Counts measured from the run folders; good = positive QoR in the report.", "",
-             "| Tech | Run directory | Catalog group | Designs | Good |",
-             "|---|---|---|---|---|"]
-    for t, n, _ in runs:
-        d = data[n]
-        lines.append("| %s | `%s` | %s | %d | %d |" % (t, n, groups.get(n, "-"), d["reports"], d["good"]))
-    section = "\n".join(lines) + "\n"
-    print("%d run(s) not mentioned. Section to append:" % len(runs))
-    print(section)
+    rows = ["| %s | `%s` | %s | %d | %d |" % (t, n, groups.get(n, "-"), data[n]["reports"], data[n]["good"])
+            for t, n, _ in runs]
+    heading = "## Runs not yet described (listed by make archive-index, %s)" % datetime.date.today()
+    # Same day again: add rows to today's section when it is the README's last one
+    # (where this command puts it), instead of a second section with the same heading.
+    last = text.rstrip("\n").rsplit("\n## ", 1)
+    reuse = len(last) == 2 and ("## " + last[1]).startswith(heading) and last[1].rstrip().endswith("|")
+    if reuse:
+        addition = ("" if text.endswith("\n") else "\n") + "\n".join(rows) + "\n"
+        print("%d run(s) not mentioned. Rows to add to today's section:" % len(runs))
+    else:
+        addition = "\n".join(["", heading, "",
+                              "Counts measured from the run folders; good = positive QoR in the report.", "",
+                              "| Tech | Run directory | Catalog group | Designs | Good |",
+                              "|---|---|---|---|---|"] + rows) + "\n"
+        print("%d run(s) not mentioned. Section to append:" % len(runs))
+    print(addition)
     if not args.apply:
-        print("Dry run: README not changed. APPLY=1 appends this after a backup copy.")
+        print("Dry run: README not changed. APPLY=1 %s after a backup copy."
+              % ("adds these rows" if reuse else "appends this"))
         return 0
     backup = README + ".bak_" + datetime.datetime.now().strftime("%Y%m%d_%H%M")
     shutil.copy2(README, backup)
     with open(README, "a") as f:
-        f.write(section)
-    print("Appended. Backup: %s" % backup)
+        f.write(addition)
+    print("%s. Backup: %s" % ("Rows added to today's section" if reuse else "Appended", backup))
     return 0
 
 
