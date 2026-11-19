@@ -20,6 +20,11 @@
 # Archiving copies into the shared archive with archive_sync.py, which never
 # deletes: the scratch run stays until someone removes it by hand after
 # `make check-run` shows it is fully archived.
+#
+# The loop only retries while rounds add tarballs; it does not judge why designs
+# are missing. It ends by writing ${RUN_DIR}/sweep_summary.tsv (facts: rounds,
+# counts, why it stopped, job ids, archive exit code), which make check-run
+# shows; what to do next is decided from there (check-run, why-failed).
 
 wait_for_jobs() {
     local tar_dir="$1"; shift
@@ -131,9 +136,10 @@ run_group() {
 
     local tar_dir="${RUN_DIR}/tarballs"
     local max_rounds="${MAX_ROUNDS:-$(python3 "${REPO_DIR}/slurm/site_config.py" default orchestrate max_rounds)}"
-    local round=0 done_count prev jids=()
+    local round=0 done_count prev jids=() all_jids=() stop=complete
 
     for script in "${scripts[@]}"; do jids+=("$(sbatch --parsable "$script")"); done
+    all_jids+=("${jids[@]}")
     echo "  [round 0] Submitted: ${jids[*]}"
     wait_for_jobs "$tar_dir" "${jids[@]}"
     done_count=$(find "$tar_dir" -maxdepth 1 -name "*.tar.gz" 2>/dev/null | wc -l)
@@ -144,24 +150,49 @@ run_group() {
         echo "  [round $round] $done_count/$total - $(( total - done_count )) remaining - re-submitting..."
         jids=()
         for script in "${scripts[@]}"; do jids+=("$(sbatch --parsable "$script")"); done
+        all_jids+=("${jids[@]}")
         echo "  [round $round] Submitted: ${jids[*]}"
         wait_for_jobs "$tar_dir" "${jids[@]}"
         prev=$done_count
         done_count=$(find "$tar_dir" -maxdepth 1 -name "*.tar.gz" 2>/dev/null | wc -l)
         echo "  [round $round] done: $done_count / $total  (+$(( done_count - prev )) new)"
-        (( done_count == prev )) && { echo "  [round $round] no progress - aborting retries" >&2; break; }
+        (( done_count == prev )) && { stop=no_progress; echo "  [round $round] no new tarballs - stopping retries" >&2; break; }
     done
+    if (( done_count < total )) && [[ "$stop" == complete ]]; then stop=max_rounds; fi
 
     if (( done_count < total )); then
-        echo "  WARNING: $done_count/$total completed after $round rounds ($(( total - done_count )) hard failures)"
+        echo "  STOPPED ($stop): $done_count/$total designs have a tarball after $round retry round(s);"
+        echo "  $(( total - done_count )) without one. Next: make check-run / make why-failed RUN=${RUN_DIR}"
     else
         echo "  Synthesis complete ($done_count/$total)"
     fi
 
     local archive_tech
     archive_tech=$(python3 "${REPO_DIR}/slurm/site_config.py" archive-dir "${TECH:-}") || {
-        echo "ERROR: unknown TECH '${TECH:-}', not archiving ${RUN_DIR}" >&2; return 1; }
+        echo "ERROR: unknown TECH '${TECH:-}', not archiving ${RUN_DIR}" >&2
+        write_summary "$total" "$done_count" "$round" "$max_rounds" "$stop" not_run "${all_jids[@]}"
+        return 1; }
     echo "  Archiving ${GROUP} rf${RF} to ${archive_tech} (copy only; scratch is kept) ..."
-    python3 "${REPO_DIR}/slurm/examples/archive_sync.py" "${RUN_DIR}" --tech "${archive_tech}" --apply
-    echo "  Done: ${GROUP} rf${RF}."
+    local archive_rc=0
+    python3 "${REPO_DIR}/slurm/examples/archive_sync.py" "${RUN_DIR}" --tech "${archive_tech}" --apply \
+        || archive_rc=$?
+    write_summary "$total" "$done_count" "$round" "$max_rounds" "$stop" "$archive_rc" "${all_jids[@]}"
+    echo "  Done: ${GROUP} rf${RF} (summary: ${RUN_DIR}/sweep_summary.tsv)."
+}
+
+# Facts about how the loop ended, for make check-run and whoever decides next.
+write_summary() {
+    local total="$1" done_count="$2" rounds="$3" max_rounds="$4" stop="$5" archive_rc="$6"
+    shift 6
+    {
+        printf 'finished\t%s\n' "$(date '+%Y-%m-%d %H:%M:%S')"
+        printf 'group\t%s\nrf\t%s\n' "$GROUP" "$RF"
+        printf 'designs\t%s\nwith_tarball\t%s\n' "$total" "$done_count"
+        printf 'retry_rounds\t%s\nmax_rounds\t%s\n' "$rounds" "$max_rounds"
+        printf 'stopped\t%s\n' "$stop"
+        printf 'nodes\t%s\nslots_per_node\t%s\nqos\t%s\ntime\t%s\nmem\t%s\nmemfree\t%s\n' \
+            "$N_NODES" "$PARALLELISM" "$SLURM_QOS" "$SLURM_TIME" "$MEM_PER_NODE" "${MEMFREE:-}"
+        printf 'jobs\t%s\n' "$*"
+        printf 'archive_sync_exit\t%s\n' "$archive_rc"
+    } > "${RUN_DIR}/sweep_summary.tsv"
 }

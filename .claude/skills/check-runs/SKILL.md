@@ -76,6 +76,8 @@ Run from the repo root. All read-only; use whichever fit, in any order.
   group to run IDs, or from a run ID to its group.
 - `make check-run RUN=<run_dir, catapult_* folder, or run name> [EXPECTED=N]`: expected, good, failed
   and missing designs on scratch and in the archive, plus good designs not yet archived.
+  For a run a sweep finished, a "sweep loop" line gives why its retry loop stopped
+  (complete, no_progress, max_rounds), from `<run>/sweep_summary.tsv`.
   The scratch side and the expected count (from `joblist.txt`) need the scratch run
   directory; a `catapult_*` folder reports every `run_*` inside it; a bare run name or
   archive path reports the archive only. A rerun folder

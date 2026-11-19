@@ -169,6 +169,14 @@ def report(args, run_arg):
         print("Joblists %s%s" % (", ".join(shown[:4]), more))
 
     print("Scratch  %s" % (run_dir or "not given"))
+    summary = os.path.join(run_dir, "sweep_summary.tsv") if run_dir else None
+    if summary and os.path.isfile(summary):
+        with open(summary) as f:
+            s = dict(l.rstrip("\n").split("\t", 1) for l in f if "\t" in l)
+        print("  sweep loop: stopped %s after %s retry round(s) (max %s), %s/%s with tarball, "
+              "archive_sync exit %s, %s" % (s.get("stopped"), s.get("retry_rounds"), s.get("max_rounds"),
+                                            s.get("with_tarball"), s.get("designs"),
+                                            s.get("archive_sync_exit"), s.get("finished")))
     if scratch is not None:
         line("reports", len(scratch["reports"]), expected)
         line("good (valid QoR)", len(scratch["good"]), expected)

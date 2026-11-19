@@ -152,7 +152,11 @@ memory and `--memfree` as given, else the `sweep` defaults in `slurm/defaults.js
 slots never exceed the license seats), waits, resubmits rounds until the tarball
 count stops rising (`MAX_ROUNDS`, default in the same file), and finally copies
 the run into the archive with `archive_sync.py --apply`
-(never deletes scratch). A design already holding a tarball is never rerun.
+(never deletes scratch). A design already holding a tarball is never rerun. The
+loop does not diagnose what is left: it writes `<run>/sweep_summary.tsv` (designs,
+with tarball, retry rounds, `stopped` = complete / no_progress / max_rounds, job
+ids, settings, archive_sync exit code), which `make check-run` shows as its
+"sweep loop" line. What to do next is decided from there, with `why-failed`.
 
 Catapult peak memory per design is <2 GB to ~19 GB (largest for 128-wide layers);
 too many slots per node gets designs OOM-killed (exit 137) and retried. Queue and
