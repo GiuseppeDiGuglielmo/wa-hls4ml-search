@@ -44,7 +44,7 @@ def design_count(group):
     spec = load_catalog(os.path.join(REPO, "slurm", "sweeps.tsv"))[group]
     mode = getattr(spec, "mode", "cartesian")
     if mode == "cartesian":
-        from enumerate_space import enumerate_designs
+        from slurm.sweeplib.enumerate_space import enumerate_designs
         return sum(1 for _ in enumerate_designs(spec)), mode, list(spec.rf)
     cand = getattr(spec, "candidates", None)
     if cand:
@@ -52,7 +52,7 @@ def design_count(group):
         if os.path.isfile(path):
             return sum(1 for l in open(path) if l.strip() and not l.startswith("#")), mode, list(spec.rf)
     try:
-        from candidates import generate
+        from slurm.sweeplib.candidates import generate
         return len(list(generate(spec))), mode, list(spec.rf)
     except Exception as e:  # sampled modes may need --n-lhs
         return None, "%s (%s)" % (mode, e.__class__.__name__), list(spec.rf)
