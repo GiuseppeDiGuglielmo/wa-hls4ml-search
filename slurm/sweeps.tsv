@@ -59,3 +59,4 @@ gf22_lhs_2l      	gf22     	4-64 	4-64,4-64                                     
 gf22_lhs_3l_p1   	gf22     	4-64 	4-64,4-64,4-64                                   	4,6,8,10,12,14	relu,sigmoid,tanh	1,16    	archive_lhs	gf22fdx/gf22_lhs_3layer_500.txt               	-                               	pass 1; excluded from pass 2
 gf22_lhs_3l      	gf22     	4-64 	4-64,4-64,4-64                                   	4,6,8,10,12,14	relu,sigmoid,tanh	1,4,8,16	archive_lhs	gf22fdx/gf22_lhs_3layer_10000.txt             	-                               	pass 2; 7 hard failures per RF group
 demo_1l_20	nangate45	4-8	4-8	4,6,8,10,12	relu	1	cartesian	-	-	20-design demo sweep
+demo_2l_24	nangate45	4-8	4-8,4-8	4,8,12	relu	1	cartesian	-	-	24-design demo sweep (two layers)

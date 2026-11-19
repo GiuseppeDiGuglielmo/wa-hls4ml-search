@@ -246,9 +246,13 @@ Run by `make sweep` after the Genesis licenses expired: `-product ultra`, Catapu
 | Catalog group | RF | Archived run directory | Designs | Status |
 |---|---|---|---|---|
 | `demo_1l_20` | 1 | `run_20261119_083102_e5f26068` | 20 | ✅ |
+| `demo_2l_24` | 1 | `run_20261119_110151_94639680` | 24 | ✅ |
 
 `demo_1l_20` is a 20-design demo of the sweep path (2026-11-19): 1 node x 5 slots
 on `express_amsc`, 4-5 min per design, 1.6 GB peak, no retries.
+`demo_2l_24` (2026-11-19) is its two-layer counterpart, and the first sweep watched
+with `make sweep-watch`: same settings, 2.7-15.8 min per design (p50 8.0), 1.6 GB
+peak, no retries, 46 min of synthesis.
 
 ## Group 7 — kept, not archived
 
