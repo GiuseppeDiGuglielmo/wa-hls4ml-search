@@ -10,8 +10,8 @@ Without --apply it only prints the plan. With --apply it copies:
   kept       both sides exist and the archive report is good: left alone, even if
              the scratch copy differs (reported, so you can look).
 
-Unlike archive_run.sh it replaces stale archive reports, and it has no code that
-removes scratch data. Every copy goes to a temporary name first and is renamed
+It replaces stale archive reports, and it has no code that removes scratch
+data. Every copy goes to a temporary name first and is renamed
 into place, and each applied action is appended to <archive run>/archive_sync.log.
 
 Usage:

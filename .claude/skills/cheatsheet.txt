@@ -63,4 +63,3 @@ RECIPES
 NOTES
   ! 5 CatapultUltra seats (fasic-135413, to 2027-05-31): at most 5 designs at once
   ! shared QOS queue is slow: pass QOS=express_amsc to rerun-failed and design-synth
-  ! never use slurm/examples/archive_run.sh (with --yes it deletes the scratch run)

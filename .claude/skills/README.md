@@ -140,8 +140,6 @@ make why-failed  RUN=<run_dir>          # if designs failed
 make archive-verify RUN=<run_dir>       # the sweep archives by itself
 ```
 
-Do not use `slurm/examples/archive_run.sh`: with `--yes` it deletes the scratch run.
-
 ## Keeping this page right
 
 When a target changes or a skill is tested, update its row here, and its line in

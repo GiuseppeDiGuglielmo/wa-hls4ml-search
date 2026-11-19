@@ -42,8 +42,7 @@ automatically with `--resume-failed`, and archives results flat to the shared CF
 | Every target | `make help` |
 
 `make help` lists all targets. [`.claude/skills/README.md`](.claude/skills/README.md) groups
-them by agent skill and says which ones change anything and which have been tested. Do not
-use the old `slurm/examples/archive_run.sh`: with `--yes` it deletes the scratch run.
+them by agent skill and says which ones change anything and which have been tested.
 
 > **RF=1 with 128-neuron layers** requires longer wall time than the default `express_amsc` (6h).
 > Override with: `sbatch slurm/sweep.sh 45nm_sz128_2l --rf 1 --qos regular --time 1-22:00:00`
