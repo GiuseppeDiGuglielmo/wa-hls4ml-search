@@ -4,12 +4,17 @@
     why_failed.py <scratch run_dir> [--no-memory]
 
 Counts, from slurm_logs/ and sacct:
-  - Catapult exit codes ("Catapult exited with code N"; 137 = SIGKILL),
+  - Catapult exit codes ("Catapult exited with code N"), with the signal name
+    when the code is 128 + a signal number (137 = SIGKILL),
   - SLURM out-of-memory kills ("oom_kill events") and time-limit cancels,
-  - license errors (mgls_errno) and the final SLURM state of each job,
+  - license errors (mgls_errno), the final SLURM state of each job, and each
+    job's peak memory (sacct MaxRSS) against what it asked for (ReqMem),
 and, from build/<stem>/catapult_native/, how many attempts designs needed and
 their peak Catapult memory (skip with --no-memory; it reads every messages.txt).
 Ends with the designs that still have no valid QoR and where they stopped.
+
+It reports facts only. What they mean (memory, wall time, licenses, a flow
+bug) is for the reader; the check-runs skill lists the usual readings as hints.
 """
 
 import argparse
@@ -18,6 +23,7 @@ import glob
 import json
 import os
 import re
+import signal
 import subprocess
 import sys
 
@@ -30,8 +36,24 @@ OOM_RE = re.compile(r"Detected (\d+) oom_kill events in StepId=(\d+)")
 TIME_RE = re.compile(r"JOB (\d+) ON \S+ CANCELLED AT \S+ DUE TO TIME LIMIT")
 JOB_RE = re.compile(r"(?:StepId=|JOB )(\d+)")
 LIC_RE = re.compile(r"mgls_errno = (\d+)")
-MEANING = {"137": "SIGKILL: OOM killer or job end", "139": "SIGSEGV", "133": "SIGTRAP",
-           "255": "launcher/apptainer error", "1": "Catapult error", "2": "flow script error"}
+
+
+def signal_name(code):
+    """'SIGKILL' for 137 (128 + 9) or -9; '' when the code is not a signal."""
+    n = int(code)
+    n = n - 128 if n > 128 else -n if n < 0 else 0
+    try:
+        return signal.Signals(n).name if n else ""
+    except ValueError:
+        return ""
+
+
+def gb(text):
+    """sacct memory ('488G', '123456K', '24000Mn') in GB; None if empty."""
+    m = re.match(r"([\d.]+)([KMGT]?)", text or "")
+    if not m:
+        return None
+    return float(m.group(1)) * {"K": 1e-6, "M": 1e-3, "G": 1.0, "T": 1e3, "": 1e-9}[m.group(2)]
 BINS = ((0, 2), (2, 4), (4, 8), (8, 12), (12, 16), (16, 1e9))
 
 
@@ -59,21 +81,28 @@ def scan_logs(run_dir):
     return exits, oom, timeouts, lic, jobs
 
 
-def sacct_states(jobs):
+def sacct_facts(jobs):
+    """(Counter of job and batch-step states, [(job, ReqMem GB, MaxRSS GB)]), or None."""
     if not jobs:
-        return collections.Counter()
+        return collections.Counter(), []
     try:
-        out = subprocess.run(["sacct", "-n", "-P", "-j", ",".join(sorted(jobs)), "-o", "JobID,State"],
+        out = subprocess.run(["sacct", "-n", "-P", "-j", ",".join(sorted(jobs)),
+                              "-o", "JobID,State,ReqMem,MaxRSS"],
                              stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
                              universal_newlines=True, timeout=120).stdout
     except (OSError, subprocess.TimeoutExpired):
         return None
-    states = collections.Counter()
+    states, req, rss = collections.Counter(), {}, {}
     for line in out.splitlines():
-        jid, _, state = line.partition("|")
+        jid, state, reqmem, maxrss = (line.split("|") + ["", "", ""])[:4]
+        job = jid.split(".")[0]
         if jid.endswith(".batch") or "." not in jid:
             states[("batch " if jid.endswith(".batch") else "job   ") + state.split()[0]] += 1
-    return states
+        if "." not in jid and gb(reqmem) is not None:
+            req[job] = gb(reqmem)
+        if gb(maxrss) is not None:
+            rss[job] = max(rss.get(job, 0.0), gb(maxrss))
+    return states, [(j, req.get(j), rss[j]) for j in sorted(rss)]
 
 
 def main():
@@ -94,22 +123,23 @@ def main():
     total = sum(exits.values())
     print("Catapult exits (non-zero, from slurm_logs): %d" % total)
     for code, n in exits.most_common():
-        print("  code %-4s %7d  %s" % (code, n, MEANING.get(code, "")))
+        print("  code %-4s %7d  %s" % (code, n, signal_name(code)))
     print("SLURM    oom_kill events %d; jobs cancelled at time limit %d" % (oom, len(timeouts)))
     if lic:
         print("License  " + ", ".join("mgls_errno %s x%d" % kv for kv in lic.most_common()))
-    states = sacct_states(jobs)
-    if states is None:
+    facts = sacct_facts(jobs)
+    if facts is None:
         print("sacct    unavailable")
-    elif states:
-        print("sacct    " + ", ".join("%s %d" % kv for kv in sorted(states.items())))
-    if exits.get("137"):
-        if oom:
-            print("Reading  137 with oom_kill events / OUT_OF_MEMORY: designs ran out of memory;"
-                  " size slots by memory (sweep --memfree, --parallelism).")
-        else:
-            print("Reading  137 without oom_kill events: killed at job end or by the node's OOM killer;"
-                  " check sacct MaxRSS against ReqMem.")
+    else:
+        states, mem = facts
+        if states:
+            print("sacct    " + ", ".join("%s %d" % kv for kv in sorted(states.items())))
+        if mem:
+            fmt = lambda v: "-" if v is None else "%.0f" % v  # noqa: E731
+            peak = max(mem, key=lambda r: r[2])
+            print("Job mem  %d jobs, peak MaxRSS %s GB (job %s, ReqMem %s GB); ReqMem per job: %s GB"
+                  % (len(mem), fmt(peak[2]), peak[0], fmt(peak[1]),
+                     ", ".join(sorted({fmt(r[1]) for r in mem}))))
 
     report_dir = os.path.join(run_dir, "data", "reports", "raw")
     stems = sorted(os.listdir(os.path.join(run_dir, "build")))

@@ -94,7 +94,21 @@ Run from the repo root. All read-only; use whichever fit, in any order.
   finished; the `No QoR` line is the state now), then
   attempts and peak memory per design, and the designs still without QoR with the
   flow step they stopped at. Reads every `messages.txt`: ~3 min for 5k designs;
-  FAST=1 skips the memory part.
+  FAST=1 skips the memory part. It prints facts only; the readings below are
+  hints, so check them against `design-show` before acting on one.
+
+## Reading why-failed (hints, not rules)
+
+- Exit 137 (SIGKILL) with oom_kill events or `OUT_OF_MEMORY`: designs usually ran
+  out of memory; compare `Job mem` peak MaxRSS with ReqMem and the per-design
+  peaks. 137 with neither: often killed when the job ended (time limit, cancel).
+- `TIMEOUT` / cancelled at time limit: the wall time was too short for what
+  was still running, which may have finished in a later round.
+- `mgls_errno` lines: license trouble (515 = server unreachable, 522 = feature
+  missing or expired; see the run-catapult skill).
+- 255 has come from the launcher or Apptainer, 2 from the flow Tcl script, 1 from
+  Catapult itself; 133 (SIGTRAP) and 139 (SIGSEGV) are Catapult crashes. Read the
+  design's `messages.txt` (`design-show`) to be sure.
 - `make design-show RUN=<run_dir or run name> STEM=<stem>`: one design's report and QoR
   on scratch and in the archive, each `Catapult_N` attempt (when its `messages.txt`
   was last written, last flow step, peak memory, QoR or not) and its GNU parallel
