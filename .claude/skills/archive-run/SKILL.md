@@ -62,8 +62,7 @@ being written could be copied half-done and would then show up as "kept, differs
 - `make archive-index [APPLY=1]`: archive runs whose ID the archive `README.md` does
   not mention, with measured design and good counts, as a markdown table. APPLY=1
   copies the README to `README.md.bak_<YYYYMMDD_HHMM>` and appends the table. It
-  does not fix stale numbers in rows that exist (the `45nm_sz128_2l` RF=1 row said
-  "incomplete" until a hand edit on 2026-11-17); those need a hand edit, with the
+  does not fix stale numbers in rows that exist; those need a hand edit, with the
   user's OK, after copying the README to `README.md.bak_<YYYYMMDD_HHMM>`. Update the
   subtotals and the disk table with the row, and check them against
   `make dataset-summary`.

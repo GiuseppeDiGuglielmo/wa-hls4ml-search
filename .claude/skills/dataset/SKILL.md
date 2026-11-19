@@ -33,9 +33,8 @@ group and RF to its archived run and design count.
 
 A design is good when its report has positive `total_area`, `latency_cycles` and
 `thruput_cycles` in `QOFRSummary` (run_status.is_good, mirroring check_dataset.py). A
-report without them is a failed synthesis; reports and good designs differ. On
-2026-11-05 the archive held 142 runs (116 nangate45, 26 gf22fdx) and about 549k
-reports; measure again rather than reuse these numbers.
+report without them is a failed synthesis; reports and good designs differ.
+Measure counts with the tools below; never quote a remembered number.
 
 Not every archived run is training data. Runs that PROVENANCE.md names only in its
 prose notes (shown as `see PROVENANCE note` in the group column) are excluded:

@@ -55,7 +55,7 @@ SETTINGS
   DROP_BACKUPS=1 scratch-clean also deletes scratch-only *_stale_* backups
   env            CATAPULT_PRODUCT=ultra|genesis   WA_LICENSES=1717@fasic-135413.fnal.gov
 
-RECIPES
+COMMON ORDERS (a guide for people; gates are in the skills)
   new sweep  env-check > sweep-estimate > sweep-check > sweep > check-run > archive-verify
   repair     why-failed > reparse [APPLY=1] > rerun-failed [SUBMIT=1]
              > check-run > archive-dry > archive > archive-verify
@@ -63,4 +63,4 @@ RECIPES
 
 NOTES
   ! 5 CatapultUltra seats (fasic-135413, to 2027-05-31): at most 5 designs at once
-  ! shared QOS queue is slow: pass QOS=express_amsc to rerun-failed and design-synth
+  ! queues change hourly: check-jobs and the plans' sbatch --test-only show them now

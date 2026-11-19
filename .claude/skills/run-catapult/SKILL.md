@@ -22,14 +22,11 @@ first, then a plan the user approves, then the action.
    Every line must be OK.
    It also detects purge damage (see below). Read-only, ~20 s.
 2. `make license-check [LMUTIL=<path>]`: each license server answers on its port,
-   and its Catapult features, using the selected install's `lmutil`. On
-   2026-11-17 `fasic-admin1` (the sweep server) listed 200 `CatAIhls4ml_c` and 200
-   `CatUltrGenesis_c` as "unsupported by licensed server" (FlexLM cannot count
-   SALT features; only `catapult-probe PROBE=1` proves a checkout);
-   `fasic-135413` (the env script's server) has 5 `CatAIhls4ml_c`, 5
-   `CatapultUltra_c` and no Genesis feature. After the features, a `product` line
-   says which feature `CATAPULT_PRODUCT` needs and how many are issued and in use
-   (WARN when the server lacks it).
+   and its Catapult features, using the selected install's `lmutil`. After the
+   features, a `product` line says which feature `CATAPULT_PRODUCT` needs and how
+   many are issued and in use (WARN when the server lacks it). FlexLM cannot count
+   SALT features and may list them as "unsupported by licensed server"; only
+   `catapult-probe PROBE=1` proves a checkout.
 3. `make catapult-probe`: launcher dry run. `make catapult-probe PROBE=1` starts
    Catapult once (one license, seconds) and must print `catapult-probe: OK`. Ask
    before PROBE=1. `WA_LICENSES=port@host` overrides the license file here too.
@@ -75,17 +72,17 @@ for a yes, then rerun with the flag.
   with just the designs without QoR: `keras_model.h5` from a scratch run of the same
   group at any RF, else `model[_<i>].json` + weights from a tarball of another RF;
   `dataflow_config.json` from the base flow config with the catalog's overrides for
-  the RF (identical to what the sweep wrote, checked 2026-11-17). Refuses if the
+  the RF (checked to match what the sweep wrote). Refuses if the
   folder exists. Then `make rerun-failed RUN=<that folder>`, and archive as usual.
 - `make design-synth RUN=<run_dir> STEM=<stem> [SUBMIT=1] [QOS= MEM= TIME=]`: one design
   again in a fresh `$SCRATCH/catapult_debug/run_*` (original untouched), under
   `/usr/bin/time -v`. Then `make design-show RUN=<debug run> STEM=<stem>`.
 
-`sbatch --test-only` start estimates for `shared` can be months off (seen 2026-11-05);
-past shared jobs started within hours. On 2026-11-17, before the `scrambled_patch`
-reservation (2026-11-18 07:00-19:00), every `shared` test failed with "Requested node
-configuration is not available" while `regular` was accepted: a machine state, not
-a script bug. `sweep-check`, `rerun-failed` and `design-synth` all report it.
+Queue state changes by the hour; measure it rather than remember it.
+`make check-jobs` shows the express pools, and the plans print an
+`sbatch --test-only` start estimate (for `shared` these have been weeks off while
+jobs started within hours). "Requested node configuration is not available" from a
+test is a machine state, such as a maintenance reservation, not a script bug.
 
 ## How Catapult is started
 
@@ -107,36 +104,31 @@ Licenses: sweeps and `catapult-probe PROBE=1` take `LM_LICENSE_FILE` from
 `license_servers_perlmutter.json` (gitignored, per user); the env script has its
 own server, which the launcher overrides.
 
-**Scratch purge.** Files unread for 8 weeks on `$SCRATCH` are deleted. On
-2026-11-05 this had gutted both the Catapult install (820 files left, 712 dangling
-links) and the venv (Python reads `.pyc`, so `.py` sources looked unread and went).
-Symptom: `import tensorflow` fails; `make env-check` reports it. Both now live outside `$SCRATCH`, in `/global/common/software/amsc011/public`:
-Catapult per version, and the DSE venv `venv_hls4ml` (TensorFlow 2.11 needs Python
-3.10, installed with conda as `python310`). QUICKSTART's "Rebuilding the shared
-installs" has the commands; rebuilding is the user's call.
+**Scratch purge.** Files unread for 8 weeks on `$SCRATCH` are deleted, including a
+venv's `.py` sources (Python reads only the `.pyc`) and parts of a Catapult install.
+Symptom: `import tensorflow` fails or Catapult links dangle; `make env-check`
+reports it. So the installs live outside `$SCRATCH` (`catapult_root` and `venv` in
+`slurm/site.json`; the DSE venv's TensorFlow 2.11 needs Python 3.10). QUICKSTART's
+"Rebuilding the shared installs" has the commands; rebuilding is the user's call.
 
 **errno 522 is the license, not the install.** `mgls_errno = 522` "License server
 does not support this feature (CatapultGenesis)" means no server offers a valid
-Genesis license; `-product genesis` needs it. Check expiry with
-`<install>/Mgc_home/bin/lmutil lmstat -i -c <port@host>`. On 2026-11-17 the probe
-failed on both servers: `fasic-admin1` lists `CatUltrGenesis_c` and
-`CatAIhls4ml_c` that expired 2026-07-01 (200) and 2026-09-15 (100); `fasic-135413`
-has `CatAIhls4ml_c` x5 to 2027-05-31 and no Genesis feature. June runs used
-`fasic-admin1` while it was valid. Renewal is for FNAL/Siemens; no sweep can run
-until then.
+license for the product. Check expiry with `make license-check` or
+`<install>/Mgc_home/bin/lmutil lmstat -i -c <port@host>`. License expiry dates
+(as of 2026-11-18: the Genesis features on `fasic-admin1` expired 2026-07-01 and
+2026-09-15; `fasic-135413` has 5 `CatapultUltra_c` to 2027-05-31) decide which
+product can run; renewal is for FNAL/Siemens.
 
-**Ultra by default.** Since 2026-11-18 the launcher runs `catapult -product ultra`
-(CatapultUltra license) unless `CATAPULT_PRODUCT=genesis`, and
-`license_servers_perlmutter.json` (gitignored; template in the `.example` file)
-lists `fasic-135413` with 5 seats. `fasic-135413` has only 5 `CatapultUltra_c` (to
-2027-05-31), so at most 5 designs run at once: `sweep` and `rerun-failed` default to
-as many slots as the file lists seats and refuse more (`sweep`: nodes x slots). A
-full group (4,914 designs at ~2.5 h each for 2-layer sz128) is out of reach until
-Genesis is renewed; then set the file back to `fasic-admin1` with its seat count and
-pass `CATAPULT_PRODUCT=genesis`. Ultra results matched Genesis (June's
-`dense_2l_sz128_2970`: area 195491 vs 195490), and the 14 reruns of 2026-11-17/18
-ran as ultra. `rerun-failed` and `design-synth` also take `WA_LICENSES=port@host`
-to override the file.
+**Product and seats.** The launcher runs `catapult -product ultra` unless
+`CATAPULT_PRODUCT=genesis`. `license_servers_perlmutter.json` (gitignored;
+template in the `.example` file) lists the servers and their seats; every job's
+slots are capped at that seat count (`sweep`: nodes x slots). With 5 Ultra seats a
+full group (4,914 designs at ~2.5 h each for 2-layer sz128) takes months, so ask
+before planning one. If Genesis is renewed, point the file at `fasic-admin1` with
+its seat count and pass `CATAPULT_PRODUCT=genesis`. Ultra and Genesis gave the same
+QoR on a checked design (`dense_2l_sz128_2970`: area 195491 vs 195490).
+`rerun-failed` and `design-synth` also take `WA_LICENSES=port@host` to override
+the file.
 
 **Two venvs.** The DSE venv (`WA_HLS4ML_VENV`) builds models and job lists outside
 the container. Catapult's own hls4ml flow uses `~/ccs_venv`, which Catapult creates

@@ -52,20 +52,18 @@ counts can differ: the archive holds only what was copied.
 - Every Catapult start in a build folder makes a new `catapult_native/Catapult_N/`
   project; many folders mean many attempts. The report is parsed from the newest
   attempt with QoR (`ProjectAttempts` in the JSON names it).
-- `Catapult exited with code 137` in `slurm_logs/*.err` is SIGKILL. When `sacct`
-  shows the step `OUT_OF_MEMORY` (or the log says `oom_kill events`), it was memory:
-  peak Catapult memory per design runs from under 2 GB to about 19 GB, highest for
-  128-wide layers, and shows in `messages.txt` as `peak memory usage`. `DUE TO TIME
-  LIMIT` in the `.err` is the job's wall time instead.
+- Peak Catapult memory per design runs from under 2 GB to about 19 GB, highest
+  for 128-wide layers; `messages.txt` records it as `peak memory usage`. The
+  readings of exit codes and kills are under "Reading why-failed" below.
 
 ## Tools
 
 Run from the repo root. All read-only; use whichever fit, in any order.
 
-- `make check-jobs [ACCOUNT=amsc011]`: your SLURM jobs, then for each express QOS
+- `make check-jobs [ACCOUNT=]`: your SLURM jobs, then for each express QOS
   (`express_amsc`, `express_amsc_g`: two separate 32-node pools shared by all
   AmSC and Genesis users) the nodes in use and a breakdown by account and user.
-  `ACCOUNT` (default `amsc011`) always gets a line, even at 0 nodes. An empty job
+  `ACCOUNT` (default: `account` in `slurm/site.json`) always gets a line, even at 0 nodes. An empty job
   table (header only) means nothing of yours is queued or running.
 - `make check-list [TECH=nangate45|gf22fdx] [WHERE=scratch|archive|both] [GREP=text]`
   (GREP is case-insensitive):
