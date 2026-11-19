@@ -96,12 +96,9 @@ def write_script(run_dir, joblist_path, total_licenses, lm_license_file,
     script_path = os.path.abspath(
         os.path.join(os.path.dirname(__file__), os.pardir, 'iter_manager_catapult.py')
     )
-    # Override the venv path with WA_HLS4ML_VENV so other users can point at
-    # their own venv without editing this code.
-    venv_activate = os.environ.get(
-        "WA_HLS4ML_VENV",
-        "/global/common/software/amsc011/public/venv_hls4ml/bin/activate",
-    )
+    # slurm/site.json names the venv; WA_HLS4ML_VENV overrides it.
+    from slurm import site_config
+    venv_activate = site_config.venv()
 
     parallelism = getattr(args, 'slurm_parallelism', 1)
     cpus_per_job = getattr(args, 'slurm_cpus_per_job', 2)

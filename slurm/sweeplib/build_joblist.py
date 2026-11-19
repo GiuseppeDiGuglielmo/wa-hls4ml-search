@@ -36,7 +36,9 @@ from util.catapult_dataflow_config import CatapultDataflowConfig  # noqa: E402
 
 SHELL_SCRIPT = os.path.join(REPO, "Perlmutter_scripts", "catapult_shell.sh")
 FLOW_TCL = os.path.join(REPO, "util", "catapult_hls4ml_flow.tcl")
-ARCHIVE_45NM = "/global/cfs/cdirs/amsc011/shared/wa-hls4ml-catapult/nangate45"
+sys.path.insert(0, os.path.join(REPO, "slurm"))
+import site_config as site  # noqa: E402
+ARCHIVE_45NM = os.path.join(site.ARCHIVE, site.TECH_MAP["nangate45"])
 MODEL_JSON_RE = re.compile(r"^model(_\d+)?\.json$")
 
 

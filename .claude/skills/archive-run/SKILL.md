@@ -27,8 +27,10 @@ the check-runs skill.
 
 `slurm/examples/archive_sync.py` (behind both targets) compares one scratch run with
 `/global/cfs/cdirs/amsc011/shared/wa-hls4ml-catapult/<tech>/<run name>/`. The tech
-folder is `gf22fdx` when the scratch path has `catapult_gf22`, else `nangate45`;
-pass `TECH=` to override.
+folder is where the run is already archived, else the catalog tech of the group in
+a `catapult_<group>_rf<N>` folder name (`slurm/site.json` maps `gf22` to
+`gf22fdx`). When neither says, it stops and asks for `TECH=`; nothing is guessed
+from the path.
 
 - **new:** report or tarball missing from the archive is copied.
 - **replace:** archive report is not good (no positive QoR, the check-runs rule) and

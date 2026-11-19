@@ -23,11 +23,13 @@ import sys
 import time
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(REPO, "slurm"))
+import site_config as site  # noqa: E402
 HOME = os.path.expanduser("~")
 SCRATCH = os.environ.get("SCRATCH", "")
-CATAPULT_ROOT = "/global/common/software/amsc011/public/Siemens/Catapult"
+CATAPULT_ROOT = site.CATAPULT_ROOT
 PURGE_DAYS = 56          # Perlmutter scratch: files unread for 8 weeks may be purged
-LICENSE_JSON = os.path.join(REPO, "license_servers_perlmutter.json")
+LICENSE_JSON = site.LICENSE_FILE
 SERVER_RE = re.compile(r"\b(\d+)@([A-Za-z0-9.\-]+)")
 
 failed = []
@@ -128,17 +130,17 @@ PRODUCT_FEATURE = {"ultra": "CatapultUltra_c", "genesis": "Genesis"}
 
 
 def check_env():
-    venv = os.environ.get("WA_HLS4ML_VENV", "/global/common/software/amsc011/public/venv_hls4ml/bin/activate")
+    venv = site.venv()
     py = os.path.join(os.path.dirname(venv), "python")
     if not os.path.isfile(venv):
         report("FAIL", "venv", "%s not found" % venv)
     else:
-        site = glob.glob(os.path.join(os.path.dirname(os.path.dirname(venv)), "lib", "python*", "site-packages"))
-        if site:
-            _, _, py_n, pyc_n = tree_damage(site[0])
+        site_pkgs = glob.glob(os.path.join(os.path.dirname(os.path.dirname(venv)), "lib", "python*", "site-packages"))
+        if site_pkgs:
+            _, _, py_n, pyc_n = tree_damage(site_pkgs[0])
             if pyc_n > 5 * max(py_n, 1):
                 report("FAIL", "venv files", "%d .py vs %d .pyc in %s: sources look purged from scratch;"
-                       " rebuild the venv (outside $SCRATCH if possible)" % (py_n, pyc_n, site[0]))
+                       " rebuild the venv (outside $SCRATCH if possible)" % (py_n, pyc_n, site_pkgs[0]))
             else:
                 report("OK", "venv files", "%d .py, %d .pyc" % (py_n, pyc_n))
         t0 = time.time()
@@ -204,7 +206,7 @@ def check_license(lmutil):
     script = env_script()
     sources = {}
     for s in json_servers():
-        sources.setdefault(s, []).append("license_servers_perlmutter.json")
+        sources.setdefault(s, []).append(os.path.basename(LICENSE_JSON))
     for s in script_servers(script):
         sources.setdefault(s, []).append(os.path.basename(script))
     if not sources:

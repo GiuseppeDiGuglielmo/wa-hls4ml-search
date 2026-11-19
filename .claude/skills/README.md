@@ -129,6 +129,14 @@ of `PROVENANCE.md`.
 Catapult uses its own venv, `~/ccs_venv`, and finds it by itself. It cannot
 replace the DSE venv.
 
+## Site facts
+
+`slurm/site.json` holds the facts every tool shares: account, archive path and
+tech folders, DSE venv, Catapult install tree, license file name, usable node
+memory. Tools read it through `slurm/site_config.py` (`get KEY`, `venv`,
+`licenses`, `seats`, `techs`, `archive-dir TECH`, `tech RUN_DIR`). It holds no
+policy: QOS, time, memory and slot counts are not site facts.
+
 ## A typical run
 
 ```

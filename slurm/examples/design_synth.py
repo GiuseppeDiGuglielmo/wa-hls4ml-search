@@ -27,11 +27,11 @@ import uuid
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
-from rerun_failed import licenses, product  # noqa: E402
+from rerun_failed import licenses, product, site  # noqa: E402
 
 SCRIPT = """#!/bin/bash
 #SBATCH --job-name=debug_{stem}
-#SBATCH --account=amsc011
+#SBATCH --account={account}
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=2
@@ -79,9 +79,9 @@ def main():
     new_build = os.path.join(new_run, "build", args.stem)
     fields = line.split("\t")
     fields[0] = new_build
-    venv = os.environ.get("WA_HLS4ML_VENV", "/global/common/software/amsc011/public/venv_hls4ml/bin/activate")
+    venv = site.venv()
     script = SCRIPT.format(stem=args.stem[:40], mem=args.mem, time=args.time, qos=args.qos, run=new_run,
-                           venv=venv, lic=licenses(), product=product(), repo=REPO, base=base)
+                           venv=venv, account=site.ACCOUNT, lic=licenses(), product=product(), repo=REPO, base=base)
     top = [n for n in os.listdir(src) if os.path.isfile(os.path.join(src, n))]
 
     print("Design   %s from %s" % (args.stem, run))

@@ -20,8 +20,9 @@ import os
 import re
 import sys
 
-ARCHIVE = "/global/cfs/cdirs/amsc011/shared/wa-hls4ml-catapult"
-TECH_DIRS = ("nangate45", "gf22fdx")
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "slurm"))
+import site_config as site  # noqa: E402
+ARCHIVE, TECH_DIRS = site.ARCHIVE, site.TECH_DIRS
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 PROVENANCE = os.path.join(REPO, "slurm", "examples", "PROVENANCE.md")
 RUN_RE = re.compile(r"run_\d{8}_\d{6}_[0-9a-f]{8}")
@@ -69,8 +70,9 @@ def read_source(run_dir):
     return os.path.basename(os.path.dirname(path)) or None
 
 
-def tech_of_folder(folder):
-    return "gf22fdx" if "gf22" in folder else "nangate45"
+def tech_of_run(run_dir):
+    """Archive tech folder from the facts (archive or catalog), '?' if unknown."""
+    return site.tech_of_run(run_dir)[0] or "?"
 
 
 def collect():
@@ -81,7 +83,7 @@ def collect():
             name = os.path.basename(d)
             if RUN_RE.fullmatch(name):
                 folder = os.path.basename(os.path.dirname(d))
-                runs[name] = {"tech": tech_of_folder(folder), "scratch": True,
+                runs[name] = {"tech": tech_of_run(d), "scratch": True,
                               "archive": False, "source": folder}
     for tech in TECH_DIRS:
         for d in glob.glob(os.path.join(ARCHIVE, tech, "run_*")):

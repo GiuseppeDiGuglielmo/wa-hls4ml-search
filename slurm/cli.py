@@ -4,6 +4,8 @@ Used by iter_manager_catapult.py to add --slurm and friends to its parser.
 Defaults match the recommended Perlmutter setup for AmSC users.
 """
 
+from slurm import site_config
+
 
 def add_slurm_args(parser):
     """Add --slurm* + --collect-slurm flags to an argparse parser.
@@ -16,8 +18,8 @@ def add_slurm_args(parser):
         help='Use SLURM job array instead of GNU parallel',
     )
     parser.add_argument(
-        '--slurm-account', type=str, default='amsc011',
-        help='NERSC project account (default: amsc011)',
+        '--slurm-account', type=str, default=site_config.ACCOUNT,
+        help='NERSC project account (default: %s, from slurm/site.json)' % site_config.ACCOUNT,
     )
     parser.add_argument(
         '--slurm-time', type=str, default='02:00:00',

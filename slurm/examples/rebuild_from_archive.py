@@ -40,7 +40,7 @@ from list_runs import provenance_groups, PROVENANCE, ARCHIVE  # noqa: E402
 from run_status import is_good  # noqa: E402
 
 FLOW_CFG = os.path.join(REPO, "configs", "catapult_flow", "config_catapult_flow.json")
-TECH_DIRS = ("nangate45", "gf22fdx")
+from run_status import TECH_DIRS  # noqa: E402
 
 
 def find_archive_run(name):

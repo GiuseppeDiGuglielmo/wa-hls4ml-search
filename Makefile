@@ -20,7 +20,8 @@ EXPECTED ?=
 TECH     ?=
 WHERE    ?=
 GREP     ?=
-ACCOUNT  ?= amsc011
+SITE     := python3 slurm/site_config.py
+ACCOUNT  ?= $(shell $(SITE) get account)
 EXPRESS_QOS := express_amsc express_amsc_g
 GROUP    ?=
 RF       ?=
@@ -43,9 +44,9 @@ SWEEP_OPTS = $(if $(RF),--rf $(RF)) $(if $(QOS),--qos $(QOS)) $(if $(TIME),--tim
              $(if $(NODES),--nodes $(NODES)) $(if $(PARALLELISM),--parallelism $(PARALLELISM)) \
              $(if $(MEM),--mem $(MEM)) $(if $(MEMFREE),--memfree $(MEMFREE))
 JOB_OPTS = $(if $(QOS),--qos $(QOS)) $(if $(TIME),--time $(TIME)) $(if $(MEM),--mem $(MEM))
-# Same license string sweep.sh builds from license_servers_perlmutter.json.
+# Same license string sweep.sh uses (slurm/site_config.py licenses).
 # WA_LICENSES=port@host overrides it, as for rerun-failed and design-synth.
-LICENSES = $${WA_LICENSES:-$$(python3 -c "import json; c=json.load(open('license_servers_perlmutter.json')); print(':'.join('%s@%s' % (s['port'], s['host']) for s in c['servers']))")}
+LICENSES = $$($(SITE) licenses)
 # The venv prints a harmless distutils-precedence.pth traceback on each python3 call.
 VENV_NOISE = -e distutils -e add_shim -e 'site.py' -e 'exec(line)' -e 'File "<string>"' -e '^ *Traceback' -e 'Remainder of file' -e '^ *$$'
 need_run  = @test -n "$(RUN)" || { echo 'usage: make $@ RUN=<scratch run_dir>$(1)'; exit 2; }
@@ -73,7 +74,7 @@ help:
 	@echo
 	@echo 'sweep opts: RF= QOS= TIME= NODES= PARALLELISM= MEM= MEMFREE='
 	@echo 'rerun-failed and design-synth also take QOS= TIME= MEM=; rerun-failed also PARALLELISM= MEMFREE='
-	@echo 'archive-dry, archive, archive-verify, scratch-clean take TECH=nangate45|gf22fdx (default: from the path)'
+	@echo 'archive-dry, archive, archive-verify, scratch-clean take TECH=nangate45|gf22fdx (default: where the run is archived, else its catalog group)'
 	@echo 'scratch-clean takes DROP_BACKUPS=1 (with APPLY=1, also deletes scratch-only *_stale_* backups)'
 	@echo 'RUN= is a scratch run folder; check-run and design-show also take a run name, rebuild-archived only a name.'
 	@echo 'More: .claude/skills/README.md; one printable page: .claude/skills/cheatsheet.txt'
@@ -118,7 +119,7 @@ design-synth:
 
 # --- One run (a group at one RF) ---
 
-## check-jobs | [ACCOUNT=amsc011] | Your jobs and the express node pools
+## check-jobs | [ACCOUNT=] | Your jobs and the express node pools
 check-jobs:
 	@squeue -u $$USER -o '%.10i %.12P %.14q %.24j %.2t %.10M %.6D %R'
 	@for q in $(EXPRESS_QOS); do \
@@ -162,7 +163,7 @@ reparse:
 ## rebuild-archived | RUN=<name> [APPLY=1] | Plans a scratch folder for an archive-only run's failed designs. APPLY=1 builds it
 rebuild-archived:
 	@test -n "$(RUN)" || { echo 'usage: make rebuild-archived RUN=<archive run name> [APPLY=1]'; exit 2; }
-	@source "$${WA_HLS4ML_VENV:-/global/common/software/amsc011/public/venv_hls4ml/bin/activate}" && \
+	@source "$$($(SITE) venv)" && \
 	  TF_CPP_MIN_LOG_LEVEL=3 python slurm/examples/rebuild_from_archive.py $(RUN) $(if $(APPLY),--apply) 2>&1 \
 	  | grep -v -E 'distutils|Instructions for updating|Lambda fuctions'
 
@@ -175,12 +176,12 @@ rerun-failed:
 sweep-check:
 	@test -n "$(GROUP)" || { echo 'usage: make sweep-check GROUP=<group from slurm/sweeps.tsv> [RF=1,4 ...]'; exit 2; }
 	@bash slurm/sweep.sh $(GROUP) $(SWEEP_OPTS) --check 2>&1 | grep -v $(VENV_NOISE)
-	@mkdir -p logs; echo "Sweep driver job:"; sbatch --test-only slurm/sweep.sh $(GROUP) $(SWEEP_OPTS) 2>&1 | sed 's/^/  /'
+	@mkdir -p logs; echo "Sweep driver job:"; sbatch --test-only --account=$(ACCOUNT) slurm/sweep.sh $(GROUP) $(SWEEP_OPTS) 2>&1 | sed 's/^/  /'
 
 ## sweep | GROUP= [sweep opts] | SUBMITS a sweep (nodes, licenses). Run sweep-check first
 sweep:
 	@test -n "$(GROUP)" || { echo 'usage: make sweep GROUP=<group> [RF=...]  (run make sweep-check first)'; exit 2; }
-	@mkdir -p logs; sbatch slurm/sweep.sh $(GROUP) $(SWEEP_OPTS)
+	@mkdir -p logs; sbatch --account=$(ACCOUNT) slurm/sweep.sh $(GROUP) $(SWEEP_OPTS)
 
 # --- Archive ---
 

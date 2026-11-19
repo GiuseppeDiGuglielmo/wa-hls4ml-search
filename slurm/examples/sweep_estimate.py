@@ -30,15 +30,14 @@ sys.path.insert(0, os.path.join(REPO, "slurm", "sweeplib"))
 from list_runs import PROVENANCE, collect, provenance_groups  # noqa: E402
 from design_show import attempts, attempt_facts  # noqa: E402
 
-NODE_GB = 460.0     # usable per CPU node after SLURM's reserve, minus headroom
+from run_status import site  # noqa: E402
+NODE_GB = site.NODE_USABLE_GB   # usable per CPU node (slurm/site.json)
 SLOTS_MAX = 100     # sweep.sh's cap per node; each slot also holds one license
 
 
 def license_seats():
     """Seats in license_servers_perlmutter.json, the same count sweep.sh caps at."""
-    import json
-    with open(os.path.join(REPO, "license_servers_perlmutter.json")) as f:
-        return sum(int(s.get("licenses", 0)) for s in json.load(f)["servers"])
+    return site.seats()
 
 
 def design_count(group):
@@ -50,7 +49,7 @@ def design_count(group):
         return sum(1 for _ in enumerate_designs(spec)), mode, list(spec.rf)
     cand = getattr(spec, "candidates", None)
     if cand:
-        path = os.path.join("/global/cfs/cdirs/amsc011/shared/wa-hls4ml-catapult", cand)
+        path = os.path.join(site.ARCHIVE, cand)
         if os.path.isfile(path):
             return sum(1 for l in open(path) if l.strip() and not l.startswith("#")), mode, list(spec.rf)
     try:

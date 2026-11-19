@@ -24,8 +24,9 @@ import json
 import os
 import sys
 
-ARCHIVE = "/global/cfs/cdirs/amsc011/shared/wa-hls4ml-catapult"
-TECH_DIRS = ("nangate45", "gf22fdx")
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "slurm"))
+import site_config as site  # noqa: E402
+ARCHIVE, TECH_DIRS = site.ARCHIVE, site.TECH_DIRS
 REQUIRED_METRICS = ("total_area", "latency_cycles", "thruput_cycles")
 
 

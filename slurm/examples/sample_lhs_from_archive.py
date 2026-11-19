@@ -22,8 +22,11 @@ import re
 import sys
 from pathlib import Path
 
-ARCHIVE_DEFAULT = "/global/cfs/cdirs/amsc011/shared/wa-hls4ml-catapult/nangate45"
-OUT_TEMPLATE    = "/global/cfs/cdirs/amsc011/shared/wa-hls4ml-catapult/gf22fdx/gf22_lhs_{layers}layer_{n}.txt"
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "slurm"))
+import site_config as site  # noqa: E402
+
+ARCHIVE_DEFAULT = os.path.join(site.ARCHIVE, site.TECH_MAP["nangate45"])
+OUT_TEMPLATE    = os.path.join(site.ARCHIVE, site.TECH_MAP["gf22"], "gf22_lhs_{layers}layer_{n}.txt")
 
 _ACT_ENC = {"relu": 0.0, "sigmoid": 0.5, "tanh": 1.0}
 _ACT_CLS = {"relu", "sigmoid", "tanh", "HardActivation"}

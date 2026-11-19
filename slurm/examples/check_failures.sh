@@ -23,10 +23,11 @@ REPORT_DIR="$RUN_DIR/data/reports/raw"
 TARBALL_DIR="$RUN_DIR/tarballs"
 SLURM_LOGS="$RUN_DIR/slurm_logs"
 JOBID_FILE="$RUN_DIR/slurm_job_id.txt"
-ARCHIVE=/global/cfs/cdirs/amsc011/shared/wa-hls4ml-catapult
+SITE="python3 $(cd "$(dirname "$0")/.." && pwd)/site_config.py"
+ARCHIVE=$($SITE get archive)
 RUN_NAME=$(basename "$RUN_DIR")
 ARCHIVE_TARBALLS=""
-for tech in nangate45 gf22fdx; do
+for tech in $($SITE techs); do
     [ -d "$ARCHIVE/$tech/$RUN_NAME/tarballs" ] && ARCHIVE_TARBALLS="$ARCHIVE/$tech/$RUN_NAME/tarballs"
 done
 declare -A IN_ARCHIVE=()

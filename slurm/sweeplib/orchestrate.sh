@@ -159,11 +159,8 @@ run_group() {
     fi
 
     local archive_tech
-    case "${TECH:-}" in
-        gf22)      archive_tech=gf22fdx ;;
-        nangate45) archive_tech=nangate45 ;;
-        *) echo "ERROR: unknown TECH '${TECH:-}', not archiving ${RUN_DIR}" >&2; return 1 ;;
-    esac
+    archive_tech=$(python3 "${REPO_DIR}/slurm/site_config.py" archive-dir "${TECH:-}") || {
+        echo "ERROR: unknown TECH '${TECH:-}', not archiving ${RUN_DIR}" >&2; return 1; }
     echo "  Archiving ${GROUP} rf${RF} to ${archive_tech} (copy only; scratch is kept) ..."
     python3 "${REPO_DIR}/slurm/examples/archive_sync.py" "${RUN_DIR}" --tech "${archive_tech}" --apply
     echo "  Done: ${GROUP} rf${RF}."

@@ -42,10 +42,11 @@ export CATAPULT_VER="${CATAPULT_VER:-2026.1_1}"
 CATAPULT_PRODUCT="${CATAPULT_PRODUCT:-ultra}"
 
 # Catapult installs, one folder per version, shared by the amsc011 project and
-# outside $SCRATCH so the purge cannot reach them. Override with CATAPULT_ROOT=...
+# outside $SCRATCH so the purge cannot reach them; slurm/site.json names the
+# tree. Override with CATAPULT_ROOT=...
 # for another tree, or CATAPULT_PATH_OVERRIDE=... for one install anywhere.
 # This path wins over CATAPULT_PATH from the env script.
-CATAPULT_ROOT="${CATAPULT_ROOT:-/global/common/software/amsc011/public/Siemens/Catapult}"
+CATAPULT_ROOT="${CATAPULT_ROOT:-$(python3 "${SCRIPT_DIR}/../slurm/site_config.py" get catapult_root)}"
 export CATAPULT_PATH_OVERRIDE="${CATAPULT_PATH_OVERRIDE:-${CATAPULT_ROOT}/${CATAPULT_VER}}"
 
 # --env-setup picks which env script to source inside the container:

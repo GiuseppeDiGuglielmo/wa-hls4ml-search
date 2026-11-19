@@ -29,7 +29,9 @@ from candidates import generate  # noqa: E402
 from enumerate_space import digest  # noqa: E402
 from sweep_spec import load_catalog, spec_from_json  # noqa: E402
 
-ARCHIVE = "/global/cfs/cdirs/amsc011/shared/wa-hls4ml-catapult"
+sys.path.insert(0, os.path.join(REPO, "slurm"))
+import site_config as site  # noqa: E402
+ARCHIVE = site.ARCHIVE
 GOLDEN = os.path.join(REPO, "slurm", "tests", "golden_design_space.tsv")
 CATALOG = os.path.join(REPO, "slurm", "sweeps.tsv")
 

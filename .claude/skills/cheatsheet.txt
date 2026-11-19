@@ -47,7 +47,7 @@ SETTINGS
   RUN=           scratch run dir (check-run, design-show: also a run name)
   STEM=          one design, e.g. dense_1l_sz128_188
   GROUP= / RF=   a row of slurm/sweeps.tsv / reuse factors, e.g. 1,4,8,16
-  TECH=          nangate45 | gf22fdx (default: from the path)
+  TECH=          nangate45 | gf22fdx (default: archive or catalog)
   QOS= TIME= MEM=                express_amsc, 05:30:00, 0 (= whole node)
   NODES= PARALLELISM= MEMFREE=   1, license seats (5), 64G free to start a design
   EXPECTED=N     design count when the run has no joblist.txt

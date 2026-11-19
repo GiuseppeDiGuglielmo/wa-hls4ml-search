@@ -1,9 +1,10 @@
 #!/bin/bash
 # Track synthesis progress + archive totals
 
-ARCHIVE_BASE=/global/cfs/cdirs/amsc011/shared/wa-hls4ml-catapult
-ARCHIVE_45NM="$ARCHIVE_BASE/nangate45"
-ARCHIVE_GF22NM="$ARCHIVE_BASE/gf22fdx"
+SITE="python3 $(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/slurm/site_config.py"
+ARCHIVE_BASE=$($SITE get archive)
+ARCHIVE_45NM="$ARCHIVE_BASE/$($SITE archive-dir nangate45)"
+ARCHIVE_GF22NM="$ARCHIVE_BASE/$($SITE archive-dir gf22)"
 ARCHIVE="$ARCHIVE_GF22NM"   # default; overridden per-section
 
 # ── Colors ───────────────────────────────────────────────────────────────────

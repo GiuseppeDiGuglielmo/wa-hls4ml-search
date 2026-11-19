@@ -1,0 +1,14 @@
+{
+  "_doc": "Facts about this site (Perlmutter, project amsc011). Read through slurm/site_config.py, never parsed directly. Policy (QOS, time, memory, slot counts) does not belong here.",
+  "account": "amsc011",
+  "archive": "/global/cfs/cdirs/amsc011/shared/wa-hls4ml-catapult",
+  "archive_tech_dirs": {
+    "_doc": "catalog tech (slurm/sweeps.tsv) -> folder under archive",
+    "nangate45": "nangate45",
+    "gf22": "gf22fdx"
+  },
+  "venv": "/global/common/software/amsc011/public/venv_hls4ml/bin/activate",
+  "catapult_root": "/global/common/software/amsc011/public/Siemens/Catapult",
+  "license_file": "license_servers_perlmutter.json",
+  "node_usable_gb": 460
+}

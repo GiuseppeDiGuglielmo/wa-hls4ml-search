@@ -7,6 +7,7 @@ This directory contains the SLURM-specific code for running Catapult HLS synthes
 | Path | Purpose |
 |---|---|
 | `__init__.py` | Package marker + public API doc |
+| `site.json`, `site_config.py` | Site facts (account, archive and tech folders, venv, Catapult tree, license file, node memory) and their one reader. `site_config.py get KEY` / `venv` / `licenses` / `seats` / `techs` / `archive-dir TECH` / `tech RUN_DIR` for shell and make. |
 | `cli.py` | `add_slurm_args(parser)` — argparse group for `--slurm`, `--slurm-account`, `--slurm-time`, `--slurm-qos`, `--slurm-constraint`, `--collect-slurm` |
 | `job_array.py` | `write_script(...)` and `submit(...)` — render `job_array.sh` SBATCH script, `sbatch` it, poll `squeue` until done, check `sacct` for failures |
 | `examples/run_single.sh` | 1-task smoke test (1 real model) |
@@ -57,8 +58,8 @@ The SLURM driver lives here, but it depends on a few sibling files. For a comple
 | `Perlmutter_scripts/perlmutter_slurm/` (submodule) | Reference SLURM tutorials (08_array_parallel_catapult is the same-design-N-times pattern; 07_array_parallel shows outer-array + inner-GNU-parallel for true 100-concurrent on the 32-node QoS cap) |
 | `~/bin/cad_env_perlmutter.sh` (per-user, NOT in repo; template `Perlmutter_scripts/cad_env_perlmutter.sh.example`) | Catapult environment setup (CATAPULT_VER, MGC_HOME, etc.) — sourced inside the container by catapult_shell.sh |
 | `license_servers_perlmutter.json` (gitignored, copy from .example) | Per-user license server config: `{"servers": [{"host": "fasic-135413.fnal.gov", "port": 1717, "licenses": 100}]}`. Drives both `LM_LICENSE_FILE` env var and the SLURM array `%total_licenses` throttle. |
-| `/global/common/software/amsc011/public/Siemens/Catapult/<version>/` (shared, amsc011) | The Catapult installs. `CATAPULT_VER` picks one (default 2026.1_1); `CATAPULT_PATH_OVERRIDE` points at another. See QUICKSTART.md. |
-| `/global/common/software/amsc011/public/venv_hls4ml/` (shared, override with `WA_HLS4ML_VENV`) | DSE Python venv activated by each SLURM task before invoking iter_manager_catapult.py |
+| `/global/common/software/amsc011/public/Siemens/Catapult/<version>/` (shared, amsc011; `catapult_root` in `site.json`) | The Catapult installs. `CATAPULT_VER` picks one (default 2026.1_1); `CATAPULT_PATH_OVERRIDE` points at another. See QUICKSTART.md. |
+| `/global/common/software/amsc011/public/venv_hls4ml/` (shared, `venv` in `site.json`, override with `WA_HLS4ML_VENV`) | DSE Python venv activated by each SLURM task before invoking iter_manager_catapult.py |
 
 ## How a single SLURM task flows
 

@@ -25,7 +25,7 @@ import shutil
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from run_status import ARCHIVE, TECH_DIRS, is_good  # noqa: E402
+from run_status import ARCHIVE, TECH_DIRS, is_good, site  # noqa: E402
 
 
 def listing(directory, suffix):
@@ -76,7 +76,7 @@ def main():
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("run_dir", help="scratch run directory (run_YYYYMMDD_HHMMSS_<uuid8>)")
     ap.add_argument("--tech", choices=TECH_DIRS,
-                    help="archive tech folder (default: gf22fdx if the path has catapult_gf22, else nangate45)")
+                    help="archive tech folder (default: where the run is already archived, else its catalog group's tech; required when neither says)")
     ap.add_argument("--apply", action="store_true", help="copy; without it only the plan is printed")
     ap.add_argument("--tag", default=datetime.date.today().strftime("%Y%m%d"),
                     help="suffix of the stale backup folders (default: today, YYYYMMDD)")
@@ -88,7 +88,11 @@ def main():
         sys.exit("archive_sync: %s is not a scratch run directory (needs data/reports/raw/)" % run_dir)
     if run_dir.startswith(ARCHIVE + "/"):
         sys.exit("archive_sync: %s is already in the archive" % run_dir)
-    tech = args.tech or ("gf22fdx" if "/catapult_gf22" in run_dir else "nangate45")
+    tech = args.tech
+    if not tech:
+        tech, why = site.tech_of_run(run_dir)
+        if not tech:
+            sys.exit("archive_sync: %s; pass --tech (make: TECH=) %s" % (why, "|".join(TECH_DIRS)))
     dest = os.path.join(ARCHIVE, tech, name)
 
     actions, differs = plan(run_dir, dest)

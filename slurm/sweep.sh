@@ -51,9 +51,10 @@ set -euo pipefail
 
 REPO_DIR="${SLURM_SUBMIT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 CATALOG="${REPO_DIR}/slurm/sweeps.tsv"
-ARCHIVE_BASE="/global/cfs/cdirs/amsc011/shared/wa-hls4ml-catapult"
+SITE="python3 ${REPO_DIR}/slurm/site_config.py"
+ARCHIVE_BASE=$($SITE get archive)
 BASE_FLOW_CFG="${REPO_DIR}/configs/catapult_flow/config_catapult_flow.json"
-VENV="${WA_HLS4ML_VENV:-/global/common/software/amsc011/public/venv_hls4ml/bin/activate}"
+VENV=$($SITE venv)
 
 GROUP="${1:-}"
 [[ -n "$GROUP" && "$GROUP" != -* ]] || {
@@ -132,29 +133,19 @@ ROW_CANDIDATES=$(read_field candidates)
 echo "=== $(read_field summary)"
 if (( LIST_ONLY )); then exit 0; fi
 
-LM_LICENSE_FILE=$(python3 -c "
-import json
-with open('${REPO_DIR}/license_servers_perlmutter.json') as f:
-    cfg = json.load(f)
-print(':'.join(f\"{s['port']}@{s['host']}\" for s in cfg['servers']))
-")
+LM_LICENSE_FILE=$($SITE licenses)
 export LM_LICENSE_FILE
 
 # Each slot runs one Catapult and holds one license, so nodes x slots may not
 # exceed the seats the license file lists (5 CatapultUltra on fasic-135413).
-LICENSE_SEATS=$(python3 -c "
-import json
-with open('${REPO_DIR}/license_servers_perlmutter.json') as f:
-    cfg = json.load(f)
-print(sum(int(s.get('licenses', 0)) for s in cfg['servers']))
-")
+LICENSE_SEATS=$($SITE seats)
 [[ -n "$PARALLELISM" ]] || PARALLELISM=$(( LICENSE_SEATS / N_NODES < 100 ? LICENSE_SEATS / N_NODES : 100 ))
 if (( PARALLELISM < 1 || N_NODES * PARALLELISM > LICENSE_SEATS )); then
     echo "error: ${N_NODES} nodes x ${PARALLELISM} slots needs more than the ${LICENSE_SEATS} license seats in license_servers_perlmutter.json" >&2
     exit 2
 fi
 
-SLURM_ACCOUNT=amsc011
+SLURM_ACCOUNT=$($SITE get account)
 SLURM_CONSTRAINT=cpu
 SLURM_QOS="$SLURM_QOS_SYNTH"
 export REPO_DIR VENV LM_LICENSE_FILE N_NODES PARALLELISM MEM_PER_NODE MEMFREE \
