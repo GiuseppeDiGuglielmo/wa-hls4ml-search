@@ -3,7 +3,7 @@ name: check-runs
 description: >-
   Facts for inspecting wa-hls4ml Catapult sweep runs on Perlmutter: where scratch
   run folders and the shared CFS archive live, what counts as a finished design,
-  and which read-only tools (make check-jobs, check-list, check-run,
+  and which read-only tools (make check-jobs, check-list, check-run, sweep-watch,
   why-failed, design-show) report progress, failures and their causes. Use when
   asked how runs or jobs are doing, how complete a sweep group or reuse factor is,
   what failed and why, what one design did, or what is missing from the archive.
@@ -84,6 +84,11 @@ Run from the repo root. All read-only; use whichever fit, in any order.
   is measured against its `joblist_rerun*.txt`. It reads every JSON: seconds on scratch,
   up to a few minutes for a large archive run on CFS. `python3 -m slurm.tools.run_status <run> --list-failed`
   prints failed stems.
+- `make sweep-watch RUN=<run> | GROUP=<group> [RF=N] [EVERY=10] [ONCE=1]`: a live
+  view of one sweep run for people, redrawn every EVERY seconds until the sweep
+  writes `sweep_summary.tsv`: progress bar (good / failed), designs running now and
+  for how long, the driver and synthesis jobs, the retry round, runtime p50/p90 and
+  a finish estimate. Agents use `ONCE=1` (one snapshot, no screen control).
 - `make check-run RUN=<run> DETAILS=1`: the same, then every design behind each
   count: no report, no valid QoR, no tarball (on scratch; tarballs only in the
   archive, e.g. after a purge, are counted, not listed) and, for the archive, no

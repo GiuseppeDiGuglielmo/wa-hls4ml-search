@@ -16,7 +16,7 @@ sweep run on 2026-11-19.
 | 2. Estimate | `make sweep-estimate GROUP=` | no |
 | 3. Plan | `make sweep-check GROUP=` | no |
 | 4. Submit | `make sweep GROUP=` | **submits jobs, spends licenses** |
-| 5. Watch | `make check-jobs`, `make check-run RUN=` | no |
+| 5. Watch | `make sweep-watch GROUP=`, `make check-run RUN=` | no |
 | 6. Record | `make archive-verify`, PROVENANCE.md, `make archive-index APPLY=1` | docs, archive README |
 
 ## 0. Check the tool chain
@@ -134,6 +134,31 @@ Prints `Submitted batch job <id>`. Then, without you:
    stopped (`complete`, `no_progress`, `max_rounds`), job ids, settings, archive exit code.
 
 ## 5. Watch
+
+```
+make sweep-watch GROUP=demo_1l_20 RF=1     # live view; quits by itself when the sweep is done (Ctrl-C any time)
+```
+
+It redraws every 10 seconds (`EVERY=`) from the files the sweep writes, and waits if
+the driver has not created the run folder yet:
+
+```
+Sweep demo_1l_20 rf1   run_20261119_083102_e5f26068   08:41:07   (every 10s, Ctrl-C quits)
+
+Jobs      synthesis  61582403  demo_1l_20_rf1_a         RUNNING     9:20  nid200196
+          driver     61582376  sweep                    RUNNING    10:52  nid200022
+Round     [round 0] Submitted: 61582403
+
+Progress  [██████████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 10/20 good
+          10 good   0 failed (no valid QoR)   5 running   5 not started   tarballs 10
+
+Running   dense_1l_10 1:12   dense_1l_11 1:12   dense_1l_12 1:11   dense_1l_13 1:11
+          dense_1l_14 1:11
+Runtime   p50 4.4 min   p90 5.2 min   max 5.2 min   (10 finished: exit 0 x10)
+Estimate  ~8:10 to go (10 left x 4.6 min mean / 5 slots), around 08:49
+```
+
+`ONCE=1` prints one snapshot instead (for a log or a script). The plain views still work:
 
 ```
 make check-jobs                                   # your jobs and the express node pools

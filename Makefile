@@ -42,6 +42,8 @@ APPLY    ?=
 FAST     ?=
 ALL      ?=
 DETAILS  ?=
+EVERY    ?= 10
+ONCE     ?=
 DROP_BACKUPS ?=
 WORKERS  ?= 8
 LMUTIL   ?=
@@ -59,7 +61,7 @@ need_run  = @test -n "$(RUN)" || { echo 'usage: make $@ RUN=<scratch run_dir>$(1
 
 .PHONY: help env-check license-check catapult-probe \
         design-show design-synth \
-        check-jobs check-list check-run why-failed reparse rebuild-archived rerun-failed sweep-check sweep \
+        check-jobs check-list check-run sweep-watch why-failed reparse rebuild-archived rerun-failed sweep-check sweep \
         archive-dry archive archive-verify scratch-clean archive-index \
         dataset-summary provenance-diff sweep-estimate
 
@@ -72,7 +74,7 @@ help:
 	@awk -F' [|] ' '/^## [a-z-]+ [|]/ { sub(/^## /, "", $$1); \
 	    row[$$1] = sprintf("  %-16s %-22s %s", $$1, $$2, $$3) } \
 	  END { n = split("run-catapult:tool chain, sweeps, repairs:env-check license-check catapult-probe sweep-estimate sweep-check sweep reparse rebuild-archived rerun-failed design-synth;" \
-	                  "check-runs:status and failures:check-jobs check-list check-run why-failed design-show;" \
+	                  "check-runs:status and failures:check-jobs check-list check-run sweep-watch why-failed design-show;" \
 	                  "archive-run:archive and scratch:archive-dry archive archive-verify scratch-clean archive-index;" \
 	                  "dataset:the archived dataset:dataset-summary provenance-diff", grp, ";"); \
 	    for (i = 1; i <= n; i++) { split(grp[i], f, ":"); printf "\n%s: %s\n", f[1], f[2]; \
@@ -145,6 +147,11 @@ check-jobs:
 ## check-list | [TECH= WHERE= GREP=] | Every run on scratch and in the archive
 check-list:
 	@$(PYTHON) -m slurm.tools.list_runs $(if $(TECH),--tech $(TECH)) $(if $(WHERE),--where $(WHERE)) $(if $(GREP),--grep "$(GREP)")
+
+## sweep-watch | RUN=|GROUP= [RF= ONCE=1] | Live view of a sweep: progress bar, running designs, jobs, ETA. EVERY=10 s
+sweep-watch:
+	@test -n "$(RUN)$(GROUP)" || { echo 'usage: make sweep-watch RUN=<scratch run dir or run name> | GROUP=<group> [RF=N] [EVERY=10] [ONCE=1]'; exit 2; }
+	@$(PYTHON) -m slurm.tools.sweep_watch $(RUN) $(if $(GROUP),--group $(GROUP)) $(if $(RF),--rf $(RF)) --every $(EVERY) $(if $(ONCE),--once)
 
 ## check-run | RUN= [EXPECTED= DETAILS=1] | Expected, good, failed and missing designs of a run. DETAILS=1 lists them
 check-run:
