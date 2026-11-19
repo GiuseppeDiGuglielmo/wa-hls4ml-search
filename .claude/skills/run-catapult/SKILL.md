@@ -15,6 +15,12 @@ description: >-
 Synthesis spends shared licenses and node hours, so it has gates. Free checks
 first, then a plan the user approves, then the action.
 
+The job settings (QOS, TIME, MEM, MEMFREE, NODES, PARALLELISM) start from
+`slurm/defaults.json`; they are starting points, not answers. When you show a plan,
+say for each one whether you kept it or changed it, and which fact decided it: the
+design count and seats the plan prints, the queues from `make check-jobs`, peak
+memory from `sweep-estimate` or `design-show`, runtime from past runs.
+
 ## Before anything runs
 
 1. `make env-check`: venv imports, container, Apptainer, Catapult install, env
@@ -40,7 +46,8 @@ first, then a plan the user approves, then the action.
    Rough; says when there is no past data.
 2. `make sweep-check GROUP=<group> [RF= QOS= TIME= NODES= PARALLELISM= MEM= MEMFREE=]`:
    the plan, plus `sbatch --test-only` of a synthesis job and of the sweep driver.
-   Builds no models, submits nothing. Show it to the user.
+   Builds no models, submits nothing. Show it to the user with the settings you
+   chose and why.
 3. `make sweep GROUP=<group> [same options]` only after the user says yes. Then follow
    it with the check-runs skill and archive it with the archive-run skill.
 
@@ -60,11 +67,9 @@ for a yes, then rerun with the flag.
   of designs it prints an sbatch line to run it on a compute node instead.
 - `make rerun-failed RUN=<run_dir> [SUBMIT=1] [QOS= TIME= MEM= PARALLELISM=]`: designs
   with no QoR in any attempt are synthesised again in one job (old report/tarball
-  moved to `*_stale_<tag>/` so they are not skipped). QOS, TIME, MEM and
-  PARALLELISM default to `slurm/defaults.json` and are yours to choose per run:
-  the plan prints the design count and seats, `check-jobs` shows the queues,
-  `design-show` a design's peak memory. On `shared` MEM defaults to 24G per slot;
-  on a whole node GNU parallel `--memfree` gates each start. Run reparse first;
+  moved to `*_stale_<tag>/` so they are not skipped). Choose QOS, TIME, MEM and
+  PARALLELISM as above. On `shared` MEM defaults to 24G per slot; on a whole node
+  GNU parallel `--memfree` gates each start. Run reparse first;
   rerun-failed skips designs reparse can fix.
 - `make rebuild-archived RUN=<archive run name> [APPLY=1]` (`Designs 0 ...; nothing
   to rebuild` when every archived design has QoR): for a run that exists only

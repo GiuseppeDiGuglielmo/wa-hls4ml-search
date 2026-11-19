@@ -26,7 +26,8 @@ common orders on one printable page for people (plain text, 94 columns).
 - **Site facts** are in `slurm/site.json`, read through `slurm/site_config.py`.
 - **Defaults** are in `slurm/defaults.json`, read through
   `slurm/defaults_config.py`: starting points, every one a flag or make
-  variable. Choose per run from what the tools report.
+  variable. Choose per run from what the tools report, and say in the plan which
+  you kept, which you changed, and the fact behind each.
 - **Skills** hold durable facts, gates and hints. Dated history lives in
   `slurm/PROVENANCE.md` (the data) and the git log (the tools).
 - **Repairs** for runs made under old conditions are in `slurm/repairs/`, with why
