@@ -158,6 +158,11 @@ Runtime   p50 4.4 min   p90 5.2 min   max 5.2 min   (10 finished: exit 0 x10)
 Estimate  ~8:10 to go (10 left x 4.6 min mean / 5 slots), around 08:49
 ```
 
+In a terminal the bar is green for good designs, red for failed, yellow for running
+and dim for not started; a running design turns orange once it runs longer than the
+p90 of the designs finished so far, and a finish that is not `complete` or whose
+archive copy failed shows in red.
+
 `ONCE=1` prints one snapshot instead (for a log or a script). The plain views still work:
 
 ```

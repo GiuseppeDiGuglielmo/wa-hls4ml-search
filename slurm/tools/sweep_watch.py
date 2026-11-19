@@ -36,9 +36,23 @@ START_RE = re.compile(r"^(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d),\d+ .*Running single j
 ROUND_RE = re.compile(r"\[round (\d+)\]")
 COLOR = sys.stdout.isatty() and os.environ.get("TERM") not in (None, "dumb")
 
+# The palette, and what each colour means on this screen.
+BOLD = "1"           # title, final result
+DIM = "2"            # secondary text: hints, run id, refresh note, "-"
+CYAN = "36"          # line labels (Jobs, Round, Progress, ...)
+GREEN = "32"         # good designs, RUNNING jobs, finished cleanly
+YELLOW = "33"        # running designs, PENDING jobs, the estimate
+RED = "31"           # failed designs, non-zero exits, signals
+ORANGE = "38;5;214"  # attention: a design running longer than the p90 so far
+
 
 def c(text, code):
-    return "\033[%sm%s\033[0m" % (code, text) if COLOR else text
+    return "\033[%sm%s\033[0m" % (code, text) if COLOR and code else str(text)
+
+
+def label(name):
+    """A line label, padded before colouring so columns stay aligned."""
+    return c("%-10s" % name, CYAN)
 
 
 def find_run(arg, group, rf):
@@ -167,12 +181,16 @@ def pct(values, q):
     return v[min(len(v) - 1, int(len(v) * q / 100.0))] if v else None
 
 
-def bar(good, failed, total, width):
+def bar(good, failed, running, total, width):
+    """Green good, red failed, yellow running, dim not started."""
     if not total:
         return "[" + " " * width + "]"
-    g = int(round(width * good / float(total)))
-    f = min(width - g, int(round(width * failed / float(total))))
-    return "[" + c("█" * g, "32") + c("█" * f, "31") + "░" * (width - g - f) + "]"
+    cells = []
+    for n, code in ((good, GREEN), (failed, RED), (running, YELLOW)):
+        k = min(width - sum(x for x, _ in cells), int(round(width * n / float(total))))
+        cells.append((k, code))
+    rest = width - sum(k for k, _ in cells)
+    return "[" + "".join(c("█" * k, code) for k, code in cells if k) + c("░" * rest, DIM) + "]"
 
 
 def draw(run_dir, gcache, every):
@@ -206,82 +224,98 @@ def draw(run_dir, gcache, every):
         running = []
     summ = summary(run_dir)
 
+    runtimes = [rt / 60.0 for _, _, rt, ex, _ in log if ex == 0]
+    p90 = pct(runtimes, 90)
+
     out = []
     title = "Sweep %s" % (("%s rf%s" % (m.group(1), m.group(2))) if m else folder)
     clock = datetime.now().strftime("%H:%M:%S")
-    out.append(c(title, "1") + "   " + os.path.basename(run_dir) + "   " + clock
-               + ("" if every is None else "   (every %ds, Ctrl-C quits)" % every))
+    out.append(c(title, BOLD) + "   " + c(os.path.basename(run_dir), DIM) + "   " + clock
+               + ("" if every is None else c("   (every %ds, Ctrl-C quits)" % every, DIM)))
     out.append("")
 
     if q is None:
-        out.append("Jobs      squeue unavailable")
+        out.append(label("Jobs") + c("squeue unavailable", RED))
     elif not q:
-        out.append("Jobs      none in the queue" + (" (finished)" if summ else ""))
+        out.append(label("Jobs") + c("none in the queue" + (" (finished)" if summ else ""), DIM))
     else:
         for i, (jid, name, state, elapsed, where) in enumerate(q):
-            label = "driver" if jid == did else "synthesis"
-            st = c(state, "32" if state == "RUNNING" else "33")
-            out.append("%-9s %-10s %-9s %-24s %s %8s  %s" % ("Jobs" if i == 0 else "", label, jid, name[:24],
-                                                             st, elapsed, where))
+            role = "driver" if jid == did else "synthesis"
+            st = c("%-8s" % state, GREEN if state == "RUNNING" else (YELLOW if state == "PENDING" else RED))
+            out.append("%s%-10s %-9s %-24s %s %8s  %s" % (label("Jobs" if i == 0 else ""), role, jid,
+                                                        name[:24], st, elapsed, c(where, DIM)))
     if round_line:
-        out.append("Round     %s" % round_line)
+        out.append(label("Round") + round_line)
     out.append("")
 
     bw = width - 34
-    out.append("Progress  %s %s" % (bar(len(good), len(failed), total, bw),
-                                    "%d/%d good" % (len(good), total)))
-    out.append("          %s good   %s failed (no valid QoR)   %d running   %d not started   tarballs %d"
-               % (c(str(len(good)), "32"), c(str(len(failed)), "31" if failed else "0"), len(running),
-                  max(0, total - len(reports) - len(running)), len(tarballs)))
+    not_started = max(0, total - len(reports) - len(running))
+    out.append(label("Progress") + bar(len(good), len(failed), len(running), total, bw) + " "
+               + c("%d/%d good" % (len(good), total), BOLD))
+    out.append(label("") + "   ".join([
+        c("%d good" % len(good), GREEN),
+        c("%d failed (no valid QoR)" % len(failed), RED if failed else DIM),
+        c("%d running" % len(running), YELLOW if running else DIM),
+        c("%d not started" % not_started, DIM),
+        c("tarballs %d" % len(tarballs), DIM)]))
     out.append("")
 
     if running:
         slots = len(running)
-        items = ["%s %s" % (s, mmss(now - t)) for s, t in running]
-        line, lines = "", []
-        for it in items:
-            if len(line) + len(it) + 3 > width - 10:
+        items = []
+        for s_, t in running:
+            text = "%s %s" % (s_, mmss(now - t))
+            late = p90 is not None and (now - t) / 60.0 > p90
+            items.append((text, ORANGE if late else YELLOW))
+        line, lines, used = "", [], 0
+        for text, code in items:
+            if used and used + len(text) + 3 > width - 10:
                 lines.append(line)
-                line = ""
-            line += ("   " if line else "") + it
+                line, used = "", 0
+            line += ("   " if used else "") + c(text, code)
+            used += (3 if used else 0) + len(text)
         lines.append(line)
-        out.append("Running   " + lines[0])
-        out.extend("          " + l for l in lines[1:])
+        out.append(label("Running") + lines[0])
+        out.extend(label("") + l for l in lines[1:])
+        if any(code == ORANGE for _, code in items):
+            out.append(label("") + c("orange: running longer than the p90 of finished designs", DIM))
     else:
         slots = None
-        out.append("Running   -")
+        out.append(label("Running") + c("-", DIM))
 
-    runtimes = [rt / 60.0 for _, _, rt, ex, _ in log if ex == 0]
     exits = {}
     for _, _, _, ex, sig in log:
         key = ("signal %d" % sig) if sig else ("exit %d" % ex)
         exits[key] = exits.get(key, 0) + 1
     if runtimes:
-        out.append("Runtime   p50 %.1f min   p90 %.1f min   max %.1f min   (%d finished: %s)"
-                   % (pct(runtimes, 50), pct(runtimes, 90), max(runtimes), len(log),
-                      ", ".join("%s x%d" % kv for kv in sorted(exits.items()))))
+        ex_text = ", ".join(c("%s x%d" % (k, n), GREEN if k == "exit 0" else RED)
+                            for k, n in sorted(exits.items()))
+        out.append(label("Runtime") + "p50 %.1f min   p90 %.1f min   max %.1f min   (%d finished: %s)"
+                   % (pct(runtimes, 50), p90, max(runtimes), len(log), ex_text))
     else:
-        out.append("Runtime   no finished design yet")
+        out.append(label("Runtime") + c("no finished design yet", DIM))
 
     left = total - len(tarballs)
     if summ:
+        ok = summ.get("stopped") == "complete" and summ.get("archive_sync_exit") == "0"
         out.append("")
-        out.append(c("Finished  %s: %s/%s with tarball, %s retry round(s), archive_sync exit %s, %s"
-                     % (summ.get("stopped", "?"), summ.get("with_tarball", "?"), summ.get("designs", "?"),
-                        summ.get("retry_rounds", "?"), summ.get("archive_sync_exit", "?"),
-                        summ.get("finished", "")), "1"))
-        out.append("Next      make check-run RUN=%s" % run_dir)
+        out.append(label("Finished") + c("%s: %s/%s with tarball, %s retry round(s), archive_sync exit %s, %s"
+                                         % (summ.get("stopped", "?"), summ.get("with_tarball", "?"),
+                                            summ.get("designs", "?"), summ.get("retry_rounds", "?"),
+                                            summ.get("archive_sync_exit", "?"), summ.get("finished", "")),
+                                         BOLD + ";" + (GREEN if ok else RED)))
+        out.append(label("Next") + c("make check-run RUN=%s" % run_dir, DIM))
+    elif not q:
+        out.append(label("Status") + c("no job in the queue and no sweep_summary.tsv: a run made outside the sweep", ORANGE))
+        out.append(label("") + c("loop, or its driver ended early. make check-run RUN=%s" % run_dir, ORANGE))
     elif left > 0 and runtimes and slots:
         mean = sum(runtimes) / len(runtimes)
         eta = (left * mean / slots) * 60 - (sum(now - t for _, t in running) / slots)
-        out.append("Estimate  ~%s to go (%d left x %.1f min mean / %d slots), around %s"
-                   % (mmss(max(eta, 0)), left, mean, slots,
-                      datetime.fromtimestamp(now + max(eta, 0)).strftime("%H:%M")))
-    elif not q:
-        out.append("Status    no job in the queue and no sweep_summary.tsv: a run made outside the sweep")
-        out.append("          loop, or its driver ended early. make check-run RUN=%s" % run_dir)
+        out.append(label("Estimate") + c("~%s to go" % mmss(max(eta, 0)), YELLOW)
+                   + " (%d left x %.1f min mean / %d slots), around %s"
+                   % (left, mean, slots, datetime.fromtimestamp(now + max(eta, 0)).strftime("%H:%M")))
     elif left == 0 and total:
-        out.append("Estimate  all designs have a tarball; the driver archives and writes the summary next")
+        out.append(label("Estimate") + "all designs have a tarball; the driver archives and writes the summary next")
     return "\n".join(out), summ is not None
 
 
