@@ -35,7 +35,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
 from run_status import is_good, site  # noqa: E402
-from reparse import has_qor_attempt  # noqa: E402
+from design_show import has_qor_attempt  # noqa: E402
 
 SCRIPT = """#!/bin/bash
 #SBATCH --job-name=retry_{name}

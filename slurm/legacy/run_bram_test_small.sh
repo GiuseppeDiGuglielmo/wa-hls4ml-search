@@ -4,10 +4,10 @@
 # After completion, check BramFactor made it into the generated project:
 #   grep -r BramFactor $SCRATCH/catapult_runs_bramtest/
 #
-# Run from repo root: bash slurm/examples/run_bram_test_small.sh
-source "${WA_HLS4ML_VENV:-/global/common/software/amsc011/public/venv_hls4ml/bin/activate}"
+# Run from repo root: bash slurm/legacy/run_bram_test_small.sh
+source "$(python3 slurm/site_config.py venv)"
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-source "${REPO_DIR}/slurm/examples/common/bram_test.sh"
+source "${REPO_DIR}/slurm/legacy/common/bram_test.sh"
 
 run_bram_test small 4

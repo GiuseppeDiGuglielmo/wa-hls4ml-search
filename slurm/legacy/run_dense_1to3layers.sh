@@ -1,7 +1,7 @@
 #!/bin/bash
 # 200-task scale run — dense NNs with 1-3 layers, 16-256 neurons, up to 8-bit quantization.
-# Run from repo root: bash slurm/examples/run_dense_1to3layers.sh
-source "${WA_HLS4ML_VENV:-/global/common/software/amsc011/public/venv_hls4ml/bin/activate}"
+# Run from repo root: bash slurm/legacy/run_dense_1to3layers.sh
+source "$(python3 slurm/site_config.py venv)"
 python iter_manager_catapult.py \
   -o $SCRATCH/catapult_dense_1to3layers                        $(: output directory) \
   --catapult_shell Perlmutter_scripts/catapult_shell.sh        $(: Apptainer wrapper that launches Catapult) \

@@ -240,13 +240,13 @@ them from the archive first; jobs ran with `make rerun-failed` on `express_amsc`
 
 ## Group 7 — kept, not archived
 
-🔧 **BramFactor smoke tests** — `run_bram_test_{small,medium,large,xl,xxl}.sh` over
-`common/bram_test.sh`, with their five `config_bram_test_*.json`. Output goes to
+🔧 **BramFactor smoke tests** — `slurm/legacy/run_bram_test_{small,medium,large,xl,xxl}.sh`
+over `common/bram_test.sh`, with their five `config_bram_test_*.json`. Output goes to
 `$SCRATCH/catapult_runs_bramtest/` and is never archived. Re-run whenever a `catapult_flow`
 change needs a BramFactor sanity check.
 
-🔧 **Pipeline smoke tests** — `run_single.sh`, `run_pilot.sh`, `run_scale.sh`,
-`run_scale_toy.sh`, and `run_dense_1to3layers.sh`. These use the legacy random-sampling
+🔧 **Pipeline smoke tests** — in `slurm/legacy/`: `run_single.sh`, `run_pilot.sh`,
+`run_scale.sh`, `run_scale_toy.sh`, and `run_dense_1to3layers.sh`. These use the legacy random-sampling
 generator schema, which the catalog does not model, so they keep their own configs.
 
 ⚠️ `run_dense_1to3layers.sh` did produce one archived legacy run,
@@ -257,4 +257,5 @@ QoR, which `make provenance-diff` reports) and
 
 🔧 **Tools** — `archive_run.sh` (removed 2026-11-18), `check_failures.sh`,
 `clean_runs.sh` (removed 2026-11-18),
-`populate_failed_designs.py`, `sample_lhs_from_archive.py`, `run_rerun_from_archive.sh`.
+`populate_failed_designs.py` (removed 2026-11-18), `sample_lhs_from_archive.py`,
+`run_rerun_from_archive.sh` (removed 2026-11-18; see `slurm/repairs/README.md`).

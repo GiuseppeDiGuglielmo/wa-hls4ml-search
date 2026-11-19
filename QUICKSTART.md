@@ -96,7 +96,7 @@ ls -lh ~/work/tool-containers/catapult_rocky.sif
 
 ```bash
 cd $HOME/work/wa-hls4ml-search    # repo root — important for relative paths
-bash slurm/examples/run_single.sh
+bash slurm/legacy/run_single.sh
 ```
 
 You should see:
@@ -111,7 +111,7 @@ Outputs land in `$SCRATCH/catapult_runs/run_<timestamp>_<uuid>/`.
 ## Run the pilot (5 toy tasks, ~5 min)
 
 ```bash
-bash slurm/examples/run_pilot.sh
+bash slurm/legacy/run_pilot.sh
 ```
 
 5 tiny models synthesized in parallel (express_amsc QoS allows up to 32
@@ -120,7 +120,7 @@ concurrent tasks; 5 fits comfortably).
 ## Run at scale (100 toy tasks, ~12 min)
 
 ```bash
-bash slurm/examples/run_scale_toy.sh
+bash slurm/legacy/run_scale_toy.sh
 ```
 
 100 toy models. **Note**: `express_amsc` QoS is capped at 32 concurrent
@@ -129,7 +129,7 @@ nodes (group-wide), so the 100 tasks run in waves of 32. License pool
 
 For 100 *real* models (not toy), use:
 ```bash
-bash slurm/examples/run_scale.sh
+bash slurm/legacy/run_scale.sh
 ```
 (Real models take ~20-40 min each; total wall-clock with the 32-node cap
 is ~1-2 hours.)

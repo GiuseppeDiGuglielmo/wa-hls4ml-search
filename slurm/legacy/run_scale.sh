@@ -4,8 +4,8 @@
 # 100 tasks run in ~4 waves of 32. License pool (CatAIhls4ml_c, 105 seats)
 # is NOT the bottleneck; the QoS node-cap is.
 # Walltime 2h tuned for real models (~20-40 min each).
-# Run from repo root: bash slurm/examples/run_scale.sh
-source "${WA_HLS4ML_VENV:-/global/common/software/amsc011/public/venv_hls4ml/bin/activate}"
+# Run from repo root: bash slurm/legacy/run_scale.sh
+source "$(python3 slurm/site_config.py venv)"
 python iter_manager_catapult.py \
   -o $SCRATCH/catapult_scale                              $(: output directory) \
   --catapult_shell Perlmutter_scripts/catapult_shell.sh   $(: Apptainer wrapper that launches Catapult) \

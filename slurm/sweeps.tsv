@@ -8,7 +8,7 @@
 # position in the cartesian product of these columns; folding two rows together
 # (say the 4,8,12 and 6,10,14 bitwidth groups) renumbers every stem and breaks
 # the (run, stem) join keys the shared archive, sample_lhs_from_archive.py and
-# run_rerun_from_archive.sh all rely on. Add a row instead.
+# rebuild_from_archive.py all rely on. Add a row instead.
 #
 # input, layers  size ranges as lb-ub, expanded to the powers of two inside them.
 #                layers is one range per dense layer, in order.

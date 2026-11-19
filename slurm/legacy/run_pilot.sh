@@ -2,8 +2,8 @@
 # 5-task pilot with toy models — fast (~5 min wall-clock total) sanity
 # check before scaling up. Uses express_amsc QoS (no double-charge for
 # AmSC users; capped at 32 concurrent nodes group-wide).
-# Run from repo root: bash slurm/examples/run_pilot.sh
-source "${WA_HLS4ML_VENV:-/global/common/software/amsc011/public/venv_hls4ml/bin/activate}"
+# Run from repo root: bash slurm/legacy/run_pilot.sh
+source "$(python3 slurm/site_config.py venv)"
 python iter_manager_catapult.py \
   -o $SCRATCH/catapult_pilot                                  $(: output directory) \
   --catapult_shell Perlmutter_scripts/catapult_shell.sh       $(: Apptainer wrapper that launches Catapult) \

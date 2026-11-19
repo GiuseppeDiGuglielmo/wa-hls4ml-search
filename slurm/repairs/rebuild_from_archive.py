@@ -32,7 +32,7 @@ import tarfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
-sys.path.insert(0, HERE)
+sys.path.insert(0, os.path.join(REPO, "slurm", "examples"))
 sys.path.insert(0, REPO)
 sys.path.insert(0, os.path.join(REPO, "slurm", "sweeplib"))
 
@@ -187,7 +187,7 @@ def main():
     with open(os.path.join(source, "joblist.txt"), "w") as f:
         f.writelines(lines)
     with open(os.path.join(source, "REBUILT_FROM_ARCHIVE.txt"), "w") as f:
-        f.write("Rebuilt by slurm/examples/rebuild_from_archive.py from %s for %d design(s).\n" % (arch, len(lines)))
+        f.write("Rebuilt by slurm/repairs/rebuild_from_archive.py from %s for %d design(s).\n" % (arch, len(lines)))
     print("Built    %s (%d designs). Next: make rerun-failed RUN=%s" % (source, len(lines), source))
     return 0
 

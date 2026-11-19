@@ -25,6 +25,11 @@ PEAK_RE = re.compile(rb"peak memory usage (\d+)kB")
 ATTEMPT_RE = re.compile(r"^Catapult(?:_(\d+))?$")
 
 
+def has_qor_attempt(native):
+    """True if any Catapult* attempt under native/ wrote nnet_qofr.csv."""
+    return bool(glob.glob(os.path.join(native, "Catapult*", "*.v*", "nnet_qofr.csv")))
+
+
 def attempts(catapult_native):
     """[(folder name, path)] of Catapult project folders, oldest first."""
     found = []

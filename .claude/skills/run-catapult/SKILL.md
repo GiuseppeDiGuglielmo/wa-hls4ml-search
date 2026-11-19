@@ -163,5 +163,5 @@ too many slots per node gets designs OOM-killed (exit 137) and retried. Queue an
 QOS limits (express pools, max wall times) are in the perlmutter skill;
 `sweep-check` surfaces violations such as `QOSMaxWallDurationPerJobLimit`.
 
-`slurm/examples/run_single.sh` is an older one-design smoke test through the
+`slurm/legacy/run_single.sh` is an older one-design smoke test through the
 `--slurm` job-array path, not the sweep path above.

@@ -163,13 +163,13 @@ why-failed:
 ## reparse | RUN= [APPLY=1] | Lists reports whose QoR is in a retry folder. APPLY=1 rewrites them
 reparse:
 	$(call need_run, [APPLY=1])
-	@set -o pipefail; $(NERSC_PY) slurm/examples/reparse.py $(RUN) $(if $(APPLY),--apply --workers $(WORKERS)) 2>&1 | { grep -v ' - INFO - ' || true; }
+	@set -o pipefail; $(NERSC_PY) slurm/repairs/reparse.py $(RUN) $(if $(APPLY),--apply --workers $(WORKERS)) 2>&1 | { grep -v ' - INFO - ' || true; }
 
 ## rebuild-archived | RUN=<name> [APPLY=1] | Plans a scratch folder for an archive-only run's failed designs. APPLY=1 builds it
 rebuild-archived:
 	@test -n "$(RUN)" || { echo 'usage: make rebuild-archived RUN=<archive run name> [APPLY=1]'; exit 2; }
 	@source "$$($(SITE) venv)" && \
-	  TF_CPP_MIN_LOG_LEVEL=3 python slurm/examples/rebuild_from_archive.py $(RUN) $(if $(APPLY),--apply) 2>&1 \
+	  TF_CPP_MIN_LOG_LEVEL=3 python slurm/repairs/rebuild_from_archive.py $(RUN) $(if $(APPLY),--apply) 2>&1 \
 	  | grep -v -E 'distutils|Instructions for updating|Lambda fuctions'
 
 ## rerun-failed | RUN= [SUBMIT=1] | Plans a rerun of designs with no QoR. SUBMIT=1 submits it

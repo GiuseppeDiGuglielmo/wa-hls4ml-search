@@ -10,10 +10,12 @@ This directory contains the SLURM-specific code for running Catapult HLS synthes
 | `site.json`, `site_config.py` | Site facts (account, archive and tech folders, venv, Catapult tree, license file, node memory) and their one reader. `site_config.py get KEY` / `venv` / `licenses` / `seats` / `techs` / `archive-dir TECH` / `tech RUN_DIR` for shell and make. |
 | `cli.py` | `add_slurm_args(parser)` — argparse group for `--slurm`, `--slurm-account`, `--slurm-time`, `--slurm-qos`, `--slurm-constraint`, `--collect-slurm` |
 | `job_array.py` | `write_script(...)` and `submit(...)` — render `job_array.sh` SBATCH script, `sbatch` it, poll `squeue` until done, check `sacct` for failures |
-| `examples/run_single.sh` | 1-task smoke test (1 real model) |
-| `examples/run_pilot.sh` | 5-task pilot (toy models, ~5 min) |
-| `examples/run_scale.sh` | 100-task production run (real models, ~45 min wall-clock with the 32-node QoS cap) |
-| `examples/run_scale_toy.sh` | 100-task toy stress test (~12 min, 99/100 success rate) |
+| `examples/` | The tools behind the `make` targets (facts, gates, sweep helpers) |
+| `repairs/` | One-off repairs (`reparse`, `rebuild-archived`), each with why it exists; see its README |
+| `legacy/run_single.sh` | 1-task smoke test (1 real model) |
+| `legacy/run_pilot.sh` | 5-task pilot (toy models, ~5 min) |
+| `legacy/run_scale.sh` | 100-task production run (real models, ~45 min wall-clock with the 32-node QoS cap) |
+| `legacy/run_scale_toy.sh` | 100-task toy stress test (~12 min, 99/100 success rate) |
 
 ### Catapult ASIC sweeps
 
@@ -39,10 +41,8 @@ the catalog:
 
 | Script | Purpose |
 |---|---|
-| `run_rerun_from_archive.sh` | Retry failed designs using model extracted from a sibling-RF tarball. `ORIG_RUN=<run> RF=<n> [TECH=gf22]`. |
 | `archive_sync.py` | Copy a run into the archive; dry run by default, `--apply` to copy. Replaces stale archive reports (backed up first), never deletes. Called by `orchestrate.sh`; `make archive-dry` / `make archive`. |
 | `check_failures.sh` | Scan a run dir for missing tarballs; write `failed_designs.txt`. |
-| `populate_failed_designs.py` | Scan archive JSON reports for synthesis failures → `failed_designs.txt`. |
 | `sample_lhs_from_archive.py` | KD-tree LHS sampling from the 45nm archive → candidates file for GF22 runs. |
 
 ## Index of files the SLURM workflow touches (across the whole repo)
@@ -109,8 +109,8 @@ See **`QUICKSTART.md` at the repo root** for the full new-user setup (shared ins
 
 To run quickly once setup is done:
 ```bash
-bash slurm/examples/run_pilot.sh   # 5 toy tasks, ~5 min
-bash slurm/examples/run_single.sh  # 1 real model, ~10-30 min
+bash slurm/legacy/run_pilot.sh   # 5 toy tasks, ~5 min
+bash slurm/legacy/run_single.sh  # 1 real model, ~10-30 min
 ```
 
 ## Notes

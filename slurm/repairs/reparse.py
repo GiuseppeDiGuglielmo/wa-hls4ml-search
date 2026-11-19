@@ -21,7 +21,6 @@ so this runs with NERSC's python (module load python) and no venv.
 import argparse
 import collections
 import datetime
-import glob
 import json
 import os
 import sys
@@ -30,8 +29,9 @@ from multiprocessing import Pool
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
-sys.path.insert(0, HERE)
+sys.path.insert(0, os.path.join(REPO, "slurm", "examples"))
 from run_status import is_good  # noqa: E402
+from design_show import has_qor_attempt  # noqa: E402
 
 im = None  # iter_manager_catapult, imported lazily with stubs
 
@@ -45,12 +45,6 @@ def load_pipeline():
     sys.path.insert(0, REPO)
     import iter_manager_catapult  # noqa: E402
     im = iter_manager_catapult
-
-
-def has_qor_attempt(native):
-    for qofr in glob.glob(os.path.join(native, "Catapult*", "*.v*", "nnet_qofr.csv")):
-        return True
-    return False
 
 
 def candidates(run_dir, only=None):
