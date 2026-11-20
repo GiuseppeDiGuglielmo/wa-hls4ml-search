@@ -92,6 +92,9 @@ which the shared archive README reports as "verified: 0 missing, 0 duplicates". 
 
 ### 3-layer reports from reruns, tarballs from the first attempt
 
+The 165 partial and 153 empty tarballs below were replaced on 2026-11-20 (see
+"3-layer designs resynthesised on 2026-11-20"); the 3,172 complete first attempts remain.
+
 Found on 2026-11-19 by comparing each archived report's `Config.OutputDir` with the run it
 is archived in. In 19 of the 44 runs, 3,490 designs (0.9% of the 405,000) have a report
 written by a later rerun (`*_rerun`, `*_rerun2` and `rerun_rf*_rerun2` folders from June
@@ -136,6 +139,8 @@ tarball could not be read).
 
 ### 3-layer tarballs that cannot be read
 
+All 60 were replaced on 2026-11-20 (next section).
+
 Found on 2026-11-19 with `make design-cost` over every dataset design. 60 archived 3-layer
 tarballs, in 15 of the runs above, cannot be opened: 56 are cut short (gzip ends early,
 `EOFError`) and 4 are empty files (`ReadError`). Their reports are complete and come from
@@ -159,6 +164,46 @@ None of them has an intact copy in the run's scratch folder (`source_dir.txt`).
 | `run_20260604_200216_be9fcdf2` | 1 | `dense_3l_2707` |
 | `run_20260605_031557_3b90ed92` | 2 | `dense_3l_9332`, `dense_3l_13073` |
 | `run_20260605_143602_67b69911` | 7 | `dense_3l_4490`, `dense_3l_4491` (empty), `dense_3l_4496`, `dense_3l_8188`, `dense_3l_8189`, `dense_3l_8214`, `dense_3l_15416` |
+
+### 3-layer designs resynthesised on 2026-11-20
+
+The 378 designs of the two sections above whose archived tarball had no usable Catapult
+log (60 unreadable, 153 without `messages.txt`, 165 stopped partway) were synthesised
+again and their report and tarball replaced, so every 3-layer design now has a project
+and a Catapult time. List: `$SCRATCH/al_replay/regen_targets.tsv` (run, stem, reason).
+
+- Models: `slurm/repairs/rebuild_from_archive.py` recreated each run's scratch folder.
+  313 designs used their own archived model (same weights); 65 whose own tarball was
+  unreadable or held no model used the same architecture from another RF's tarball,
+  which has different random weights, because each RF run drew its own.
+- Synthesis: Catapult 2026.1_1, product ultra, `fasic-135413` (5 seats), `express_amsc`,
+  with `tools.rerun_failed` (tags `regen_test` for a first batch of 9, `regen_full` and
+  `regen_full2` for the rest). All 378 have QoR, a complete log and a tarball.
+- Test batch (9 designs, own model): latency and throughput identical to the archived
+  report, area 0 to +3.8%.
+- Archive: `archive_sync.py --replace-stems` (make archive REPLACE=), backups of the
+  old reports and tarballs in `reports_stale_regen_20261120/` and
+  `tarballs_stale_regen_20261120/` of each run; `make archive-verify` VERIFIED for all 16
+  runs. Catapult time of the 378: 14 h in total, median 92 s.
+
+| Archived run | Designs |
+|---|---|
+| `run_20260521_193026_cba4319e` | 165 |
+| `run_20260522_214453_7dd5508f` | 154 |
+| `run_20260524_141002_d30e0a91` | 5 |
+| `run_20260526_025959_d64af1bb` | 2 |
+| `run_20260527_074357_aff0d65c` | 5 |
+| `run_20260528_121757_f758fd3a` | 3 |
+| `run_20260529_131718_42b83b2b` | 4 |
+| `run_20260530_130622_1329d506` | 5 |
+| `run_20260531_093401_e6edde98` | 7 |
+| `run_20260601_091721_d8d2e774` | 5 |
+| `run_20260602_175454_3852b272` | 3 |
+| `run_20260603_083059_83e7d4d3` | 3 |
+| `run_20260603_083059_aef76e2f` | 7 |
+| `run_20260604_200216_be9fcdf2` | 1 |
+| `run_20260605_031557_3b90ed92` | 2 |
+| `run_20260605_143602_67b69911` | 7 |
 
 ## Group 3 — 2-layer cartesian family
 
