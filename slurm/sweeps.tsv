@@ -14,7 +14,9 @@
 #                layers is one range per dense layer, in order.
 # acts           activation order matters: it is the mask position, not a set.
 # mode           cartesian    enumerated from the columns
-#                lhs_nlayer   Latin hypercube over the columns, single seed=42 draw
+#                lhs_nlayer   Latin hypercube over the columns, single seed=42 draw;
+#                             end values get half the share (sigmoid 50%)
+#                lhs_even     the same with equal-probability bins; use for new groups
 #                cart_sz128   cartesian, keeping only designs with a dim of 128
 #                archive_lhs  sampled from the 45nm archive, re-synthesised in GF22
 # candidates     for the sampled modes, the frozen design list under

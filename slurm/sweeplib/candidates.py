@@ -16,7 +16,11 @@ takes a single seed=42 draw of exactly N samples and dedups what it gets;
 that fits inside the already-synthesised <=64 cartesian. They produce different
 sequences, so merging them would change the archived candidate lists.
 
-The fourth mode, `archive_lhs`, samples the 45nm archive for re-synthesis in
+`lhs_even` is `lhs_nlayer` with equal-probability bins: `lhs_nlayer` gives
+the end values of each column half the share of the others (sigmoid, the
+middle activation, gets 50%). Use `lhs_even` for new sampled groups.
+
+The `archive_lhs` mode, samples the 45nm archive for re-synthesis in
 GF22 and lives in slurm/tools/sample_lhs_from_archive.py, which emits
 (run_name, stem) pairs rather than architectures.
 
@@ -40,7 +44,24 @@ from sweep_spec import dense_sizes, load_catalog  # noqa: E402
 SAMPLER_ACTS = ["relu", "sigmoid", "tanh"]
 
 
-def _snappers(sizes, bws, acts):
+def _snappers(sizes, bws, acts, even=False):
+    """Map a uniform [0, 1) coordinate to a size, bitwidth and activation.
+
+    even=False is the original snapping (nearest value, round(x * (n-1))).
+    It gives the first and last choice half the probability of the others:
+    with three activations the middle one (sigmoid) gets 50%, and sizes 4
+    and 64 and bitwidths 4 and 14 get half the share of the inner values.
+    The archived lhs_nlayer lists were drawn this way and must stay so.
+    even=True cuts [0, 1) into n equal bins, one per choice, so every value
+    is equally likely.
+    """
+    def pick(x, choices):
+        return choices[max(0, min(len(choices) - 1, int(x * len(choices))))]
+
+    if even:
+        return (lambda x: pick(x, sizes), lambda x: pick(x, bws),
+                lambda x: pick(x, acts))
+
     log2_sizes = [math.log2(s) for s in sizes]
     lo_sz, hi_sz = log2_sizes[0], log2_sizes[-1]
 
@@ -59,17 +80,18 @@ def _snappers(sizes, bws, acts):
     return snap_size, snap_bw, snap_act
 
 
-def lhs_nlayer(n_layers, sizes, bws, acts, n_lhs, seed=42):
-    """One seed=42 draw of n_lhs points, deduped in first-seen order.
+def lhs_nlayer(n_layers, sizes, bws, acts, n_lhs, seed=42, even=False):
+    """One draw of n_lhs points, deduped in first-seen order.
 
     Mirrors submit_45nm_nlayer_lhs.sh. Fewer than n_lhs designs come out when
     the snapping collapses samples: the archived 4-layer file holds 2,493.
+    even=True is mode lhs_even (equal-probability bins, see _snappers).
     """
     from scipy.stats.qmc import LatinHypercube
 
     dim = 2 + 2 * n_layers
     raw = LatinHypercube(d=dim, seed=seed).random(n=n_lhs)
-    snap_size, snap_bw, snap_act = _snappers(sizes, bws, acts)
+    snap_size, snap_bw, snap_act = _snappers(sizes, bws, acts, even=even)
 
     seen, ordered = set(), []
     for row in raw:
@@ -146,7 +168,7 @@ def format_candidates(ordered, n_layers, stem_prefix):
     return lines
 
 
-def generate(spec, n_lhs=None):
+def generate(spec, n_lhs=None, seed=42):
     """Produce the candidates lines for a catalog Spec."""
     n_layers = spec.n_layers
     # The samplers walk one flat size ladder, so every layer shares a range.
@@ -159,7 +181,11 @@ def generate(spec, n_lhs=None):
     acts = list(spec.activations)
 
     if spec.mode == "lhs_nlayer":
-        ordered = lhs_nlayer(n_layers, sizes, bws, acts, n_lhs or 2500)
+        ordered = lhs_nlayer(n_layers, sizes, bws, acts, n_lhs or 2500, seed=seed)
+        return format_candidates(ordered, n_layers, "dense_%dl")
+    if spec.mode == "lhs_even":
+        ordered = lhs_nlayer(n_layers, sizes, bws, acts, n_lhs or 2500, seed=seed,
+                             even=True)
         return format_candidates(ordered, n_layers, "dense_%dl")
     if spec.mode == "cart_sz128":
         ordered = cart_sz128(n_layers, sizes, bws, acts)
@@ -182,6 +208,9 @@ def main():
     ap.add_argument("--catalog", default=os.path.join(repo, "slurm", "sweeps.tsv"))
     ap.add_argument("--n-lhs", type=int, default=None,
                     help="LHS sample count (default 2500; ignored by cartesian modes)")
+    ap.add_argument("--seed", type=int, default=42,
+                    help="LHS seed for lhs_nlayer and lhs_even (default 42, the "
+                         "archived lists)")
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
 
@@ -189,7 +218,7 @@ def main():
     if args.group not in catalog:
         ap.error("group %r not in %s" % (args.group, args.catalog))
 
-    lines = generate(catalog[args.group], n_lhs=args.n_lhs)
+    lines = generate(catalog[args.group], n_lhs=args.n_lhs, seed=args.seed)
     out_dir = os.path.dirname(os.path.abspath(args.out))
     if out_dir:
         os.makedirs(out_dir, exist_ok=True)
