@@ -9,6 +9,10 @@ Without --apply it only prints the plan. With --apply it copies:
              reports_stale_<tag>/ and tarballs_stale_<tag>/, then overwritten.
   kept       both sides exist and the archive report is good: left alone, even if
              the scratch copy differs (reported, so you can look).
+  forced     --replace-stems FILE (one stem per line): these designs are
+             replaced, report and tarball, although the archive report is good,
+             e.g. after a rerun that recovered a missing log or a broken tarball.
+             Only when the scratch report is good; backed up like a replace.
 
 It replaces stale archive reports, and it has no code that removes scratch
 data. Every copy goes to a temporary name first and is renamed
@@ -16,6 +20,7 @@ into place, and each applied action is appended to <archive run>/archive_sync.lo
 
 Usage:
     archive_sync.py <scratch run_dir> [--tech nangate45|gf22fdx] [--apply] [--tag TAG]
+                    [--replace-stems FILE]
 """
 
 import argparse
@@ -34,8 +39,12 @@ def listing(directory, suffix):
     return {n[:-len(suffix)] for n in os.listdir(directory) if n.endswith(suffix)}
 
 
-def plan(run_dir, dest):
-    """Return {stem: action} for reports and tarballs, and the 'kept but differs' stems."""
+def plan(run_dir, dest, force=frozenset()):
+    """Return {stem: action} for reports and tarballs, and the 'kept but differs' stems.
+
+    Stems in force are replaced (report and tarball) whenever the scratch
+    report is good, even if the archive report is good too.
+    """
     s_rep, d_rep = os.path.join(run_dir, "data", "reports", "raw"), os.path.join(dest, "reports")
     s_tar, d_tar = os.path.join(run_dir, "tarballs"), os.path.join(dest, "tarballs")
     src_r, dst_r = listing(s_rep, ".json"), listing(d_rep, ".json")
@@ -46,6 +55,13 @@ def plan(run_dir, dest):
         sj, dj = os.path.join(s_rep, stem + ".json"), os.path.join(d_rep, stem + ".json")
         st, dt = os.path.join(s_tar, stem + ".tar.gz"), os.path.join(d_tar, stem + ".tar.gz")
         rep = tar = None
+        if stem in force and stem in src_r and stem in dst_r and is_good(sj):
+            if stem not in src_t:
+                tar = None
+            else:
+                tar = "replace" if stem in dst_t else "new"
+            actions[stem] = ("replace", tar)
+            continue
         if stem in src_r:
             if stem not in dst_r:
                 rep = "new"
@@ -80,6 +96,8 @@ def main():
     ap.add_argument("--apply", action="store_true", help="copy; without it only the plan is printed")
     ap.add_argument("--tag", default=datetime.date.today().strftime("%Y%m%d"),
                     help="suffix of the stale backup folders (default: today, YYYYMMDD)")
+    ap.add_argument("--replace-stems", metavar="FILE",
+                    help="stems (one per line) to replace even though the archive report is good")
     args = ap.parse_args()
 
     run_dir = os.path.abspath(args.run_dir.rstrip("/"))
@@ -95,16 +113,24 @@ def main():
             sys.exit("archive_sync: %s; pass --tech (make: TECH=) %s" % (why, "|".join(TECH_DIRS)))
     dest = os.path.join(ARCHIVE, tech, name)
 
-    actions, differs = plan(run_dir, dest)
+    force = set()
+    if args.replace_stems:
+        force = {l.split()[0] for l in open(args.replace_stems) if l.strip() and not l.startswith("#")}
+    actions, differs = plan(run_dir, dest, frozenset(force))
     count = lambda kind, what: sum(1 for a in actions.values() if a[kind] == what)
     print("Run      %s" % name)
     print("Scratch  %s" % run_dir)
     print("Archive  %s%s" % (dest, "" if os.path.isdir(dest) else "  (new)"))
-    print("  reports   new %5d   replace (archive not good, scratch good) %5d"
+    print("  reports   new %5d   replace (archive not good, or forced)    %5d"
           % (count(0, "new"), count(0, "replace")))
     print("  tarballs  new %5d   replace (with its report)                %5d"
           % (count(1, "new"), count(1, "replace")))
     print("  kept: archive good, scratch tarball size differs              %5d" % len(differs))
+    if force:
+        forced = sum(1 for st in force if st in actions)
+        print("  forced (--replace-stems): %d of %d listed; the rest have no good scratch report"
+              % (forced, len(force)) if forced != len(force) else
+              "  forced (--replace-stems): %d of %d listed" % (forced, len(force)))
     for stem in differs[:5]:
         print("    %s" % stem)
     if len(differs) > 5:

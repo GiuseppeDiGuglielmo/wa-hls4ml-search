@@ -197,15 +197,15 @@ sweep:
 
 # --- Archive ---
 
-## archive-dry | RUN= | What archive would copy
+## archive-dry | RUN= [REPLACE=stems file] | What archive would copy
 archive-dry:
 	$(call need_run,)
-	@$(PYTHON) -m slurm.tools.archive_sync $(RUN) $(if $(TECH),--tech $(TECH))
+	@$(PYTHON) -m slurm.tools.archive_sync $(RUN) $(if $(TECH),--tech $(TECH)) $(if $(REPLACE),--replace-stems $(REPLACE))
 
-## archive | RUN= | COPIES a run into the shared archive (never deletes). Run archive-dry first
+## archive | RUN= [REPLACE=stems file] | COPIES a run into the shared archive (never deletes); REPLACE also overwrites those good designs (backed up). Run archive-dry first
 archive:
 	$(call need_run,  (run make archive-dry first))
-	@$(PYTHON) -m slurm.tools.archive_sync $(RUN) $(if $(TECH),--tech $(TECH)) --apply
+	@$(PYTHON) -m slurm.tools.archive_sync $(RUN) $(if $(TECH),--tech $(TECH)) $(if $(REPLACE),--replace-stems $(REPLACE)) --apply
 
 ## archive-verify | RUN= [ALL=1] | Check the archive holds everything of a run
 archive-verify:
