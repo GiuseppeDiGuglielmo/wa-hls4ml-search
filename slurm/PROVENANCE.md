@@ -134,6 +134,32 @@ tarball could not be read).
 | `run_20260605_031557_3b90ed92` | 160 | `catapult_dense_3layers_sz64_inp_rf8_l1a_rerun/run_20260608_132918_2d0b54c7` |
 | `run_20260605_143602_67b69911` | 126 | `catapult_dense_3layers_sz64_inp_rf16_l1a_rerun/run_20260608_165001_efaa5d01` |
 
+### 3-layer tarballs that cannot be read
+
+Found on 2026-11-19 with `make design-cost` over every dataset design. 60 archived 3-layer
+tarballs, in 15 of the runs above, cannot be opened: 56 are cut short (gzip ends early,
+`EOFError`) and 4 are empty files (`ReadError`). Their reports are complete and come from
+the run itself, so the QoR is valid; only the project and its Catapult time are missing.
+None of them has an intact copy in the run's scratch folder (`source_dir.txt`).
+
+| Archived run | Tarballs | Designs |
+|---|---|---|
+| `run_20260522_214453_7dd5508f` | 1 | `dense_3l_3122` |
+| `run_20260524_141002_d30e0a91` | 5 | `dense_3l_3952`, `dense_3l_7094`, `dense_3l_7095`, `dense_3l_7096`, `dense_3l_7104` |
+| `run_20260526_025959_d64af1bb` | 2 | `dense_3l_3669`, `dense_3l_3683` (empty) |
+| `run_20260527_074357_aff0d65c` | 5 | `dense_3l_5817`, `dense_3l_5872`, `dense_3l_5873`, `dense_3l_10915`, `dense_3l_10919` |
+| `run_20260528_121757_f758fd3a` | 3 | `dense_3l_6042`, `dense_3l_12586`, `dense_3l_12639` |
+| `run_20260529_131718_42b83b2b` | 4 | `dense_3l_3208`, `dense_3l_7668`, `dense_3l_7673`, `dense_3l_11591` |
+| `run_20260530_130622_1329d506` | 5 | `dense_3l_2953`, `dense_3l_2973`, `dense_3l_2982`, `dense_3l_2988`, `dense_3l_8520` |
+| `run_20260531_093401_e6edde98` | 7 | `dense_3l_6459`, `dense_3l_6462`, `dense_3l_13612`, `dense_3l_13613`, `dense_3l_13619` (empty), `dense_3l_15990`, `dense_3l_15991` |
+| `run_20260601_091721_d8d2e774` | 5 | `dense_3l_2671`, `dense_3l_7269`, `dense_3l_7277`, `dense_3l_12273`, `dense_3l_12278` |
+| `run_20260602_175454_3852b272` | 3 | `dense_3l_3377`, `dense_3l_3383`, `dense_3l_7545` |
+| `run_20260603_083059_83e7d4d3` | 3 | `dense_3l_3585`, `dense_3l_3695`, `dense_3l_14464` |
+| `run_20260603_083059_aef76e2f` | 7 | `dense_3l_9286`, `dense_3l_9287`, `dense_3l_9288`, `dense_3l_15645`, `dense_3l_15647`, `dense_3l_15648` (empty), `dense_3l_15675` |
+| `run_20260604_200216_be9fcdf2` | 1 | `dense_3l_2707` |
+| `run_20260605_031557_3b90ed92` | 2 | `dense_3l_9332`, `dense_3l_13073` |
+| `run_20260605_143602_67b69911` | 7 | `dense_3l_4490`, `dense_3l_4491` (empty), `dense_3l_4496`, `dense_3l_8188`, `dense_3l_8189`, `dense_3l_8214`, `dense_3l_15416` |
+
 ## Group 3 — 2-layer cartesian family
 
 Was: eight `run_dense_2layers_cartesian*.sh` scripts over `common/dense2layer_cartesian.sh`.
