@@ -90,6 +90,50 @@ campaigns. Archive root: `nangate45/`.
 Together with group 1 these are the 44 runs of the 405,000-design 3-layer cartesian sweep,
 which the shared archive README reports as "verified: 0 missing, 0 duplicates". **Complete.**
 
+### 3-layer reports from reruns, tarballs from the first attempt
+
+Found on 2026-11-19 by comparing each archived report's `Config.OutputDir` with the run it
+is archived in. In 19 of the 44 runs, 3,490 designs (0.9% of the 405,000) have a report
+written by a later rerun (`*_rerun`, `*_rerun2` and `rerun_rf*_rerun2` folders from June
+2026), while their tarball is still the run's first attempt. The QoR in those reports comes
+from a synthesis that succeeded, so the labels are valid. The tarballs do not match them:
+
+- 3,172 tarballs hold a complete first attempt (all 13 Catapult steps).
+- 165 stopped partway, for example at `go compile: Too many real operations` after 5 s
+  (`run_20260521_193026_cba4319e/dense_3l_1645`).
+- 153 hold no Catapult `messages.txt`.
+
+The reruns' own projects cannot replace them: their scratch `tarballs/` folders are empty and
+the scratch purge has removed the Catapult logs from their `build/` folders. Catapult time
+read from these tarballs (`make design-cost`) counts the first attempt only, so it is low for
+these designs, by roughly 320 h over all of them.
+
+`slurm/report_tarball_mismatch.tsv` lists every such design: run, stem, the scratch folder
+the report came from, and the number of Catapult steps in the archived tarball (`-` when the
+tarball could not be read).
+
+| Archived run | Designs | Report written in |
+|---|---|---|
+| `run_20260521_193026_cba4319e` | 212 | `catapult_dense_3layers_sz32_l3_rf16_rerun2/run_20260605_000437_90ec3b44` |
+| `run_20260522_214453_7dd5508f` | 459 | `catapult_dense_3layers_sz64_l3_rf1_rerun2/run_20260604_195728_91a8b4b2` |
+| `run_20260524_141002_d30e0a91` |  69 | `catapult_dense_3layers_sz64_l3_rf4_rerun2/run_20260604_153843_bf273809` |
+| `run_20260525_095507_5d107c91` |  44 | `catapult_dense_3layers_sz64_l3_rf8_rerun2/run_20260604_122348_ca1f4262` |
+| `run_20260526_025959_d64af1bb` |  14 | `catapult_dense_3layers_sz64_l3_rf16_rerun2/run_20260604_111248_609e1dfb` |
+| `run_20260527_074357_aff0d65c` | 333 | `catapult_dense_3layers_sz64_l2_rf1_rerun2/run_20260604_210013_79e08b2d` |
+| `run_20260528_121757_f758fd3a` | 235 | `catapult_dense_3layers_sz64_l2_rf4_rerun2/run_20260604_230504_cc3b3596` |
+| `run_20260529_131718_42b83b2b` | 136 | `catapult_dense_3layers_sz64_l2_rf8_rerun2/run_20260605_020910_bfe7de6c` |
+| `run_20260530_130622_1329d506` | 147 | `catapult_dense_3layers_sz64_l2_rf16_rerun2/run_20260605_013951_c9d8aee2` |
+| `run_20260531_093401_e6edde98` | 503 | `catapult_dense_3layers_sz64_l1_rf1_rerun2/run_20260604_180916_9fe9d367` |
+| `run_20260601_090902_4db63227` | 251 | `catapult_dense_3layers_sz64_l1_rf4_rerun2/run_20260604_221427_f67625d1` |
+| `run_20260601_091721_d8d2e774` | 186 | `catapult_dense_3layers_sz64_l1_rf8_rerun2/run_20260605_005925_117bea94` |
+| `run_20260602_175454_3852b272` | 104 | `catapult_dense_3layers_sz64_l1_rf16_rerun2/run_20260604_173353_99715f12` |
+| `run_20260603_083059_83e7d4d3` | 165 | `rerun_rf1_rerun2/run_20260605_085420_12434cd5` |
+| `run_20260603_083059_aef76e2f` |  99 | `rerun_rf4_rerun2/run_20260605_094145_e15c20cf` |
+| `run_20260604_173538_d4da9e4b` |  19 | `rerun_rf4_rerun2/run_20260605_101927_5941871b` |
+| `run_20260604_200216_be9fcdf2` | 228 | `catapult_dense_3layers_sz64_inp_rf1_l1b_rerun/run_20260608_102938_bc24f230` |
+| `run_20260605_031557_3b90ed92` | 160 | `catapult_dense_3layers_sz64_inp_rf8_l1a_rerun/run_20260608_132918_2d0b54c7` |
+| `run_20260605_143602_67b69911` | 126 | `catapult_dense_3layers_sz64_inp_rf16_l1a_rerun/run_20260608_165001_efaa5d01` |
+
 ## Group 3 — 2-layer cartesian family
 
 Was: eight `run_dense_2layers_cartesian*.sh` scripts over `common/dense2layer_cartesian.sh`.
