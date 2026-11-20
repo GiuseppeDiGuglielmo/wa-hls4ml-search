@@ -262,6 +262,7 @@ bit-for-bit by `slurm/sweeplib/candidates.py`, which `check_design_space.py` ver
 | Catalog group | RF | Archived run directory | Designs | Status |
 |---|---|---|---|---|
 | `45nm_lhs_4l`  | 1, 4, 8, 16 | `run_20260610_195135_d3223479`, `run_20260610_230312_51efc7a8`, `run_20260611_004823_793a0a9d`, `run_20260611_022851_1b2d2486` | 2,493 each | ✅ |
+| `45nm_lhs_4l` (ext7) | 1, 4, 8, 16 | `run_20261119_195942_be324806`, `run_20261119_202505_a8d00cb8`, `run_20261119_203801_5a5ca93e`, `run_20261119_204754_d66e885f` | 7 each | ✅ |
 | `45nm_lhs_5l`  | 1, 4, 8, 16 | `run_20260611_091354_a43fd6c4`, `run_20260611_120449_634ccce7`, `run_20260611_150955_a7b0be9c`, `run_20260611_165836_886ba4df` | 2,500 each | ✅ |
 | `45nm_lhs_6l`  | 1, 4, 8, 16 | `run_20260611_183754_5be00351`, `run_20260611_215941_933c8ab7`, `run_20260612_002203_5d295619`, `run_20260612_021635_0b97189a` | 2,500 each | ✅ |
 | `45nm_lhs_8l`  | 1, 4, 8, 16 | `run_20260612_041700_3d431c10`, `run_20260612_080446_c678f428`, `run_20260612_104716_eb826f3b`, `run_20260612_131637_5e7e8f6b` | 2,500 each | ✅ |
@@ -275,7 +276,21 @@ bit-for-bit by `slurm/sweeplib/candidates.py`, which `check_design_space.py` ver
 | `45nm_sz128_2l`| 8  | `run_20260615_014236_9a742bcf` | 4,914 | ✅ |
 | `45nm_sz128_2l`| 16 | `run_20260615_060740_63216104` | 4,914 | ✅ |
 
-The 4-layer group loses 7 designs per RF to hard synthesis failures (2,493 of 2,500).
+The 4-layer candidates file holds 2,493 designs, not 2,500: the seed=42 draw of 2,500
+samples snapped to 7 duplicates, which were dropped and the stems renumbered (`dense_4l_0`
+to `dense_4l_2492`, no gaps). No design failed synthesis; the catalog row's note "7 hard
+synthesis failures" is wrong but stays, as catalog rows are never edited.
+
+On 2026-11-19 the group was extended to 2,500 per RF (10,000 designs): seven new designs,
+`dense_4l_2493` to `dense_4l_2499`, from a fresh Latin-hypercube draw (seed 2026) over the
+same space, none duplicating the 2,493. They live in
+`nangate45/nangate45_lhs_4layer_ext7.txt` and were run with the group's row and that list:
+
+    sbatch --account=amsc011 --qos=express_amsc --time=06:00:00 --mem=16G \
+        slurm/sweep.sh 45nm_lhs_4l --time 02:00:00 --candidates <ext7 file>
+
+Catapult 2026.1_1 with product Ultra (the June runs used Genesis). All 28 designs are good;
+the four runs are linked into `mlp-4layer/`.
 
 The four `45nm_sz128_2l` runs were missing from the shared archive's `README.md` until
 2026-09-02, when they were found by diffing the archive's run directories against it and added.
